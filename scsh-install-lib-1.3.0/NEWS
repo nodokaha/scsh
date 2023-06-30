@@ -1,0 +1,79 @@
+Recent changes to install-lib                               -*- outline -*-
+
+* Changes in version 1.3.0 (released 2005-08-20)
+
+Added phase "build-clean", during which all the files created during
+phase "build" should be removed.
+
+Fixed a bug in the package definition of the library itself.
+
+Added the source of the documentation to the distribution, to make
+sure this library is considered as free software by Debian.
+
+
+* Changes in version 1.2.0 (released 2004-11-14)
+
+Added option --phases to perform only parts of the installation
+procedure (either the "build" phase or the "install" phase).
+
+Added a script called scsh-test-pkg (in bin/) which can be used to
+test if a package satisfies (some of) the conventions laid out in the
+documentation. While far from being perfect, and slightly pedantic on
+naming issues, this script can be very useful for package authors.
+Currently, it isn't installed automatically.
+
+Fixed the test to check if a package is installed when
+--non-shared-only is specified: in that case, consider the package as
+already installed iff a directory in the "lib" location corresponding
+to the current platform exists.
+
+Added naming conventions and some documentation for "split packages"
+(scsh packages composed of a main archive which is not scsh-aware, and
+another archive providing scsh-related files, e.g. the package
+definition).
+
+Removed previously undocumented --layout-to option.
+
+Changed (undocumented) behaviour of --layout and --layout-from
+options: layouts must now be specified as a single s-expression
+evaluating to a function mapping a package to a layout. Note: this
+doesn't affect the documented behaviour of --layout which still
+accepts names to designate predefined layouts.
+
+
+* Changes in version 1.1.2 (released 2004-07-08)
+
+By default, skip installation of all packages which are already
+installed (and report these packages in the final message). The
+"--force" option must be used to force their re-installation.
+
+
+* Changes in version 1.1.1 (released 2004-06-13)
+
+Changed the way "--destdir" is interpreted: now, it is a prefix for
+the installation prefix, whereas before it was the root of the
+installation prefix. In some cases, this implies a slightly different
+behaviour, which corresponds more to the de facto standard.
+
+
+* Changes in version 1.1 (released 2004-05-22)
+
+The installation library itself is now installed as a scsh package
+called "install-lib". The "scsh-install-pkg" script is just a wrapper
+around this library.
+
+As a consequence, the meaning of the "--prefix" option passed to the
+installation script changed: it is now the prefix to use to install
+the "install-lib" package. All the files but the wrapper script are
+installed below this prefix, according to the chosen layout. The
+wrapper script itself is put in the directory specified by the
+"--bindir" option.
+
+To comply with the packaging policy, some files were also renamed.
+Most importantly, the name of the documentation changed from
+"proposal.pdf" to "install-lib.pdf".
+
+
+* Version 1.0 (released 2004-04-01)
+
+First public release.

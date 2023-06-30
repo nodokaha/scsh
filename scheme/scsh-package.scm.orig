@@ -1032,16 +1032,6 @@
         external-calls)
   (files md5))
 
-(define-structure configure configure-interface
-  (open scheme
-        re-level-0 rx-syntax
-        (subset srfi-13 (string-join)))
-  (files configure))
-
-(define-structure config config-interface
-  (open scheme)
-  (files config))
-
 (define-structures ((lib-dirs lib-dirs-interface)
                     (lib-dirs-internal lib-dirs-internal-interface))
   (open scsh-level-0

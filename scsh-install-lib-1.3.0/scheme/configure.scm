@@ -1,4 +1,4 @@
-(define (host) "@host@")
+(define (host) "x86_64-pc-linux-gnu")
 
 (define (machine-vendor-os)
   (let ((match (regexp-search (rx (submatch (+ (~ #\-))) "-"
@@ -18,29 +18,29 @@
 (define (os)
   (caddr (machine-vendor-os)))
 
-(define (prefix) "@prefix@")
+(define (prefix) "/usr/local")
 
-(define (exec-prefix) "@exec_prefix@")
+(define (exec-prefix) "${prefix}")
 
-(define (bin-dir) "@bindir@")
+(define (bin-dir) "${exec_prefix}/bin")
 
-(define (lib-dir) "@libdir@")
+(define (lib-dir) "${exec_prefix}/lib")
 
-(define (include-dir) "@includedir@")
+(define (include-dir) "${prefix}/include")
 
-(define (man-dir) "@mandir@")
+(define (man-dir) "${prefix}/share/man")
 
 (define (lib-dirs-list) (quote @lib_dirs_list@))
 
-(define (libs) "@LIBS@")
+(define (libs) "")
 
-(define (defs) "@DEFS@")
+(define (defs) "-DHAVE_CONFIG_H")
 
-(define (cflags) "@CFLAGS@")
+(define (cflags) "-g -O2")
 
-(define (cppflags) "@CPPFLAGS@")
+(define (cppflags) " -I/nix/store/jjmwd58bk0z8w5jxk6nq6r2k82ibphq9-scheme48-1.9.2/include")
 
-(define (ldflags) "@LDFLAGS@")
+(define (ldflags) " -rdynamic")
 
 (define (compiler-flags)
   (string-join (list "-I" (include-dir) (defs))))

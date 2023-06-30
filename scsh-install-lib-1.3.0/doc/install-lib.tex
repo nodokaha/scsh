@@ -1,0 +1,798 @@
+%% $Id: install-lib.tex,v 1.5 2005/08/20 15:46:29 michel-schinz Exp $
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[latin1]{inputenc}
+\usepackage{a4wide, palatino, url, hyperref}
+
+\newcommand{\file}{\begingroup \urlstyle{tt}\Url}
+
+\newcommand{\envvar}[1]{\texttt{#1}}
+\newcommand{\cloption}[1]{\texttt{#1}}
+\newcommand{\package}[1]{\texttt{#1}}
+\newcommand{\layout}[1]{\texttt{#1}}
+\newcommand{\location}[1]{\texttt{#1}}
+\newcommand{\ident}[1]{\texttt{#1}}
+\newcommand{\phase}[1]{\texttt{#1}}
+
+\newcommand{\define}[3]{%
+  \noindent%
+  (\texttt{#1} \textit{#2})\hfill\textit{(#3)}\\[0.5em]%
+}
+\newcommand{\definep}[2]{\define{#1}{#2}{procedure}}
+\newcommand{\defines}[2]{\define{#1}{#2}{syntax}}
+\newcommand{\param}[1]{\emph{#1}}
+
+\newenvironment{rationale}%
+{\begin{quotation}\noindent\textbf{Rationale}}%
+{\end{quotation}}
+\newenvironment{example}%
+{\begin{quotation}\noindent\textbf{Example}}%
+{\end{quotation}}
+
+\begin{document}
+\title{A proposal for scsh packages}
+\author{Michel Schinz}
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+The aim of the following proposal is to define a standard for the
+packaging, distribution, installation, use and removal of libraries
+for scsh. Such packaged libraries are called \emph{scsh packages} or
+simply \emph{packages} below.
+
+This proposal attempts to cover both libraries containing only Scheme
+code and libraries containing additional C code. It does not try to
+cover applications written in scsh, which are currently considered to
+be outside of its scope.
+
+\subsection{Package identification and naming}
+
+Packages are identified by a globally-unique name. This name should
+start with an ASCII letter (a-z or A-Z) and should consist only of
+ASCII letters, digits or hyphens `\verb|-|'. Package names are
+case-sensitive, but there should not be two packages with names which
+differ only by their capitalisation.
+
+\begin{rationale}
+  This restriction on package names ensures that they can be used to
+  name directories on current operating systems.
+\end{rationale}
+
+Several versions of a given package can exist. A version is identified
+by a sequence of non-negative integers. Versions are ordered
+lexicographically.
+
+A version has a printed representation which is obtained by separating
+(the printed representation of) its components by dots. For example,
+the printed representation of a version composed of the integer 1
+followed by the integer 2 is the string \texttt{1.2}. Below, versions
+are usually represented using their printed representation for
+simplicity, but it is important to keep in mind that versions are
+sequences of integers, not strings.
+
+A specific version of a package is therefore identified by a name and
+a version. The \emph{full name} of a version of a package is obtained
+by concatenating:
+\begin{itemize}
+\item the name of the package,
+\item a hyphen `\texttt{-}',
+\item the printed representation of the version.
+\end{itemize}
+
+In what follows, the term \emph{package} is often used to designate a
+specific version of a package, but this should be clear from the
+context.
+
+\section{Distributing packages}
+
+Packages are usually distributed as a stand-alone archive containing
+the code and documentation to install, as well as a file describing
+the installation procedure. However, it is also possible to distribute
+the scsh-specific installation procedure separately from the main code
+and documentation. This is typically useful to turn general Scheme
+libraries into scsh packages.
+
+\subsection{Stand-alone packages}
+\label{sec:stand-alone-packages}
+
+Stand-alone packages are distributed in a single \texttt{tar} archive,
+which can optionally be compressed by \texttt{gzip} or \texttt{bzip2}.
+The name of the archive is composed by appending:
+\begin{itemize}
+\item the full name of the package,
+\item the string \texttt{.tar} indicating that it's a \texttt{tar}
+  archive,
+\item either the string \texttt{.gz} if the archive is compressed
+  using \texttt{gzip}, or the string \texttt{.bz2} if the archive is
+  compressed using \texttt{bzip2}, or nothing if the archive is not
+  compressed.
+\end{itemize}
+
+The archive of a stand-alone package is organised so that it contains
+one top-level directory whose name is the full name of the package.
+This directory is called the \emph{package unpacking directory}. All
+the files belonging to the package are stored below it.
+
+The unpacking directory contains at least the following files:
+\begin{description}
+\item[\file{pkg-def.scm}] a Scheme file containing the installation
+  procedure for the package (see §~\ref{sec:authoring-packages}),
+\item[\file{README}] a textual file containing a short description of
+  the package,
+\item[\file{COPYING}] a textual file containing the license of the
+  package.
+\end{description}
+
+\subsection{Split packages}
+\label{sec:split-packages}
+
+Split packages are distributed as two separate archives. The first
+one, called the \emph{upstream archive}, contains the code and
+documentation of the package. The second one, called the
+\emph{downstream archive}, contains the scsh-specific installation
+procedure for the package.
+
+Ideally, the upstream archive should follow the rules laid out in the
+previous section for stand-alone archives. Most of the time, however,
+the author of the upstream package has no reason to be aware of the
+current policy, or simply to adhere to it. The name and layout of the
+downstream archive should therefore mirror the one of the upstream
+archive, as follows:
+\begin{enumerate}
+\item the name of the downstream archive is composed by appending:
+  \begin{itemize}
+  \item the string \texttt{pkg\_} (the three letters `p', `k' and `g'
+    followed by an underscore character),
+  \item the name of the upstream archive, including its version but
+    excluding extensions indicating the archive type and/or
+    compression method,
+  \item an underscore character,
+  \item a single number indicating the version of the downstream
+    archive,
+  \item the string \texttt{.tar} indicating that it's a \texttt{tar}
+    archive,
+  \item either the string \texttt{.gz} if the archive is compressed
+    using \texttt{gzip}, or the string \texttt{.bz2} if the archive is
+    compressed using \texttt{bzip2}, or nothing if the archive is not
+    compressed.
+  \end{itemize}
+\item the downstream archive should contain at least the file
+  \file{pkg-def.scm} placed in a directory with the same name as the
+  ``main'' directory of the upstream archive.
+\end{enumerate}
+These conventions ensure that split packages behave almost like
+stand-alone packages after the two archives have been unpacked at the
+same location.
+
+% TODO give an example of a split package
+
+\section{Downloading and installing packages}
+
+A package can be installed on a target machine by downloading its
+archive, expanding it and finally running the installation script
+located in the unpacking directory.
+
+\subsection{Layouts}
+
+The installation script installs files according to some given
+\emph{layout}. A layout maps abstract \emph{locations} to concrete
+directories on the target machine. For example, a layout could map the
+abstract location \location{doc}, where documentation is stored, to
+the directory \file{/usr/local/share/doc/my_package}.
+
+Currently, the following abstract locations are defined:
+\begin{description}
+\item[\location{base}] The ``base'' location of a package, where the
+  package loading script \file{load.scm} resides.
+
+\item[\location{active}] Location containing a symbolic link, with the
+  same name as the package (excluding the version), pointing to the
+  base location of the package.  This link is used to designate the
+  \emph{active} version of a package\,---\,the one to load when a
+  package is requested by giving only its name, without an explicit
+  version.
+
+\item[\location{scheme}] Location containing all Scheme code. If the
+  package comes with some examples showing its usage, they are put in
+  a sub-directory called \file{examples} of this location.
+
+\item[\location{lib}] Location containing platform-dependent files,
+  like shared libraries.  This location contains one sub-directory per
+  platform for which packages have been installed, and nothing else.
+
+\item[\location{doc}] Location containing all the package
+  documentation. This location contains one or more sub-directories,
+  one per format in which the documentation is available. The contents
+  of these sub-directories is standardised as follows, to make it easy
+  for users to find the document they need:
+  \begin{description}
+  \item[\file{html}] Directory containing the HTML documentation of
+    the package, if any; this directory should at least contain one
+    file called \file{index.html} serving as an entry point to the
+    documentation.
+  \item[\file{pdf}] Directory containing the PDF documentation of the
+    package, if any; this directory should contain at least one file
+    called \file{<package_name>.pdf} where \file{<package_name>} is
+    the name of the package.
+  \item[\file{ps}] Directory containing the PostScript documentation
+    of the package, if any; this directory should contain at least one
+    file called \file{<package_name>.ps} where \file{<package_name>}
+    is the name of the package.
+  \item[\file{text}] Directory containing the raw textual
+    documentation of the package, if any.
+  \end{description}
+
+\item[\location{misc-shared}] Location containing miscellaneous data
+  which does not belong to any directory above, and which is
+  platform-independent.
+\end{description}
+
+The directories to which a layout maps these abstract locations are
+not absolute directories, but rather relative ones. They are relative
+to a \emph{prefix}, specified at installation time using the
+\cloption{--prefix} option, as explained in section
+\ref{sec:inst-proc}.
+
+\begin{example}
+  Let's imagine that a user is installing version 1.2 of a package
+  called \package{foo}. This package contains a file called
+  \file{COPYING} which has to be installed in sub-directory
+  \file{license} of the \location{doc} location. If the user chooses
+  to use the default layout, which maps \location{doc} to directory
+  \file{<scsh-version>/<package_full_name>/doc} (see
+  §~\ref{sec:scsh-layout}), and specifies
+  \file{/usr/local/share/scsh/modules} as a prefix, then the
+  \file{COPYING} file will end up in:
+\[
+\begin{small}
+\underbrace{\mbox{\texttt{/usr/local/share/scsh/modules/}}}_{1}%
+\underbrace{\mbox{\texttt{0.6/foo-1.2/doc/}}}_{2}%
+\underbrace{\mbox{\texttt{license/COPYING}}}_{3}
+\end{small}
+\]
+(provided the user is running scsh v0.6.x) Part 1 is the prefix, part
+2 is the layout's mapping for the \location{doc} location, and part 3
+is the file name relative to the location.
+\end{example}
+
+\subsubsection{Predefined layouts}
+\label{sec:predefined-layouts}
+
+Every installation script comes with a set of predefined layouts which
+serve different aims. They are described below
+
+The directories to which these layouts map locations often have a name
+which includes the current version of scsh and/or the full name of the
+package. In what follows, the notation \file{<version>} represents the
+printed representation of the first two components of scsh's version
+(e.g. \file{0.6} for scsh v0.6.x). The notation \file{<pkg_fname>}
+represents the \emph{full} name of the package being installed.
+
+\paragraph{The \layout{scsh} layout}
+\label{sec:scsh-layout}
+
+The \layout{scsh} layout is the default layout. It maps all locations
+to sub-directories of a single directory, called the package
+installation directory, which contains nothing but the files of the
+package being installed. Its name is simply the full name of the
+package in question, and it resides in the \file{prefix} directory.
+
+The \layout{scsh} layout maps locations as given in the following
+table:
+\begin{center}
+  \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Location}      & \textbf{Directory (relative to prefix)} \\
+    \hline
+    \location{base}        & \file{<version>/<pkg_fname>}            \\
+    \location{active}      & \file{<version>}                        \\
+    \location{scheme}      & \file{<version>/<pkg_fname>/scheme}     \\
+    \location{lib}         & \file{<version>/<pkg_fname>/lib}        \\
+    \location{doc}         & \file{<version>/<pkg_fname>/doc}        \\
+    \location{misc-shared} & \file{<version>/<pkg_fname>}            \\
+    \hline
+  \end{tabular}
+\end{center}
+
+This layout is well suited for installations performed without the
+assistance of an additional package manager, because it makes many
+common operations easy. For example, finding to which package a file
+belongs is trivial, as is the removal of an installed package.
+
+\paragraph{The \layout{fhs} layout}
+\label{sec:fhs-layout}
+
+The \layout{fhs} layout maps locations according to the File Hierarchy
+Standard (FHS, see \href{http://www.pathname.com/fhs/}%
+{http://www.pathname.com/fhs/}), as follows:
+\begin{center}
+  \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Location}    & \textbf{Directory (relative to prefix)}                \\
+    \hline
+    \layout{base}        & \file{share/scsh-<version>/modules/<pkg_fname>}        \\
+    \layout{active}      & \file{share/scsh-<version>/modules}                    \\
+    \layout{scheme}      & \file{share/scsh-<version>/modules/<pkg_fname>/scheme} \\
+    \layout{lib}         & \file{lib/scsh-<version>/modules/<pkg_fname>}          \\
+    \layout{doc}         & \file{share/doc/scsh-<version>/<pkg_fname>}            \\
+    \layout{misc-shared} & \file{share/scsh-<version>/modules/<pkg_fname>}        \\
+    \hline
+  \end{tabular}
+\end{center}
+
+The main advantage of this layout is that it adheres to the FHS
+standard, and is therefore compatible with several packaging policies,
+like \href{http://www.debian.org/}{Debian}'s,
+\href{http://fink.sourceforge.net/}{Fink}'s and others. Its main
+drawback is that files belonging to a given package are scattered, and
+therefore hard to find when removing or upgrading a package. Its use
+should therefore be considered only if third-party tools are available
+to track files belonging to a package.
+
+%% TODO \subsection{File permissions}
+
+\subsection{Installation procedure}
+\label{sec:inst-proc}
+
+Packages are installed using the \file{scsh-install-pkg} script,
+which is part of the installation library. This script must be given
+the name of the prefix using the \cloption{--prefix} option. It also
+accepts the following options:
+\begin{center}
+  \begin{tabular}{lp{.6\textwidth}}
+    \cloption{--layout} name      & Specifies the layout to use (see §~\ref{sec:predefined-layouts}).                         \\
+    \cloption{--verbose}          & Print messages about what is being done.                                                  \\
+    \cloption{--dry-run}          & Print what actions would be performed to install the package, but do not perform them.    \\
+    \cloption{--inactive}         & Do not activate package after installing it.                                              \\
+    \cloption{--non-shared-only}  & Only install platform-dependent files, if any.                                            \\
+    \cloption{--force}            & Overwrite existing files during installation.                                             \\
+    \cloption{--no-user-defaults} & Don't read user defaults in \file{.scsh-pkg-defaults.scm} (see §~\ref{sec:user-preferences}). \\
+  \end{tabular}
+\end{center}
+A few, more advanced options exist and are documented in section
+\ref{sec:packaging-packages}.
+
+\subsubsection{User preferences}
+\label{sec:user-preferences}
+
+Users can store default values for the options passed to the
+installation script by storing them in a file called
+\file{.scsh-pkg-defaults.scm} residing in their home directory. This
+file must contain exactly one Scheme expression whose value is an
+association list. The keys of this list, which must be symbols,
+identify options and the values specify the default value for these
+options. The contents of this file is implicitly quasi-quoted.
+
+The values stored in this file override the default values of the
+options, but they are in turn overridden by the values specified on the
+command line of the installation script. Furthermore, it is possible
+to ask for this file to be completely ignored by passing the
+\cloption{--no-user-defaults} option to the installation script.
+
+\begin{example}
+  A \file{.scsh-pkg-defaults.scm} file containing the following:
+\begin{verbatim}
+;; Default values for scsh packages installation
+((layout  . "fhs")
+ (prefix  . "/usr/local/share/scsh/modules")
+ (verbose . #t))
+\end{verbatim}
+  specifies default values for the \cloption{--layout},
+  \cloption{--prefix} and \cloption{--verbose} options.
+\end{example}
+
+\section{Using packages}
+
+To use a package, its \emph{loading script} must be loaded in
+Scheme~48's exec package. The loading script for a package is a file
+written in the Scheme 48 exec language, whose name is \file{load.scm}
+and which resides in the \location{base} location.
+
+To load this file, one typically uses scsh's \cloption{-lel} option
+along with a properly defined \envvar{SCSH\_LIB\_DIRS} environment
+variable.
+
+Scsh has a list of directories, called the library directories, in
+which it looks for files to load when the options \cloption{-ll} or
+\cloption{-lel} are used. This list can be given a default value
+during scsh's configuration, and this value can be overridden by
+setting the environment variable \envvar{SCSH\_LIB\_DIRS} before running
+scsh.
+
+In order for scsh to find the package loading scripts, one must make
+sure that scsh's library search path contains the names of all
+\location{active} locations which containing packages.
+
+The names of these directories should not end with a slash `\verb|/|',
+as this forces scsh to search them recursively. This could
+\emph{drastically} slow down scsh when looking for packages.
+
+\begin{example}
+  Let's imagine a machine on which the system administrator installs
+  scsh packages according to the \layout{fhs} layout in prefix
+  directory \file{/usr/local}. The \location{active} location for
+  these packages corresponds to the directory
+  \file{/usr/local/share/scsh-0.6/modules}, according to section
+  \ref{sec:fhs-layout}.
+
+  Let's also imagine that there is a user called \texttt{john} on this
+  machine, who installs additional scsh packages for himself in his
+  home directory, using \file{/home/john/scsh} as a prefix.
+  To ease their management, he uses the \layout{scsh} layout. The
+  \location{active} location for these packages corresponds to the
+  directory \file{/home/john/scsh/0.6}, according to section
+  \ref{sec:scsh-layout}.
+
+  In order to be able to use scsh packages installed both by the
+  administrator and by himself, user \texttt{john} needs to put both
+  active directories in his \envvar{SCSH\_LIB\_DIRS} environment
+  variable.  The value of this variable will therefore be:
+  \begin{small}
+\begin{verbatim}
+"/usr/local/share/scsh-0.6/modules" "/home/john/scsh/0.6"
+\end{verbatim}
+  \end{small}
+
+  Now, in order to use packages \package{foo} and \package{bar} in one
+  of his script, user \texttt{john} just needs to load their loading
+  script using the \cloption{-lel} option when invoking scsh, as
+  follows:
+\begin{verbatim}
+  -lel foo/load.scm -lel bar/load.scm
+\end{verbatim}
+\end{example}
+
+\section{Authoring packages}
+\label{sec:authoring-packages}
+
+Once the Scheme and/or C code for a package has been written, the last
+step in turning it into a standard package as defined by this proposal
+is to write the installation script.
+
+This script could be written fully by the package author, but in order
+to simplify this task a small scsh installation framework is provided.
+This framework must be present on the host system before a scsh
+package can be installed.
+
+As explained above, when the \file{scsh-install-pkg} script is
+invoked, it launches scsh on the main function of the installation
+library, which does the following:
+\begin{enumerate}
+\item parse the command line arguments (e.g the \cloption{--prefix}
+  option),
+\item load the package definition file, a (Scheme) file called
+  \file{pkg-def.scm}, which is supplied by the package author and
+  which contains one or several package definition statements, and
+\item install the packages which were defined in the previous step.
+\end{enumerate}
+Most package definition files should contain a single package
+definition, but the ability to define several packages in one file can
+sometimes be useful.
+
+The main job of the package author is therefore to write the package
+definition file, \file{pkg-def.scm}. This file is mostly composed of a
+package definition statement, which specifies the name, version and
+installation code for the package. The package definition statement is
+expressed using the \ident{define-package} form, documented in the
+next section.
+
+\subsection{Installation library}
+\label{sec:install-library}
+
+\subsubsection{Package definition}
+
+\defines{define-package}{name version extension body ...}%
+Define a package to be installed. \param{Name} (a string) is the
+package name, \param{version} (a list of integers) is its version,
+\param{extensions} is a list of extensions (see below), and
+\param{body} is the list of statements to be evaluated in order to
+install the package.
+
+The installation statements typically use functions of the
+installation library in order to install files in their target
+location. The available functions are presented below.
+
+\param{Extensions} consists in a list of lists, each one starting with
+a symbol identifying the extension, possibly followed by
+extension-specific parameters. It is used to specify various
+parameters, which are usually optional. Currently, the following
+extensions are defined:
+\begin{description}
+\item[install-lib-version] specifies the version of the installation
+  library that this package definition requires. The version is
+  specified as a list composed of \emph{exactly two} integers, giving
+  the major and minor version number of the library. Before installing
+  a package, this version requirement is checked and installation
+  aborts if the installation library does not satisfy it.%
+  \footnote{Version $(i_1\,i_2)$ of the installation library satisfies a
+    requirement $(r_1\,r_2)$ if and only if both major numbers are equal,
+    and the minor number of the installation library is greater or
+    equal to the minor requirement. In other words, iff $i_1 = r_1$
+    and $i_2 \ge r_2$.}%
+  It is strongly recommended that package authors provide this
+  information, as it makes it possible to provide helpful error
+  messages to users.
+
+\item[options] enables the script to define additional command-line
+  options. It accepts nine parameters in total, with the last three
+  being optional. The description of these parameters follows, in the
+  order in which they should appear:
+  \begin{description}
+  \item[\param{name}] (a symbol) is the name of the option, without
+    the initial double hyphen (\verb|--|),
+  \item[\param{help-text}] (a string) describes the option for the
+    user,
+  \item[\param{arg-help-text}] (a string) describes the option's
+    argument (if any) for the user,
+  \item[\param{required-arg?}] (a boolean) says whether this option
+    requires an argument or not,
+  \item[\param{optional-arg?}] (a boolean) says whether this option's
+    argument can be omitted or not,
+  \item[\param{default}] (anything) is the default value for the
+    option,
+  \item[\param{parser}] (a function from string to anything) parses
+    the option, i.e. turns its string representation into its internal
+    value,
+  \item[\param{unparser}] (a function from anything to string) turns
+    the internal representation of the option into a string,
+  \item[\param{transformer}] is a function taking the current value of
+    the option, the value given by the user and returning its new
+    value.
+  \end{description}
+  By default, \param{parser} and \param{unparser} are the identity
+  function, and \param{transformer} is a function which takes two
+  arguments and returns the second (i.e. the current value of the
+  option is simply replaced by the one given).
+\end{description}
+
+\subsubsection{Content installation}
+
+\definep{install-file}{file location [target-dir]}%
+Install the given \param{file} in the sub-directory \param{target-dir}
+(which must be a relative directory) of the given \param{location}.
+\param{Target-dir} is \file{.} by default.
+
+If the directory in which the file is about to be installed does not
+exist, it is created along with all its parents, as needed. If
+\param{file} is a string, then the installed file will have the same
+name as the original one. If \param{file} is a pair, then its first element
+specifies the name of the source file, and its second element the name
+it will have once installed. The second element must be a simple file
+name, without any directory part.
+
+\vspace{1em}
+\definep{install-files}{file-list location [target-dir]}%
+Like \ident{install-file} but for several files, which are specified
+as a list. Each element in the list can be either a simple string or a
+pair, as explained above.
+
+\vspace{1em}
+\definep{install-directory}{directory location [target-dir]}%
+Install the given \param{directory} and all its contents, including
+sub-directories, in sub-directory \param{target-dir} of
+\param{location}. This is similar to what \param{install-file} does,
+but for complete hierarchies.
+
+Notice that \param{directory} will be installed as a sub-directory of
+\param{target-dir}.
+
+\vspace{1em}
+\definep{install-directories}{dir-list location [target-dir]}%
+Install several directories in one go.
+
+\vspace{1em}
+\definep{install-directory-contents}{directory location [target-dir]}%
+Install the contents of the given \param{directory} in sub-directory
+\param{target} of \param{location}.
+
+\vspace{1em}
+\definep{install-string}{string location [target-dir]}%
+Install the contents of \param{string} in sub-directory
+\param{target-dir} of \param{location}.
+
+\subsubsection{Queries}
+
+\definep{get-directory}{location install?}%
+Get the absolute name of the directory to which the current layout
+maps the abstract \param{location}. If \param{install?} is true, the
+directory is the one valid during installation; If it is false, the
+directory is the one valid after installation, that is when the
+package is later used.
+
+The distinction between installation-time and usage-time directories
+is necessary to support staged installation, as performed by package
+managers like Debian's APT.
+
+\vspace{1em}
+\definep{get-option-value}{option}%
+Return the value of the given command-line \param{option} (a symbol).
+This can be used to get the value of predefined options (like
+\cloption{--dry-run}) or package-specific options.
+
+\vspace{1em} \definep{phase-active?}{phase}%
+Return true iff the given \param{phase} is active, that is if the
+steps associated with it should be performed. \param{Phase} should be
+one of the following symbols: \texttt{build}, \texttt{build-clean} or
+\texttt{install}, designating the corresponding phase (see section
+\ref{sec:packaging-packages}).
+
+\subsubsection{Load script generation}
+
+\definep{with-output-to-load-script*}{thunk}%
+Evaluate \param{thunk} with the current output opened on the loading
+script of the current package. If this script was already existing,
+its previous contents is deleted.
+
+\vspace{1em}
+\defines{with-output-to-load-script}{body ...}%
+Syntactic sugar for \ident{with-output-to-load-script*}.
+
+\vspace{1em}
+\definep{write-to-load-script}{s-expression}%
+Pretty-print the \param{s-expression} to the loading script of the
+current package. If this script was already existing, its previous
+contents is deleted.
+
+\begin{example}
+  A typical package definition file for a simple package called
+  \package{pkg} whose version is 1.2 could look like this:
+\begin{verbatim}
+(define-package "pkg" (1 2) ()
+  (install-file "load.scm" 'base)
+  (install-directory-contents "scheme" 'scheme)
+  (install-file ("LICENSE" . "COPYING") 'doc)
+  (install-directory-contents "doc" 'doc))
+\end{verbatim}
+  
+  With such a definition, invoking the installation script with
+  \file{/usr/local/} as prefix and \layout{fhs} as layout has the
+  following effects:
+\begin{enumerate}
+\item The base directory \file{/usr/local/share/scsh/modules/pkg-1.2}
+  is created and file \file{load.scm} is copied to it.
+\item All the contents of the directory called \file{scheme} is copied
+  to directory \file{/usr/local/share/scsh/modules/pkg-1.2/scheme}
+  which is created before, if needed.
+\item File \file{LICENSE} is copied to directory
+  \file{/usr/local/share/doc/pkg-1.2/} with name \file{COPYING}.
+\item All the contents of the directory called \file{doc} is copied to
+  directory \file{/usr/local/share/doc/pkg-1.2/}
+\item The package is activated by creating a symbolic link with name
+  \file{/usr/local/share/scsh/modules/pkg} pointing to
+  \file{./pkg-1.2}
+\end{enumerate}
+\end{example}
+
+\subsubsection{Miscellaneous}
+\label{sec:misc}
+
+A few functions which are not specifically related to installation are
+provided, as they can sometimes be useful when writing installation
+scripts. They are documented below.
+
+\vspace{1em}
+\definep{parent-directory}{dir}%
+Returns the parent directory of \param{dir}. Notice that a trailing
+slash is always ignored by this function, so that the parent directory
+of both \file{/tmp/dir} and \file{/tmp/dir/} is \file{/tmp/}.
+
+\vspace{1em}
+\definep{create-directory\&parents}{dir}%
+Similar to scsh's \ident{create-directory}, but also create all parent
+directories which do not exist yet.
+
+\vspace{1em}
+\definep{relative-file-name}{fname [dir]}%
+Return the name of file \param{fname} relative to \param{dir}, which
+defaults to the current directory.
+
+\vspace{1em}
+\definep{paths->file-name}{path ...}%
+Similar to scsh's \ident{path-list->file-name} except that all
+arguments are taken to form the final path. This function has no
+equivalent for \ident{path-list->file-name}'s optional argument.
+
+\subsection{Packages containing C code (for shared libraries)}
+
+Packages containing C code are more challenging to write, since all
+the problems related to C's portability and incompatibilities between
+the APIs of the various platforms have to be accounted for.
+Fortunately, the GNU Autoconf system simplifies the management of
+these problems, and authors of scsh packages containing C code are
+strongly encouraged to use it.
+
+%% Integrating Autoconf into the installation procedure should not be a
+%% major problem thanks to scsh's ability to run separate programs.
+
+\section{Packaging packages}
+\label{sec:packaging-packages}
+
+Most important Unix systems today have one (or several) package
+management systems which ease the installation of packages on a
+system. In order to avoid confusion between these packages and the
+scsh packages discussed above, they will be called \emph{system
+  packages} in what follows.
+
+It makes perfect sense to provide system packages for scsh packages.
+System packages should as much as possible try to use the standard
+installation script described above to install scsh packages. In order
+to make this as easy as possible, the installation script recognizes
+the following additional options:
+
+\begin{center}
+  \begin{tabular}{lp{.6\textwidth}}
+    \cloption{--dest-dir} dir  & Specify a prefix for all installed files\\
+    \cloption{--phases} phases & Only perform some phases of installation.\\
+  \end{tabular}
+\end{center}
+
+The \cloption{--dest-dir} option plays the same role as the
+\envvar{DESTDIR} variable which is typically given to \texttt{make
+  install}. Its value, which is the empty string by default, is
+prepended to all installation paths. This is used to perform staged
+installations, during which the package is first installed into a
+temporary directory and then moved to its final location by some
+external tool.
+
+The \cloption{--phases} option is used to perform only some steps of
+the whole installation process. Currently, three phases are defined:
+\phase{build}, \phase{build-clean} and \phase{install}.
+
+The \phase{build} phase is the one during which the operations
+required to build the package are performed. For scsh packages
+containing only Scheme code, this phase usually does nothing. For scsh
+packages containing some C code, this phase is the one during which
+the C code is compiled.
+
+The \phase{build-clean} phase is the one during which all the files
+created during the \phase{build} phase are removed.
+
+The \phase{install} phase is the one during which the files are copied
+to their final location.
+
+Using the \cloption{--phases} option, each phase can happen during a
+separate run of the installation script. This makes it possible, for
+example, to perform the build phase as one user, and the install phase
+as another one (e.g. root). In order for this to work, the
+installation script must be invoked as follows:
+\begin{enumerate}
+\item first with the \cloption{--phases build} option and maybe other
+  options,
+\item then with the \emph{exact same options} as in the first step,
+  except that \phase{install} has to be given to \cloption{--phases}
+  instead of \phase{build}.
+\end{enumerate}
+The behaviour of the installation script is not defined if these
+conditions are violated.
+
+%% \section{Glossary}
+%% TODO define the following terms
+%% Version
+%% Target machine
+%% Package
+%% (Package) unpacking directory
+%% Layout
+%% (Abstract) location
+%% Package loading script
+
+\section{Acknowledgments}
+\label{sec:acknowledgments}
+
+Discussions with
+Andreas Bernauer,
+Anthony Carrico,
+David Frese,
+Friedrich Delgado Friedrichs,
+Martin Gasbichler,
+Eric Knauel,
+Daniel Kobras,
+Lionel Elie Mamane, and
+Jorgen Schäfer
+greatly helped the design of this proposal.
+Mark Sapa started everything by asking for a Fink package for sunet
+and sunterlib.
+
+\end{document}

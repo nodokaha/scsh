@@ -1,0 +1,375 @@
+#!/bin/sh
+exec scsh -o let-opt -o sort -o srfi-26 -o thread-fluids -e main -s "$0" "$@"
+!#
+
+;; Test a scsh package (either stand-alone or composed of two
+;; archives) by checking that is conforms to the rules given in the
+;; proposal.
+
+;; $Id: scsh-test-pkg,v 1.1 2004/11/14 14:14:52 michel-schinz Exp $
+
+; TODO have a way to give a log file
+
+(define valid-extensions '(".tar" ".tar.gz" ".tar.bz2"))
+
+;;; Utilities
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (string->version str)
+  (map string->number ((infix-splitter ".") str)))
+
+(define (version->string v)
+  (string-join (map number->string v) "."))
+
+(define (permissions->string perms)
+  (let ((decode (lambda (mask str)
+                  (if (zero? (bitwise-and perms mask)) "-" str))))
+    (string-append (decode #o400 "r") (decode #o200 "w") (decode #o100 "x")
+                   (decode #o040 "r") (decode #o020 "w") (decode #o010 "x")
+                   (decode #o004 "r") (decode #o002 "w") (decode #o001 "x"))))
+
+(define (paths->file-name . paths)
+  (path-list->file-name paths))
+
+(define (delete-directory-and-contents dir)
+  (run (rm -rf ,(directory-as-file-name dir))))
+
+(define (create-temp-directory)
+  (temp-file-iterate (lambda (dir) (create-directory dir) dir)
+                     "/var/tmp/tmp.~a"))
+
+(define (call-with-temp-directory proc)
+  (let ((temp-dir (create-temp-directory)))
+    (proc temp-dir)
+    (delete-directory-and-contents temp-dir)))
+
+(define (with-temp-directory* thunk)
+  (call-with-temp-directory (lambda (dir) (with-cwd dir (thunk)))))
+
+(define-syntax with-temp-directory
+  (syntax-rules ()
+    ((with-temp-directory body ...)
+     (with-temp-directory* (lambda () body ...)))))
+
+(define-syntax let-temp-directories
+  (syntax-rules ()
+    ((let-temp-directories () body ...)
+     (begin body ...))
+    ((let-temp-directories (i1 i2 ...) body ...)
+     (call-with-temp-directory
+      (lambda (i1) (let-temp-directories (i2 ...) body ...))))))
+
+(define-syntax when
+  (syntax-rules ()
+    ((when cond body1 ...)
+     (if cond (begin body1 ...)))))
+
+(define-syntax unless
+  (syntax-rules ()
+    ((unless cond body1 ...)
+     (if (not cond) (begin body1 ...)))))
+
+(define (dir-for-each f dir)
+  (for-each (lambda (thing)
+              (f thing)
+              (if (file-directory? thing #f)
+                  (dir-for-each f (absolute-file-name thing dir))))
+            (directory-files dir)))
+
+(define (directory-contents dir)
+  (with-cwd dir
+    (append-map (lambda (path)
+                  (if (file-directory? path #f)
+                      (cons path
+                            (map (cut absolute-file-name <> path)
+                                 (directory-contents path)))
+                      (list path)))
+                (directory-files))))
+
+(define (take-max lst len ellipsis)
+  (if (zero? len)
+      (if (null? lst) lst (list ellipsis))
+      (cons (car lst) (take-max (cdr lst) (- len 1) ellipsis))))
+
+;; Package name parsing
+
+(define pkg-name-rx
+  (rx (w/nocase alphabetic (* (| "-" alphanumeric)))))
+
+(define pkg-version-rx
+  (rx (+ digit) (* "." (+ digit))))
+
+(define pkg-full-name-rx
+  (rx (submatch ,pkg-name-rx) "-" (submatch ,pkg-version-rx)))
+
+(define (parse-pkg-full-name full-name)
+  (let-match (regexp-search pkg-full-name-rx full-name) (#f pkg-name pkg-vers)
+             (list pkg-name pkg-vers)))
+
+;; Interface with TAR
+
+(define (tar-decompress-option archive)
+  (let ((archive-ext (string-downcase (file-name-extension archive))))
+    (cond ((string=? archive-ext ".gz")  '(--gzip))
+          ((string=? archive-ext ".bz2") '(--bzip2))
+          (else '()))))
+
+(define (tar-unpack! archive)
+  (run (tar --extract ,@(tar-decompress-option archive) --file ,archive)))
+
+(define (tar-file-list archive)
+  (run/strings (tar --list ,@(tar-decompress-option archive) --file ,archive)))
+
+;; Directory comparison
+
+(define (sorted-directory-files dir)
+  (sort-list (map (cut absolute-file-name <> dir) (directory-files dir))
+             string<?))
+
+(define (compare-file-kind f1 i1 f2 i2 mismatch-handler)
+  (unless (eq? (file-info:type i1) (file-info:type i2))
+          (mismatch-handler f1 f2 'type)))
+
+(define (compare-file-mode f1 i1 f2 i2 mismatch-handler)
+  (unless (= (file-info:mode i1) (file-info:mode i2))
+          (mismatch-handler f1 f2 'mode)))
+
+(define (compare-file-contents f1 i1 f2 i2 mismatch-handler)
+  (unless (and (= (file-info:size i1) (file-info:size i2))
+               (zero? (run (diff -q ,f1 ,f2) (> /dev/null))))
+          (mismatch-handler f1 f2 'contents)))
+
+(define (compare-directories dir1 dir2 mismatch-handler)
+  (for-each (lambda (f1 f2)
+              (unless (string=? (file-name-nondirectory f1)
+                                (file-name-nondirectory f2))
+                      (mismatch-handler f1 f2 'name))
+              (let ((i1 (file-info f1 #f)) (i2 (file-info f2 #f)))
+                (compare-file-kind f1 i1 f2 i2 mismatch-handler)
+                (cond ((file-info-regular? i1)
+                       (compare-file-mode f1 i1 f2 i2 mismatch-handler)
+                       (compare-file-contents f1 i1 f2 i2 mismatch-handler))
+                      ((file-info-directory? i1)
+                       (compare-file-mode f1 i1 f2 i2 mismatch-handler)
+                       (compare-directories f1 f2 mismatch-handler))
+                      ((file-info-symlink? i1)
+                       )
+                      (else
+                       (mismatch-handler f1 f2 'unknown)))))
+            (sorted-directory-files dir1)
+            (sorted-directory-files dir2)))
+
+(define (get-characteristic file characteristic)
+  (case characteristic
+    ((name)
+     (string-append "name = " file))
+    ((mode)
+     (string-append "mode = " (permissions->string (file-mode file))))
+    ((type)
+     (string-append "type = " (file-type file)))
+    ((contents)
+     "contents")
+    (else
+     "unknown characteristic")))
+
+;;; Logging
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (display* . args)
+  (for-each (cut display <> (current-output-port)) args))
+
+(define (log . args)
+  (apply display* args)
+  (newline))
+
+(define log-info log)
+
+(define error-count 0)
+
+(define (log-error . args)
+  (apply log "Error: " args)
+  (set! error-count (+ 1 error-count)))
+
+(define (log-check . args)
+  (apply log "Checking " args))
+
+;;; Tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (pkg-full-name name version)
+  (string-append name "-" (version->string version)))
+
+(define test-layout
+  '(lambda (pkg)
+     (let ((pkg-full-name (package-full-name pkg)))
+       `((base        . ,pkg-full-name)
+         (misc-shared . ,pkg-full-name)
+         (scheme      . ,(paths->file-name pkg-full-name "scheme"))
+         (lib         . ,(paths->file-name pkg-full-name "lib"))
+         (doc         . ,(paths->file-name pkg-full-name "doc"))
+         (active      . ".")))))
+
+(define (base-location pkg-dir) pkg-dir)
+(define (doc-location pkg-dir) (absolute-file-name "doc" pkg-dir))
+
+(define (layout->string layout)
+  (call-with-string-output-port (lambda (port) (write layout port))))
+
+(define (valid-archive-names base-name)
+  (map (cut string-append base-name <>) valid-extensions))
+
+(define (check-archive-name base-name archive-name)
+  (let ((valid-names (valid-archive-names base-name)))
+    (unless (member archive-name valid-names)
+            (log-error "invalid archive name "archive-name"\n"
+                       "  should be one of: "(string-join valid-names ", ")))))
+
+(define (check-archive-contents name version archive)
+  (let ((top-dir-name (pkg-full-name name version))
+        (archive-files (map simplify-file-name (tar-file-list archive))))
+    (for-each (lambda (req-file)
+                (unless (member req-file archive-files)
+                        (log-error "required file "req-file" not found "
+                                   "in archive")))
+              (map (cut absolute-file-name <> top-dir-name)
+                   '("pkg-def.scm" "README" "COPYING")))
+    (for-each
+     (lambda (name)
+       (let ((dir-name (first (split-file-name name))))
+         (unless (string=? dir-name top-dir-name)
+                 (log-error "archive file "name" not in correct directory"
+                            "\n(should be: "top-dir-name")"))))
+     archive-files)))
+
+(define (check-dir-file dir sub-dir file)
+  (let ((abs-sub-dir (absolute-file-name sub-dir dir)))
+    (when (and (file-exists? abs-sub-dir)
+               (file-not-exists? (absolute-file-name file abs-sub-dir)))
+          (log-error "directory "abs-sub-dir" exists, but it doesn't contain\n"
+                     "required file "file))))
+
+;; Check that the installed files have the appropriate names.
+(define (check-installation-names pkg-name pkg-root)
+  (check-dir-file (base-location pkg-root) "." "load.scm")
+  (let ((doc (doc-location pkg-root)))
+    (check-dir-file doc "html" "index.html")
+    (check-dir-file doc "pdf" (string-append pkg-name ".pdf"))
+    (check-dir-file doc "ps" (string-append pkg-name ".ps"))))
+
+(define (for-all-contents f dir)
+  (for-each (lambda (thing)
+              (f thing)
+              (if (file-directory? thing)
+                  (for-all-contents f thing)))
+            (map (cut absolute-file-name <> dir) (directory-files dir))))
+
+(define (check-installation-protections pkg-root)
+  (for-all-contents
+   (lambda (file)
+     (let* ((info (file-info file))
+            (fnd-perms (file-info:mode info))
+            (req-perms (cond ((file-info-regular? info) #o444)
+                             ((file-info-directory? info) #o555)
+                             (else 0))))
+     (unless (= req-perms (bitwise-and req-perms fnd-perms))
+             (log-error "insufficient permissions for file "file"\n"
+                        "  required: "(permissions->string req-perms)"\n"
+                        "     found: "(permissions->string fnd-perms)))))
+   pkg-root))
+
+(define (check-installation main-pkg-full-name prefix-dir)
+  (with-cwd prefix-dir
+    (let ((all-dirs (filter (cut file-directory? <> #f) (directory-files))))
+      (unless (member main-pkg-full-name all-dirs)
+              (log-error "expected at least one directory called "
+                         main-pkg-full-name" to be installed\n"
+                         "  only found: "(string-join all-dirs ", ")))
+      (for-each (lambda (pkg-dir)
+                  (let ((abs-pkg-dir (absolute-file-name pkg-dir))
+                        (pkg-name (first (parse-pkg-full-name pkg-dir))))
+                    (check-installation-names pkg-name abs-pkg-dir)
+                    (check-installation-protections abs-pkg-dir)))
+                all-dirs))))
+
+(define (install-pkg installer pkg-full-name archives prefix options)
+  (with-temp-directory
+   (for-each tar-unpack! archives)
+   (with-cwd pkg-full-name
+     (unless (zero? (run (,installer --no-user-defaults
+                                     --layout ,(layout->string test-layout)
+                                     --prefix ,prefix
+                                     ,@options)
+                         (> /dev/null)))
+       (log-error "unsuccessful installation")))))
+
+(define (log-dest-dir-mismatch file-normal file-dest-dir characteristic)
+  (log-error "difference between file installed with and without --dest-dir\n"
+             "  file: ~a\n"
+             "  without --dest-dir: ~a\n"
+             "     with --dest-dir: ~a\n"
+             file-normal
+             (get-characteristic file-normal characteristic)
+             (get-characteristic file-dest-dir characteristic)))
+
+(define (test-pkg name version main-archive pkg-archive)
+  (let ((full-name (pkg-full-name name version))
+        (all-archives (delete #f (list main-archive pkg-archive)))
+        (sip (exec-path-search "scsh-install-pkg"
+                               (thread-fluid exec-path-list))))
+    (unless (zero? (run (,sip --version) (> /dev/null)))
+            (error "need at least install-lib 1.2.0"))
+    (log-info "Using scsh-install-pkg executable: "sip"\n"
+              "  ("(string-trim-right (run/string (,sip --version)))")")
+    (log-check "archive name")
+    (check-archive-name full-name (file-name-nondirectory main-archive))
+    (if pkg-archive
+        (check-archive-name (string-append "pkg_" full-name)
+                            (file-name-nondirectory pkg-archive)))
+    (log-check "archive contents")
+    (for-each (cut check-archive-contents name version <>) all-archives)
+    (let-temp-directories (ref-dir tst-dir)
+      (log-check "basic installation")
+      (install-pkg sip full-name all-archives ref-dir '())
+      (check-installation full-name ref-dir)
+      (log-check "installation with --dest-dir")
+      (install-pkg sip full-name all-archives ref-dir `(--dest-dir ,tst-dir))
+      (compare-directories ref-dir tst-dir log-dest-dir-mismatch))
+    (log-check "installation with --dry-run")
+    (let-temp-directories (empty-dir)
+      (install-pkg sip full-name all-archives empty-dir `(--dry-run))
+      (let ((contents (directory-contents empty-dir)))
+        (unless (null? contents)
+                (log-error "no files should have been installed, but the "
+                           "following were:\n  "
+                           (string-join (take-max contents 3 "...") ", ")))))))
+
+;   (log-check "installation with --non-shared-only")
+;   (do-test check-non-shared-installation main-archive pkg-archive))
+
+
+(define (display-usage-then-exit prog)
+  (format #t
+          "Usage: ~a <pkg-name> <pkg-version> <main-archive> [<pkg-archive>]\n"
+          prog)
+  (exit 1))
+
+(define (main cmd-line)
+  (let ((prog (car cmd-line))
+        (args (cdr cmd-line)))
+    (if (<= 3 (length args) 4)
+        (test-pkg (first args)
+                  (string->version (second args))
+                  (absolute-file-name (third args))
+                  (and (> (length args) 3)
+                       (absolute-file-name (fourth args))))
+        (display-usage-then-exit (file-name-nondirectory prog)))
+    (if (zero? error-count)
+        (display "Test passed.\n")
+        (begin
+          (display* "Test failed "
+                    "("error-count" error"(if (= 1 error-count) "" "s")")\n")
+          (exit 1)))))
+
+;;; Local Variables:
+;;; mode:scheme
+;;; End:

@@ -1,0 +1,43 @@
+913,934c913,931
+<  (define-interface configure-interface
+<    (export host
+<            machine
+<            vendor
+<            os
+<            prefix
+<            exec-prefix
+<            bin-dir
+<            lib-dir
+<            include-dir
+<            man-dir
+<            lib-dirs-list
+<            libs
+<            defs
+<            cflags
+<            cppflags
+<            ldflags
+<            linker-flags
+<            compiler-flags))
+< 
+< (define-interface config-interface
+<   (export config-version))
+---
+> ;; (define-interface configure-interface
+> ;;   (export host
+> ;;           machine
+> ;;           vendor
+> ;;           os
+> ;;           prefix
+> ;;           exec-prefix
+> ;;           bin-dir
+> ;;           lib-dir
+> ;;           include-dir
+> ;;           man-dir
+> ;;           lib-dirs-list
+> ;;           libs
+> ;;           defs
+> ;;           cflags
+> ;;           cppflags
+> ;;           ldflags
+> ;;           linker-flags
+> ;;           compiler-flags))
