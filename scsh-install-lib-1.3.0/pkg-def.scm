@@ -2,7 +2,7 @@
 
 ;; Template for scsh-install-pkg script, must be plugged with the
 ;; directory containing the Scheme code.
-(define scsh-install-pkg-template "#!/bin/sh\nexec scsh -lm ~a/scheme/install-lib-module.scm -o posix -le ~a/scheme/install-lib.scm -o install-lib -e install-main -s \"$0\" \"$@\"\n!#\n")
+(define scsh-install-pkg-template "#!/bin/sh\nexec scsh +lp ~a -ll scheme/install-lib-module.scm -lel configure.scm -o posix -o install-lib -e install-main -s \"$0\" \"$@\"\n!#\n")
 
 (define-package "install-lib" (1 3 0)
   ((options (bindir "Destination directory for executables" "<dir>" #t #f

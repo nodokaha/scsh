@@ -30,6 +30,7 @@ RUNNABLE = scsh
 LIB = $(libdir)/scsh-$(VERSION)
 SHARE = $(datadir)/scsh-$(VERSION)
 lib_dirs_list = ("${prefix}/lib/scsh/modules" "${prefix}/lib/scsh/modules/${VERSION}")
+MODULE_PATH = ${prefix}/lib/scsh/modules
 
 SCHEME48VERSION =  1.9.2
 SCHEME48VM = @S48DIR@/lib/scheme48-${SCHEME48VERSION}/scheme48vm
@@ -155,7 +156,7 @@ scsh.image: $(SCHEME) $(COMPILED_LIBS)
 		"`pwd`/c/" '$@' '$(SCHEME48) -h 0' '$(LOADS)'
 
 dirs:
-	for dir in $(bindir) $(LIB) $(SHARE); do\
+	for dir in $(bindir) $(LIB) $(SHARE) $(MODULE_PATH); do\
 		{ mkdir -p $(DESTDIR)$$dir && [ -w $(DESTDIR)$$dir ]; } || {	\
 			echo "$(DESTDIR)$$dir not a writable directory" >&2;	\
 			exit 1;						\
@@ -175,6 +176,8 @@ install-scsh: scsh
         #install scheme source files
 	for f in $(srcdir)/scheme/*.scm $(srcdir)/scheme/*/*.scm; \
 	    do $(INSTALL_DATA) $$f $(DESTDIR)$(SHARE)/; done
+	for f in $(srcdir)/scheme/*.scm $(srcdir)/scheme/*/*.scm $(srcdir)/rx/*.scm; \
+	    do $(INSTALL_DATA) $$f $(DESTDIR)$(MODULE_PATH)/; done
 
 install-scsh-image: install-scsh
 	$(srcdir)/build/build-image.sh $(srcdir) \

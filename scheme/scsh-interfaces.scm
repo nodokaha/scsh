@@ -931,7 +931,7 @@ argv))
            compiler-flags))
 
 (define-interface config-interface
-  (export config-version))
+  (export config))
 
 (define-interface lib-dirs-interface
   (export lib-dirs
