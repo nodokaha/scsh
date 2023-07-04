@@ -1,0 +1,115 @@
+\chapter{FTP Server}\label{cha:ftpd}
+
+The \ex{ftpd} structure contains a complete anonymous ftp server.
+
+\defun{ftpd}{options}{\noreturn}
+\defunx{ftp-inetd}{options}{\noreturn} 
+\begin{desc}
+  \ex{Ftpd} starts the server, using \var{anonymous-home} as the
+  root directory of the server.
+  
+  \ex{ftpd-inetd} is the version to be used from \ex{inetd}.
+  \ex{Ftpd-inetd} handles the connection through the current standard
+  output and input ports.
+\end{desc}
+%
+The \var{options} argument can be constructed through a number of
+procedures with names of the form \texttt{with-\ldots}.  Each of these
+procedures either creates a fresh options value or adds a
+configuration parameter to an old options argument.  The configuration
+parameter value is always the first argument, the (old) options value
+the optional second one.  Here they are:
+
+\defun{with-port}{port [options]}{options}
+\begin{desc}
+  This specifies the port on which the server listens.  Defaults to 21.
+\end{desc}
+
+\defun{with-anonymous-home}{string [options]}{options}
+\begin{desc}
+  This specifies the home directory for anonymous logins.  Defaults to
+  \verb|"~ftp"|.
+\end{desc}
+
+\defun{with-banner}{list [options]}{options}
+\begin{desc}
+  This specifies an alternative greeting banner for those members of
+  the Untergrund who prefer to remain covert.  The banner is
+  represented as a list of strings, one for each line of output.
+\end{desc}
+
+\defun{with-log-port}{output-port [options]}{options}
+\begin{desc}
+  If this is non-\sharpf, ex{ftpd} outputs a log entry for each file
+  sent or retrieved on \var{output-port}.  Defaults to \sharpf.
+\end{desc}
+
+\defun{with-dns-lookup?}{boolean [options]}{options}
+\begin{desc}
+  If \var{dns-lookup?} is \sharpt, the log file will contain the host
+  names instead of their IP addresses.  If \var{dns-lookup?} is \sharpf,
+  the log will only contain IP addresses.  Defaults to \sharpf.
+\end{desc}
+%
+The \ex{make-ftpd-options} eases the construction of the options
+argument:
+%
+\defun{make-ftpd-options}{transformer value \ldots}{options}
+\begin{desc}
+  This constructs an options value from an argument list of parameter
+  transformers and parameter values.  The arguments come in pairs,
+  each an option transformer from the list above, and a value for that
+  parameter.  \ex{Make-ftpd-options} returns the resulting options value.
+\end{desc}
+
+The log format of \ex{ftpd} is the same as the one of
+\ex{wuftpd}.   The entries look like this:
+%
+\begin{verbatim}
+Fri Apr 19 17:08:14 2002 4 134.2.2.171 56881 /files.lst b _ i a nop@ssword ftp 0 *
+\end{verbatim}
+%
+These are the fields:
+\begin{enumerate} 
+\item Current date and time. This field contains
+  spaces and is 24 characters long.
+\item Transfer time in seconds.
+\item Remote host IP (wu-ftpd puts the name here).
+\item File size in bytes
+\item Name of file (spaces are converted to underscores)
+\item Transfer type: \underline{a}scii or \underline{b}inary (image type).
+\item Special action flags. As \ex{ftpd} does not support any special
+action, it always has \ex{\_} here.
+\item File was sent to user (\underline{o}utgoing) or received from user
+(\underline{i}ncoming) 
+\item \underline{A}nonymous access
+\item Anonymous ftp password.
+\item Service name---always \ex{ftp}.
+\item Authentication mode (always ``none'' = `\ex{0}').
+\item Authenticated user ID (always ``not available'' = `\ex{*}')
+\end{enumerate}
+
+The server also writes log information to the syslog facility.
+The following syslog levels occur in the output:
+\begin{description}
+\item[\ex{notice}]
+\begin{itemize}
+\item messages concerning \emph{connections} (establishing connection,
+  connection refused, closing connection due to timeout, etc.)
+\item the execution of the \ex{STOR} command\\
+  Its success (\ie
+  somebody is putting something on your server via ftp, also known as
+  \ex{PUT}) is also logged at \ex{notice}.
+\item internal errors
+\item Unix errors
+\item reaching of actually unreachable case branches
+\end{itemize}
+\item[\ex{info}] Messages concerning all other commands,
+  including the \ex{RETR} command.
+\item[\ex{debug}] all other messages, including debug messages
+\end{description}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

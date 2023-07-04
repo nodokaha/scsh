@@ -1,0 +1,41 @@
+The structure MINI-PROFILER implements a minimalist profiler for
+Scheme48 and scsh.  Time is measuered using Scheme48's RUN-TIME
+function from TIME.
+
+Functions
+=========
+
+  (profile-init!) -> unspecific
+
+  Initialize or reset the profiler.  Calling this function will delete
+  all information collected during previous runs of the compiler.
+
+  (display-profile . port) -> unspecific
+
+  Print the profiling information acquired to PORT.  If PORT is not
+  specified use CURRENT-OUTPUT-PORT.
+
+Syntax
+======
+
+  (account-for name body)
+
+  Evaluate BODY and stop the time needed for doing so.  Account the
+  time needed for NAME.  Especially useful for profiling code that
+  makes heavy use of high-order functions or lazy evaluation.  Example:
+
+  (define (compile-funcall exp)
+    (account-for compile-funcall
+      (let ((op  (compile (funcall-op exp)))
+            (arg (compile (funcall-arg exp))))
+        (lambda (env)
+           (account-for eval-funcall
+              (op (arg env stop-k)))))))
+
+  define-prof
+
+  DEFINE-PROF is a substitute for Scheme's DEFINE. Mini-profiler
+  accounts the time needed to evaluate the procedure bound with DEFINE
+  for DEFINE name.
+  
+

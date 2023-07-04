@@ -1,0 +1,38 @@
+[This file and the accompanying source code were derived from
+ Oleg's code for Gambit available from
+
+     http://okmij.org/ftp/Scheme/index.html#binio
+
+]
+
+The structure BINARY-PARSE provides a procedure to read bits from a
+byte-stream.
+
+================================================================================
+
+After installation, use the switch
+
+-lel binary-parse/load.scm
+
+to load this library.
+
+================================================================================
+
+(make-bit-reader byte-reader) -> bit-reader
+
+Given a BYTE-READER (a thunk), construct and return a function
+
+      (bit-reader N) -> integer
+
+that reads N bits from a byte-stream represented by the BYTE-READER.
+
+The BYTE-READER is a function that takes no arguments and returns
+the current byte as an exact integer [0-255]. The byte reader
+should return #f on EOF.
+The bit reader returns N bits as an exact unsigned integer, 
+0 -... (no limit). N must be a positive integer, otherwise the bit reader
+returns #f. There is no upper limit on N -- other than the size of the
+input stream itself and the amount of (virtual) memory an OS is willing
+to give to your process. If you want to read 1M of _bits_, go ahead.
+
+It is assumed that the bit order is the most-significant bit first.

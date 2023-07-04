@@ -930,9 +930,6 @@ argv))
            linker-flags
            compiler-flags))
 
-(define-interface config-interface
-  (export config))
-
 (define-interface lib-dirs-interface
   (export lib-dirs
           find-library-file

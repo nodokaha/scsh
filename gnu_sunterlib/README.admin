@@ -1,0 +1,17 @@
+How to make a release:
+
+1. Make sure the NEWS files are up-to-date (at least add the
+  distribution date).
+2. Check out a clean source tree from cvs.
+3. Make the distribution:
+  make dist
+4. Test the distribution.
+5. Tag the release. For example to tag sunterlib-0.1.tar.gz
+  cvs tag sunterlib-0-1 .
+6. Post the release:
+  $ ftp savannah.nongnu.org
+  ftp> cd incoming/savannah/sunterlib
+  ftp> put sunterlib-0.1.tar.gz
+  ftp> put sunterlib-0.1.tar.gz.sig
+7. Increment the version number in Makefile, pkg-def.scm.
+8. Start a new version entry in the top level NEWS file.

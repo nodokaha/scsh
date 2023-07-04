@@ -1,0 +1,788 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-15.html">previous</a></span><span>, <a href="man-Z-H-17.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_14"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_14">Chapter 14</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_14">DNS Client Library</a></h1>
+<p>
+</p>
+<dl><dt></dt><dd>
+</dd><dt><b>Used files:</b></dt><dd> dns.scm
+</dd><dt><b>Name of the package:</b></dt><dd> dns
+</dd></dl><p>
+</p>
+<a name="node_sec_14.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_14.1">14.1&nbsp;&nbsp;Overview</a></h2>
+<p>The <tt>dns</tt> structure contains a library for querying DNS servers.
+The library contains sophisticated replacements for scsh's interface
+to the <tt>gethostbyname</tt> and <tt>gethostbyaddr</tt> and many extensions
+to these functions.</p>
+<p>
+The main features of the libraray include:
+</p>
+<ul>
+<li><p>Complete implementation of the DNS protocol
+</p>
+<li><p>Concurrent contacting of multiple DNS servers without blocking
+the scsh process
+</p>
+<li><p>Internal caching of DNS responses
+</p>
+<li><p>Parsing of <tt>resolv.conf</tt>, including <tt>search</tt>
+entries to generate FQDNs from unqualified host names
+</p>
+<li><p>Rich condition hierarchie
+</p>
+</ul><p></p>
+<p>
+</p>
+<a name="node_sec_14.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_14.2">14.2&nbsp;&nbsp;Conditions</a></h2>
+<p>The library defines a set of conditions raised by the procedures of
+the library. The supertype of these conditions is <a name="node_idx_702"></a><tt>dns-error</tt>.
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_704"></a>
+<blockquote>
+The predicate for <tt>dns-error</tt> conditions.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-error-&gt;string <i>dns-error-condition</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>string</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_706"></a>
+<blockquote>
+Returns a string with the description of the condition.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_708"></a></p>
+<div align=left><tt>parse-error</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_710"></a><div align=left><tt>unexpected-eof-from-server</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_712"></a><div align=left><tt>bad-address</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_714"></a><div align=left><tt>no-nameservers</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_716"></a><div align=left><tt>bad-nameserver</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_718"></a><div align=left><tt>not-a-hostname</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_720"></a><div align=left><tt>not-a-ip</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+<p>
+</p>
+<blockquote><p>
+</p>
+</blockquote>
+<p></p>
+<p></p>
+<p><a name="node_idx_722"></a></p>
+<div align=left><tt>dns-format-error</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_724"></a><div align=left><tt>dns-server-failure</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_726"></a><div align=left><tt>dns-name-error</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_728"></a><div align=left><tt>dns-not-implemented</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<a name="node_idx_730"></a><div align=left><tt>dns-refused</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<blockquote>
+These conditons correspond to errors returned by the DNS server.
+They are all subtypes of the <a name="node_idx_732"></a><tt>dns-server-error</tt> condition which
+in turn is a subtype of <tt>dns-error</tt>.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-server-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_734"></a>
+<blockquote>
+The predicate for <tt>dns-server-error</tt> conditions.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_736"></a>
+<div align=left><tt>(unexpected-eof-from-server? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_738"></a>
+<div align=left><tt>(bad-address? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_740"></a>
+<div align=left><tt>(no-nameservers? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_742"></a>
+<div align=left><tt>(bad-nameserver? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_744"></a>
+<div align=left><tt>(not-a-hostname? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_746"></a>
+<div align=left><tt>(not-a-ip? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_748"></a>
+<div align=left><tt>(dns-format-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_750"></a>
+<div align=left><tt>(dns-server-failure? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_752"></a>
+<div align=left><tt>(dns-name-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_754"></a>
+<div align=left><tt>(dns-not-implemented? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_756"></a>
+<div align=left><tt>(dns-refused? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_758"></a>
+<blockquote>
+The type predicates for the conditions above.
+</blockquote><p>
+</p>
+<a name="node_sec_14.3"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_14.3">14.3&nbsp;&nbsp;High-level Interface</a></h2>
+<p>
+
+</p>
+<p>
+The library uses an internal store to cache data obtained from DNS
+servers. All procedures take a boolean flag <i>use-cache?</i> that
+indicates whether the cache should be used or not. <i>use-cache?</i>
+defaults to true.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-clear-cache!<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_760"></a>
+<blockquote>
+This procedure erases all information stored in the internal cache.
+</blockquote><p>
+The library is further capable of parsing the contents of
+<tt>/etc/resolv.conf</tt> (see Section&nbsp;<a href="#node_sec_14.5">14.5</a>). The
+nameservers listed there are the default value for the optional
+argument <i>nameserver list</i> which many procedures of the library
+accept. <i>Nameserver</i> is either a IP-address or a dotted IP string.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-lookup-name <i>FQDN [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>IP-address </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_762"></a>
+<blockquote>
+Given the FQDN of a host, <tt>dns-lookup-ip</tt> returns the IP address.
+The optional argument specifes the name servers to query, it defaults
+to the ones found in <tt>/etc/resolv.conf</tt>. 
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-lookup-ip <i>IP-string/IP-address [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_764"></a>
+<blockquote>
+Looks up the FQDN for the given IP address. The optional argument
+specifes the name servers to query, it defaults to the ones found in
+<tt>/etc/resolv.conf</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-lookup-nameserver <i>IP-string/IP-address [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>IP-address list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_766"></a>
+<blockquote>
+Looks up an authoritative name server for a hostname, returns a list
+of name servers.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-lookup-mail-exchanger <i>IP-string/IP-address [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_768"></a>
+<blockquote>
+Looks up mail-exchangers for a hostname und returns them in a list
+sorted by preference.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(socket-address-&gt;fqdn <i>socket-address [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_770"></a>
+<blockquote>
+Returns the FQDN for of the address bound to argument. The argument
+<i>cache?</i>  indicates whether the internal cache may be queried to
+obtain the information.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(maybe-dns-lookup-name <i>FQDN [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>IP-address or <tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_772"></a>
+<div align=left><tt>(maybe-dns-lookup-ip <i>IP-string/IP-address [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN  or <tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_774"></a>
+<blockquote>
+These procedures provide the same functionality as
+<tt>dns-lookup-name</tt> and <tt>dns-lookup-ip</tt> but return <tt>#f</tt> in
+case of an <tt>dns-error</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(host-fqdn <i>name/socket-address [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_776"></a>
+<div align=left><tt>(system-fqdn <i>[nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_778"></a>
+<blockquote>
+<tt>host-fqdn</tt> returns the fully qualified domain name (FQDN) for
+its argument which can be either a unqualified host name or a socket
+address.  The procedure <tt>system-fqdn</tt> returns the FQDN of the
+local host. These procedures use a list of domain names obtained
+from <tt>/etc/resolv.conf</tt> to the generate FQDNs and try to
+resolve these FQDNs.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-check-nameservers <i>[nameserver list]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_780"></a>
+<blockquote>
+<tt>dns-check-namservers</tt> checks if the given nameservers are reachable.
+If no argument is given, the nameservers in <tt>/etc/resolv.conf</tt>
+are checked. Information about the status of the nameservers is printed
+to the current output port.
+</blockquote><p>
+</p>
+<a name="node_sec_14.4"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_14.4">14.4&nbsp;&nbsp;Low-level Interface</a></h2>
+<p>This section describes a set of data structures and procedures which
+directly correspond to the data flow of the DNS protocol. The central
+entity is a <i>message</i>, the abstraction of the packet sent to the
+server or received from the server (The DNS protocol uses the same
+data format for both directions). A <i>dns-message</i> encapsulates the
+query message sent to the server, the response message received from
+the server, and some additional information the library gathered while
+generating the <i>dns-message</i>.</p>
+<p>
+</p>
+<div align=left><tt>(dns-get-information <i>message protocol answer-okay? [nameserver
+list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>dns-message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_782"></a>
+<blockquote>
+Most general way to submit a DNS query. The message is sent to the
+name servers via <i>protocol</i> which can be either
+<tt>(network-procotcol tcp)</tt> or (network-protocol udp), both
+members of of the enumerated type <tt>network-protocol</tt>. After
+receiving the reply, <tt>dns-get-information</tt> applies the predicate
+<i>answer-okay?</i> to the message. If it returns <tt>#f</tt> and the
+answer is not authoritative additional name servers sent with the
+reply are checked until an authoritative answer is found. If the
+predicate returns <tt>#f</tt> but the answer is authoritative a
+<i>bad-address</i> condition is signalled.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(network-protocol <i>protocol-name</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>network-protocol</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(syntax)&nbsp;</div>
+ <a name="node_idx_784"></a>
+<div align=left><tt>(network-protocol? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_786"></a>
+<blockquote>
+Constructor and predicate for the enumerated type
+<tt>network-protocol</tt> with the possible protocol names <tt>tcp</tt> and
+<tt>udp</tt>.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-lookup <i>IP-string/IP-address type [nameserver list][use-cache?]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>dns-message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_788"></a>
+<blockquote>
+Convenient shortcut to submit a DNS query. The return value
+is a <tt>dns-message</tt> structure:
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-message? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_790"></a>
+<div align=left><tt>(dns-message-query <i>dns-message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_792"></a>
+<div align=left><tt>(dns-message-reply <i>dns-message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_794"></a>
+<div align=left><tt>(dns-message-cache? <i>dns-message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_796"></a>
+<div align=left><tt>(dns-message-protocol <i>dns-message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>protocol</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_798"></a>
+<div align=left><tt>(dns-message-tried-nameservers <i>dns-message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_800"></a>
+<blockquote>
+A <i>dns-message</i> records the query sent to the server and the
+reply from the server. It also contains information whether the
+library took the reply from the cache, which protocol was used and
+to which nameservers the query was sent.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pretty-print-dns-message <i>dns-message [output-port]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_802"></a>
+<blockquote>
+Pretty prints a DNS message to <i>out-port</i> which defaults to the
+current output port.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(message? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_804"></a>
+<div align=left><tt>(message-header <i>message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>header</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_806"></a>
+<div align=left><tt>(message-questions <i>message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>question list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_808"></a>
+<div align=left><tt>(message-answers <i>message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>resource-record list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_810"></a>
+<div align=left><tt>(message-nameservers <i>message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>resource-record list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_812"></a>
+<div align=left><tt>(message-additionals <i>message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>resource-record list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_814"></a>
+<div align=left><tt>(message-source <i>message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>char list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_816"></a>
+<blockquote>
+A <tt>message</tt> represents the data sent to the DNS server or
+received from the DNS server. The DNS protocol uses the same message
+format for queries and replies. In queries only the header and the
+questions is present, a reply may contain answers, name servers and
+and additional informations as resource records. <tt>Message-source</tt>
+returns the actual data sent over the network.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-query-message header <i>header question [questions]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_818"></a>
+<blockquote>
+The procedure generates a message the supplied questions,
+<i>header</i>, and the standard message values for queries.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-simple-query-message <i>name type class</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_820"></a>
+<blockquote>
+This simplified constructor generates a message with one question
+which is built from the parameters, and the standard header flags
+for queries and the standard message values for queries.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(header? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_822"></a>
+<div align=left><tt>(header-id <i>header</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_824"></a>
+<div align=left><tt>(header-flags <i>header</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>flags</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_826"></a>
+<div align=left><tt>(header-question-count <i>header</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_828"></a>
+<div align=left><tt>(header-answer-count <i>header</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_830"></a>
+<div align=left><tt>(header-nameserver-count <i>header</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_832"></a>
+<div align=left><tt>(header-additional-count <i>header</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_834"></a>
+<blockquote>
+Every DNS message contains a header which stores information about
+the data present in the message and contains flags for the query.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(flags? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_836"></a>
+<div align=left><tt>(flags-query-type <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>'query or 'response</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_838"></a>
+<div align=left><tt>(flags-opcode <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_840"></a>
+<div align=left><tt>(flags-authoritative? <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_842"></a>
+<div align=left><tt>(flags-truncated? <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_844"></a>
+<div align=left><tt>(flags-recursion-desired? <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_846"></a>
+<div align=left><tt>(flags-recursion-available? <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_848"></a>
+<div align=left><tt>(flags-zero <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>0</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_850"></a>
+<div align=left><tt>(flags-response-code <i>flags</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_852"></a>
+<blockquote>
+Flags occur within the header of a DNS message. The boolean value
+returned from <tt>flags-authoritative</tt> indicates whether the message
+was sent from a authoritative server, <tt>flags-truncated?</tt> should
+always be <tt>#f</tt>as the library automatically uses the TCP protocol
+is the UDP message size is not sufficied.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(question? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_854"></a>
+<div align=left><tt>(question-name <i>question</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>string</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_856"></a>
+<div align=left><tt>(question-type <i>question</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message-type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_858"></a>
+<div align=left><tt>(question-class <i>question</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message-class</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_860"></a>
+<blockquote>
+A question sent to the DNS server.
+</blockquote>
+The type and class of the question and answer are elements of
+enumerated types:
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(message-class <i>class-name</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message-class</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(syntax)&nbsp;</div>
+ <a name="node_idx_862"></a>
+<div align=left><tt>(message-class? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_864"></a>
+<div align=left><tt>(message-class-name <i>message-class</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>symbol</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_866"></a>
+<div align=left><tt>(message-class-number <i>message-class</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_868"></a>
+<blockquote>
+<tt>message-class</tt> constructs a member of the enumerated type,
+<tt>message-class?</tt> is the type predicate, <tt>message-class-name</tt>
+returns the symbol and <tt>message-class-number</tt> the number used for
+the class in the DNS protocol.
+</blockquote>
+The possible names for the classes are:
+<dl><dt></dt><dd>
+</dd><dt><b><tt>in</tt></b></dt><dd> The Internet
+</dd><dt><b><tt>cs</tt></b></dt><dd> obsolete
+</dd><dt><b><tt>ch</tt></b></dt><dd> the CHAOS class
+</dd><dt><b><tt>hs</tt></b></dt><dd> Hesoid
+</dd></dl><p></p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(message-type <i>type-name</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message-type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(syntax)&nbsp;</div>
+ <a name="node_idx_870"></a>
+<div align=left><tt>(message-type? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_872"></a>
+<div align=left><tt>(message-type-name <i>message-type</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>symbol</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_874"></a>
+<div align=left><tt>(message-type-number <i>message-type</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_876"></a>
+<blockquote>
+<tt>message-type</tt> constructs a member of the enumeration from name
+<i>&lt;.type-name.&gt;</i> listed in Table&nbsp;<a href="#node_tbl_Temp_19">2</a>.
+<tt>message-type?</tt> is the type predicate, <tt>message-type-name</tt>
+returns the name, and <tt>message-type-number</tt> the number used for
+the class the DNS protocol.<p>
+</p>
+</blockquote>
+<p></p>
+<hr>
+<p></p>
+<a name="node_tbl_Temp_19"></a>
+<div class=table align=center><table width=100%><tr><td align=center>
+<table border=1><tr><td valign=top ><tt>a</tt></td><td valign=top >a host address</td></tr>
+<tr><td valign=top ><tt>ns</tt></td><td valign=top >an authoritative name server</td></tr>
+<tr><td valign=top ><tt>md</tt></td><td valign=top >(obsolete)</td></tr>
+<tr><td valign=top ><tt>mf</tt></td><td valign=top >(obsolete)</td></tr>
+<tr><td valign=top ><tt>cname</tt></td><td valign=top >the canonical name for an alias</td></tr>
+<tr><td valign=top ><tt>soa</tt></td><td valign=top >marks the start of a zone of authority</td></tr>
+<tr><td valign=top ><tt>mb</tt></td><td valign=top >(experimental)</td></tr>
+<tr><td valign=top ><tt>mg</tt></td><td valign=top >(experimental)</td></tr>
+<tr><td valign=top ><tt>mr</tt></td><td valign=top >(experimental)</td></tr>
+<tr><td valign=top ><tt>null</tt></td><td valign=top >(experimental)</td></tr>
+<tr><td valign=top ><tt>wks</tt></td><td valign=top >a well known service description</td></tr>
+<tr><td valign=top ><tt>ptr</tt></td><td valign=top >a domain name pointer</td></tr>
+<tr><td valign=top ><tt>hinfo</tt></td><td valign=top >host information</td></tr>
+<tr><td valign=top ><tt>minfo</tt></td><td valign=top >(experimental)</td></tr>
+<tr><td valign=top ><tt>mx</tt></td><td valign=top >mail exchange</td></tr>
+<tr><td valign=top ><tt>txt</tt></td><td valign=top >text strings</td></tr>
+<tr><td valign=top ></td></tr></table>
+</td></tr>
+<tr><td align=center><b>Table 2:</b>&nbsp;&nbsp;Message types</td></tr>
+<tr><td>
+
+</td></tr></table></div><p></p>
+<hr>
+<p></p>
+<p></p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_878"></a>
+<div align=left><tt>(resource-record-name <i>resource-record</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>string</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_880"></a>
+<div align=left><tt>(resource-record-type <i>resource-record</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message-type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_882"></a>
+<div align=left><tt>(resource-record-class <i>resource-record</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>message-class</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_884"></a>
+<div align=left><tt>(resource-record-ttl <i>resource-record</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_886"></a>
+<div align=left><tt>(resource-record-data <i>resource-record</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>resource-record-data-<tt>...</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_888"></a>
+<blockquote>
+A resource record as returned from the DNS server. The actual data
+of the record is stored in the <tt>resource-record-data</tt> field.
+It is one of the record types for resource record data described
+below.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record-data-a? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_890"></a>
+<div align=left><tt>(resource-record-data-a-ip <i>resource-record-data-a</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>IP-address </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_892"></a>
+<blockquote>
+An address resource record which holds an internet address.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record-data-ns? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_894"></a>
+<div align=left><tt>(resource-record-data-ns-name <i>resource-record-data-ns</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_896"></a>
+<blockquote>
+A name server resource record containing the FQDN of the name server.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record-data-cname? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_898"></a>
+<div align=left><tt>(resource-record-data-cname-name <i>resource-record-data-cname</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_900"></a>
+<blockquote>
+A canonical name resource record which contains the canonical or
+primary name of the owner.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record-data-mx? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_902"></a>
+<div align=left><tt>(resource-record-data-mx-preference <i>resource-record-data-mx</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_904"></a>
+<div align=left><tt>(resource-record-data-mx-exchanger <i>resource-record-data-mx</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_906"></a>
+<blockquote>
+A mail exchange resource record with the preference and the FQDN of
+a host willing to act as a mail exchange.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record-data-ptr? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_908"></a>
+<div align=left><tt>(resource-record-data-ptr-name <i>resource-record-data-ptr</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>string</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_910"></a>
+<blockquote>
+A pointer resource record which points to some other domain name.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resource-record-data-soa? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_912"></a>
+<div align=left><tt>(resource-record-data-soa-mname <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_914"></a>
+<div align=left><tt>(resource-record-data-soa-rname <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_916"></a>
+<div align=left><tt>(resource-record-data-soa-serial <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_918"></a>
+<div align=left><tt>(resource-record-data-soa-refresh <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_920"></a>
+<div align=left><tt>(resource-record-data-soa-retry <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_922"></a>
+<div align=left><tt>(resource-record-data-soa-expire <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_924"></a>
+<div align=left><tt>(resource-record-data-soa-minimum <i>resource-record-data-soa</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_926"></a>
+<blockquote>
+A start of a zone of authority resource record. 
+</blockquote>
+The protocol specifies other possible values for the <tt>resource-record-data</tt>
+field but we where no able to find test cases for them.<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(cache? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_928"></a>
+<div align=left><tt>(cache-answer <i>cache</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>dns-message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_930"></a>
+<div align=left><tt>(cache-ttl <i>cache</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_932"></a>
+<div align=left><tt>(cache-time <i>cache</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_934"></a>
+<blockquote>
+A cache data structure corresponds to a saved answer to a previous
+query. <tt>cache-answer</tt> returns the saved message, <tt>cache-ttl</tt>
+returns the time when the cache entry expires and <tt>cache-time</tt>
+returns the time the entry was created.
+</blockquote><p>
+</p>
+<a name="node_sec_14.5"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_14.5">14.5&nbsp;&nbsp;Parsing <tt>/etc/resolv.conf</tt></a></h2>
+<p></p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_936"></a></p>
+<div align=left><tt>resolv.conf-parse-error</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition&nbsp;</div>
+
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resolv.conf-parse-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_938"></a>
+<blockquote>
+The code signals the condition <i>resolv.conf-parse-error</i> if a
+parse error occurs while scanning <tt>/etc/resolv.conf</tt>. It is a
+subtype of the <i>dns-error</i> condition.
+<tt>resolv.conf-parse-error?</tt> is the type predicate for this
+condition.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resolv.conf<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>symbol-->string alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_940"></a>
+<blockquote>
+Returns the contents of <tt>/etc/resolv.conv</tt> as an alist with
+the possible keys <tt>nameserver</tt>, <tt>domain</tt>,
+<tt>search</tt>, <tt>sortlist</tt> and <tt>options</tt>.<p>
+Note that the library caches the contents of
+<tt>/etc/resolv.conv</tt> and <tt>resolv.conf</tt> only really opens the
+file if its modification time is more recent than the modification
+time of the cache.
+</p>
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-resolv.conf!<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_942"></a>
+<blockquote>
+Parses the contents of <tt>/etc/resolv.conv</tt> and updates the
+internal cache of the library.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-find-nameserver-list<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_944"></a>
+<blockquote>
+Returns a list of name servers from <tt>/etc/resolv.conf</tt>
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(dns-find-nameserver<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>FQDN </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_946"></a>
+<blockquote>
+Returns the first name servers found in <tt>/etc/resolv.conf</tt>.
+<tt>dns-find-nameserver</tt> raises <tt>no-nameservers</tt> if
+<tt>/etc/resolv.conf</tt> does not contain a <tt>nameserver</tt>
+entry.
+</blockquote>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(domains-for-search<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>string</i> list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_948"></a>
+<blockquote>
+Parses <tt>/etc/resolv.conf</tt> and extracts the domains specified
+by the <tt>search</tt> keyword.
+</blockquote><p>
+</p>
+<a name="node_sec_14.6"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_14.6">14.6&nbsp;&nbsp;IP Addresses as Dotted Strings</a></h2>
+<p></p>
+<dl><dt></dt><dd>
+</dd><dt><b>Used files:</b></dt><dd> ip.scm
+</dd><dt><b>Name of the package:</b></dt><dd> ips
+</dd></dl><p>
+</p>
+<p>
+The structure <tt>ips</tt> provides a small set of procedures for turning
+the human-readable form of IP addresses (``dotted strings'') into 32
+bits numbers.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(address32-&gt;ip-string <i>IP-address </i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>ip-string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_950"></a><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ip-string-&gt;address32 <i>ip-string</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>IP-address </i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_952"></a><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ip-string? <i>string</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>boolean</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_954"></a>
+<blockquote>
+Tests whether <i>string</i> is a valid dotted string for an IP
+address.
+</blockquote>
+<p>
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-15.html">previous</a></span><span>, <a href="man-Z-H-17.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

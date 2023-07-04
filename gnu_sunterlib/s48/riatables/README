@@ -1,0 +1,21 @@
+Improved hash table package for Scheme48
+
+This library for Scheme48 implements much more rich hash tables than
+what Scheme48's built-in hash tables provide, notably object identity
+tables (with arbitrary objects for keys), tables with GC-sensitive hash
+functions in general, and head- & tail-weak hash tables.
+
+Taylor Campbell wrote this code and this associated documentation; he
+places it in the public domain.
+
+The scheme/ directory contains the Scheme source code. Load the file
+scheme/packages.scm for the definitions of the relevant interfaces &
+structures. The RIATABLES structure exports everything relevant to the
+package.
+
+There is currently no extended documentation.  Use the source, Luke.
+This may change soon.
+
+Send bugs, comments, questions, or anything to Taylor Campbell via
+email to campbell@bloodandcoffee.net or via IRC on irc.freenode.net,
+where he can be found in the channels #scheme & #scsh as Riastradh.

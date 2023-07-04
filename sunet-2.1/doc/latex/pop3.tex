@@ -1,0 +1,99 @@
+\chapter{POP3 Client}\label{cha:pop3}
+%
+The \ex{pop3} structure provides a client for the POP3 protocol that
+allows access to email on a maildrop server.  It is often used in
+configurations where users connect from a client machine which doesn't
+have a permanent network connection or isn't always turned on,
+situations which make local SMTP delivery impossible.  It is the most
+common form of email access provided by ISPs.
+
+Two types of authentication are commonly used.  The first, most basic
+type involves sending a user's password in clear over the network, and
+should be avoided.  (Unfortunately, many POP3 clients only implement this
+basic authentication.)  The digest authentication system involves the
+server sending the client a ``challenge'' token; the client encodes
+this token with the pass phrase and sends the coded information to the
+server.  This method avoids sending sensitive information over the
+network.  Both methods are implemented by \ex{pop3}.
+
+Once connected, a client may request information about the number and
+size of the messages waiting on the server, download selected messages
+(either their headers or the entire content), and delete selected
+messages.
+
+The procedures defined here raise an error detectable via
+\ex{pop3-error?} upon protocol errors with the POP3 server.
+
+\defun{pop3-connect}{[host-or-\sharpf] [login-or-\sharpf]
+  [password-or-\sharpf] [log-port]}{connection}
+\begin{desc}
+  This procedure connects to the maildrop server named \var{host},
+  and logs in using the provided login name and password.  Any of
+  these can be omitted or \sharpf, in which case the procedure uses
+  defaults: \ex{MAILHOST} for the host, and \ex{~/.netrc}-provided
+  values for login and password.  If \var{log-port} is provided, the
+  conversation to the server is logged to the specified output port.
+  
+  \ex{Pop3-connect} returns a value representing the connection to the
+  POP3 server, to be used in the procedures below.
+\end{desc}
+
+\defun{pop3-stat}{connection}{number bytes}
+\begin{desc}
+  This returns the number of messages and the number of bytes waiting in the
+  maildrop.
+\end{desc}
+
+Most of the following procedures accept a \var{msgid} argument which
+specifies a message number, which ranges from 1 for the first message
+to the number returned by \ex{pop3-stat}.
+
+\defun{pop3-retrieve-message}{connection msgid}{headers message}
+\begin{desc}
+  This downloads message number \var{msgid} from the mailhost.
+  It returns the headers as an alist of field names and bodies; the
+  names are symbols, the bodies are strings.  (These are obtained
+  using the \ex{rfc822} structure, see Section~\ref{cha:rfc822}.)
+  The message is returned as a list of strings, each string
+  representing a line of the message.
+\end{desc}
+
+\defun{pop3-retrieve-headers}{connection msgid}{headers}
+\begin{desc}
+  This downloads the headers of message number \var{msgid}.  It
+  returns the headers in the same format as \ex{pop3-retrieve-message}.
+\end{desc}
+
+\defun{pop3-last}{connection}{msgid}
+\begin{desc}
+  This returns the highest accessed message-id number for the current
+  session.  (This isn't in the RFC, but seems to be supported by several
+  servers.)
+\end{desc}
+
+\defun{pop3-delete}{connection msgid}{undefined}
+\begin{desc}
+  This mark message number \var{msgid} for deletion.  The message will
+  not be deleted until the client logs out.
+\end{desc}
+
+\defun{pop3-reset}{connection}{undefined}
+\begin{desc}
+  This marks any messages which have been marked for deletion.
+\end{desc}
+
+\defun{pop3-quit}{connection}{undefined}
+\begin{desc}
+  This closes the connection with the mailhost.
+\end{desc}
+
+\defun{pop3-error?}{thing}{boolean}
+\begin{desc}
+  This returns \sharpt{} if \var{thing} is a \ex{pop3-error} object,
+  otherwise \sharpf.
+\end{desc}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

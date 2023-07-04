@@ -1,0 +1,28 @@
+Scheme Untergrund Library
+
+REQUIREMENTS
+
+The Scheme Untergrund Library requires that scsh is installed on your
+system. If you don't have it, please obtain and install it before
+building sunterlib. See the webpage <http://scsh.net/>.
+
+BUILD
+
+If you obtained the source from cvs, type 'make' to build the
+package. This is not necessary if you have a tar distribution.
+
+INSTALLATION
+
+As of version 0.6, sunterlib follows Michel Schinz's scsh package
+proposal for installation and use. Please see:
+  http://lamp.epfl.ch/~schinz/scsh_packages/
+
+Running the installation script (scsh-install-pkg) in the top-level
+distribution directory will install all of the libraries.
+
+ISSUE: Currently it is not possible to run the installation script in
+an individual library's subdirectory to install just that library.
+
+UNINSTALLATION
+
+See the packaging proposal for details.

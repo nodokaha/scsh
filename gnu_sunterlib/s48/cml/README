@@ -1,0 +1,20 @@
+CML
+===
+
+This is an implementation of the Concurrent ML event algebra (called
+rendezvous here) and some of higher-level synchronization
+abstractions.
+
+================================================================================
+
+After installation, use the switch
+
+-lel cml/load.scm
+
+to load this library.
+
+================================================================================
+
+Currently, you need to check the Concurrent ML docs for more
+information.
+

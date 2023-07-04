@@ -1,0 +1,87 @@
+Integer sets represented as lists of intervals
+
+1. Introduction
+
+This module provides functions to work with sets of integers
+represented as sorted lists of intervals, which are pairs of bounds.
+For example, the set
+
+  { 1, 2, 3, 4, 10, 11, 12, 80 }
+
+is represented by the list
+
+  ((1 . 4) (10 . 12) (80 . 80))
+
+The functions provided here always ensure that the lists are valid and
+in canonical form.
+
+A list is valid if each of its intervals is valid. An interval is
+valid if its upper bound is greater or equal to its lower bound.
+
+A list is in canonical form if:
+
+   * all its intervals are strictly disjoint, that is they neither
+     overlap nor touch, and
+
+   * its intervals are sorted by increasing bounds.
+
+2. Functions
+
+Apart from the functions presented here, all functions working on
+lists can be used, since the representation of integer sets is exposed
+for that purpose.
+
+2.1. Constructors
+
+(intset-singleton element) -> integer-set
+
+Return an integer set containing only the given ELEMENT.
+
+(intset-range begin end) -> integer-set
+
+Return an integer set composed of the integers in the range
+[BEGIN,END] (i.e. both BEGIN and END are included).
+
+2.2. Predicates
+
+(intset? thing) -> boolean
+
+Return true iff the given THING is a valid list of intervals in
+canonical form, as defined above.
+
+(intset-contains? element set) -> boolean
+
+Return true iff SET contains ELEMENT.
+
+2.3. Set operations
+
+(intset-union set-1 set-2) -> integer-set
+
+Return the union of the integer sets SET-1 and SET-2.
+
+(intset-intersection set-1 set-2) -> integer-set
+
+Return the intersection of the integer sets SET-1 and SET-2.
+
+(intset-difference set-1 set-2) -> integer-set
+
+Return the difference of the integer sets SET-1 and SET-2, that is
+SET-1 \ SET-2.
+
+(intset-adjoin element set) -> integer-set
+
+Return a set containing the same elements as SET plus ELEMENT. Note:
+the "lset-adjoin" function in SRFI-1 takes the set as first argument
+and the element(s) as rest arguments. Since this argument ordering is
+not coherent with the other functions, I decided not to copy it.
+
+(intset-delete element set) -> integer-set
+
+Return a set containing the same elements as SET but ELEMENT.
+
+2.4. Iterators
+
+(intset-map f set) -> list
+
+Apply function F to the lower and upper bounds of all intervals in
+SET, and return the list of all of F results.

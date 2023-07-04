@@ -1,0 +1,167 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-5.html">previous</a></span><span>, <a href="man-Z-H-7.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_4"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_4">Chapter 4</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_4">Parsing and Processing URLs</a></h1>
+<p>
+This modules contains procedures to parse and unparse URLs.  Until
+now, only the parsing of HTTP URLs is implemented.</p>
+<p>
+</p>
+<a name="node_sec_4.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_4.1">4.1&nbsp;&nbsp;Server Records</a></h2>
+<p>A <i>server</i> value describes path prefixes of the form
+<i>user</i>:<i>password</i>@<i>host</i>:<i>port</i>. These are
+frequently used as the initial prefix of URLs describing Internet
+resources.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-server <i>user password host port</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>server</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_118"></a>
+<div align=left><tt>(server? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_120"></a>
+<div align=left><tt>(server-user <i>server</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_122"></a>
+<div align=left><tt>(server-password <i>server</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_124"></a>
+<div align=left><tt>(server-host <i>server</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_126"></a>
+<div align=left><tt>(server-port <i>server</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_128"></a>
+<blockquote>
+<tt>Make-server</tt> creates a new server record.  Each slot is a
+decoded string or <tt>#f</tt>. (<i>Port</i> is also a string.)<p>
+<tt>server?</tt> is the corresponding predicate, <tt>server-user</tt>,
+<tt>server-password</tt>, <tt>server-host</tt> and <tt>server-port</tt>
+are the correspondig selectors.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-server <i>path default</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>server</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_130"></a>
+<div align=left><tt>(server-&gt;string <i>server</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_132"></a>
+<blockquote>
+<tt>Parse-server</tt> parses a URI path <i>path</i> (a list representing
+a path, not a string) into a server value.  Default values are taken
+from the server <i>default</i> except for the host.  The values
+are unescaped and stored into a server record that is returned.
+<tt>Fatal-syntax-error</tt> is called, if the specified path has no
+initial to slashes (i.e., it starts with `//<tt>...</tt>').<p>
+<tt>server-&gt;string</tt> just does the inverse job: it unparses
+<i>server</i> into a string. The elements of the record
+are escaped before they are put together.  </p>
+<p>
+Example:
+</p>
+<pre class=verbatim>&gt; (define default (make-server &quot;andreas&quot;  &quot;se ret&quot; &quot;www.sf.net&quot; &quot;80&quot;))
+&gt; (server-&gt;string default)
+&quot;andreas:se%20ret@www.sf.net:80&quot;
+&gt; (parse-server '(&quot;&quot; &quot;&quot; &quot;foo%20bar@www.scsh.net&quot; &quot;docu&quot; &quot;index.html&quot;) 
+                default)
+'#server
+&gt; (server-&gt;string ##)
+&quot;foo%20bar:se%20ret@www.scsh.net:80&quot;
+</pre><p>
+For details about escaping and unescaping see Chapter&nbsp;<a href="man-Z-H-5.html#node_chap_3">3</a>.
+</p>
+</blockquote><p>
+</p>
+<a name="node_sec_4.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_4.2">4.2&nbsp;&nbsp;HTTP URLs</a></h2>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-http-url <i>server path search frag-id</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>http-url</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_134"></a>
+<div align=left><tt>(http-url? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_136"></a>
+<div align=left><tt>(http-url-server <i>http-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>server</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_138"></a>
+<div align=left><tt>(http-url-path <i>http-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_140"></a>
+<div align=left><tt>(http-url-search <i>http-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_142"></a>
+<div align=left><tt>(http-url-frag-ment-identifier <i>http-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_144"></a>
+<blockquote>
+<tt>Make-http-url</tt> creates a new <tt>httpd-url</tt> record.
+<i>Server</i> is a record, containing the initial part of the address
+(like <tt>anonymous@clark.lcs.mit.edu:80</tt>).  <i>Path</i> contains the
+URL's URI path ( a list).  These elements are in raw, unescaped
+format. To convert them back to a string, use
+<tt>(uri-path-&gt;uri (map escape-uri pathlist))</tt>. <i>Search</i>
+and <i>frag-id</i> are the last two parts of the URL.  (See
+Chapter&nbsp;<a href="man-Z-H-5.html#node_chap_3">3</a> about parts of an URI.)<p>
+<tt>Http-url?</tt> is the predicate for HTTP URL values, and
+<tt>http-url-server</tt>, <tt>http-url-path</tt>, <tt>http-url-search</tt> and
+<tt>http-url-fragment-identifier</tt> are the corresponding selectors.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-http-url <i>path search frag-id</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>http-url</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_146"></a>
+<div align=left><tt>(http-url-&gt;string <i>http-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_148"></a><blockquote>
+This constructs an HTTP URL record from a URI path (a list of path
+components), a search, and a frag-id component.<p>
+<tt>Http-url-&gt;string</tt> just does the inverse job. It converts an
+HTTP URL record into a string.
+</p>
+</blockquote>
+Note: The URI parser <tt>parse-uri</tt> maps a string to four parts:
+<i>scheme</i>, <i>path</i>, <i>search</i> and <i>frag-id</i> (see
+Section&nbsp;<a href="man-Z-H-5.html#node_sec_3.2">3.2</a> for details). If <i>scheme</i> is
+<tt>http</tt>, then the other three parts can be passed to
+<tt>parse-http-url</tt>, which parses them into a <tt>http-url</tt> record.
+All strings come back from the URI parser encoded.  <i>Search</i> and
+<i>frag-id</i> are left that way; this parser decodes the path
+elements.  The first two list elements of the path indicating the
+leading double-slash are omitted.<p>
+The following procedure combines the jobs of <tt>parse-uri</tt> and
+<tt>parse-http-url</tt>:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-http-url-string <i>string</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>http-url</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_150"></a>
+<blockquote>
+This parses an HTTP URL and returns the corresponding URL value; it
+calls <tt>fatal-syntax-error</tt> if the URL string doesn't have an
+<tt>http</tt> scheme.
+</blockquote><p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-5.html">previous</a></span><span>, <a href="man-Z-H-7.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

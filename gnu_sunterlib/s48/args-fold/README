@@ -1,0 +1,119 @@
+The structure srfi-37 implements "args-fold: a program option
+processor". Here are details (from the srfi document):
+
+ABSTRACT
+
+Many operating systems make the set of argument strings used to invoke
+a program available (often following the program name string in an
+array called argv). Most programs need to parse and process these
+argument strings in one way or another. This SRFI describes a set of
+procedures that support processing program arguments according to
+POSIX and GNU C Library Reference Manual guidelines.
+
+RATIONALE
+
+Program arguments are the primary interface to many programs, so
+processing arguments is a common programming task. There are many
+common (often conflicting) ways take care of this task, so a custom
+processor is often necessary; however, many programmers (and their
+users) would welcome a convenient interface supporting common
+guidelines [1].  POSIX provides several guidelines for the
+specification of program options, option-arguments, and operands. It
+also notes historical exceptions to these guidelines. The GNU C
+Library Reference Manual describes [2] long option extensions to the
+POSIX guidelines.
+
+This SRFI supports creating programs following the guidelines
+mentioned above by
+  * parsing short-options and long-options in any order and possibly
+    repeated,
+  * option-arguments (possibly required or forbidden),
+  * operands (non-option argument strings),
+  * and recognizing option processing termination.
+
+It parses argument strings according to the following rules:
+  * Each short-option name is a single character.
+  * One or more short-options are accepted in a single argument string
+    when grouped behind one -- delimiter character. Examples: -a -bcd
+  * A short-option-argument is accepted in a separate argument string
+    immediately following a short-option. Examples: -a foo -bcd bar
+  * Also (for historical reasons) a short-option-argument is accepted
+    immediately following the last short-option in a single argument
+    string. Examples: -afoo -bcdbar
+  * Each long-option name is one or more characters.
+  * One long-option is accepted in a single argument string when
+    preceded by two - delimiter characters. Example: --help
+  * In a single argument string, a long-option followed by one =
+    delimiter character followed by a long-option-argument is
+    accepted. Example: --speed=fast
+  * The first -- argument string is accepted as a delimiter indicating
+    the end of options. It is not treated as an option or an
+    operand. Any argument strings following this delimiter are treated
+    as operands, even if they begin with the - character.
+  * All other argument strings are treated as operands. This includes
+    argument strings consisting of a single - character.
+  * Operands may be intermingled with options in any order.
+
+SPECIFICATION
+
+Args-fold is an iterator similar to SRFI-1's fold procedure ("the
+fundamental list iterator"). As it parses options and operands, it
+calls their corresponding operand and option processors. Unlike
+mapping, folding passes state, called seeds, from one processor to the
+next.  For example, a program may need a list of operands and a table
+of options. To build these, args-fold could be seeded with an empty
+operand list, and an empty option table. The operand processor could
+add the operands to the operand list, and the option processors could
+add the options to the option table. Along the way, some option
+processors might even take immediate action for options like --version
+or --help. This kind of heterogeneous processing is appropriate for
+program arguments, and folding allows a functional implementation if
+desired.
+
+procedure prototype: (option-processor OPTION NAME ARG SEEDS ...)
+
+Prototype for an option-processor. It should return the next seeds as
+values.  OPTION will be the option. NAME will be one of the OPTION's
+option-names as encountered by args-fold. ARG will be a string, or #f
+if args-fold didn't encounter an option-argument.
+
+procedure prototype: (operand-processor OPERAND SEEDS ...)
+
+Prototype for an operand-processor. It should return the next seeds as
+values.  OPERAND will be a string.
+
+procedure: (option NAMES REQUIRED-ARG? OPTIONAL-ARG? OPTION-PROC)
+
+Return an option. NAMES is a list of short (character) and long
+(string) option names. REQUIRED-ARG? specifies if this options
+requires an option-argument (boolean). OPTIONAL-ARG? specifies if this
+option can accept an option-argument (boolean). OPTION-PROC is a
+procedure (following the option-processor prototype) used to process
+this option.
+
+procedure: (option-names OPTION)
+
+procedure: (option-required-arg? OPTION)
+
+procedure: (option-optional-arg? OPTION)
+
+procedure: (option-processor OPTION)
+
+Return the contents of corresponding fields of OPTION.
+
+procedure: (args-fold ARGS OPTIONS UNRECOGNIZED-OPTION-PROC
+            OPERAND-PROC SEEDS ...)
+
+Parse argument strings left-to-right, calling the appropriate
+processors in- order (for the parsed known options, unknown options,
+and operands), passing the seed values from one processor to the next
+and returning the final seeds values as results. ARGS is a list of
+strings. OPTIONS is a list of options.  UNRECOGNIZED-OPTION-PROC is a
+procedure (following the option-processor prototype) for unrecognized
+options. NOTE: args-fold will create temporary options as necessary
+for the UNRECOGNIZED-OPTION-PROC. OPERAND-PROC is a procedure
+(following the operand-processor prototype) for operands.
+
+[1] http://www.opengroup.org/onlinepubs/007904975/basedefs/xbd_chap12.html#tag_12_02
+
+[2] http://www.gnu.org/manual/glibc/html_node/Argument-Syntax.html

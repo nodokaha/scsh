@@ -1,0 +1,63 @@
+This library provides two structures to ease concurrent programming:
+
+* SEMAPHORES
+
+* WITH-LOCk
+
+================================================================================
+
+After installation, use the switch
+
+-lel concurrency/load.scm
+
+to load this library.
+
+================================================================================
+
+
+The structure SEMAPHORES defines semaphores to be used this
+threads. Semaphores are usually used to control access to a resource
+by using a counter for the free slots of the resource.
+
+
+
+(make-semaphore init) -> semaphore
+
+Constructor for semaphores. INIT specifies the initial value of the
+semaphore's counter.
+
+
+
+(semaphore-wait sem) -> unspecific
+
+Blocks the current thread until at the counter of the semaphore SEM is
+at least one. It then decrements the counter and returns.
+
+
+(semaphore-post sem) -> unspecific
+
+Increments the counter of the semaphore SEM.
+
+
+(with-semaphore-posted sem thunk)
+
+Calls SEMAPHORE-WAIT on SEM before calling THUNK. When THUNK returns,
+calls SEMAPHORE-POST on SEM and returns the return value of THUNK. If
+the evaluation of THUNK causes a non-local exit, SEMAPHORE-POST is
+also applied to SEM, likewise, if the control reenters the dynamic
+extend of the evaluation of THUNK, SEMAPHORE-WAIT is called on SEM.
+
+
+
+The structure WITH-LOCK exports the procedure WITH-LOCK as an
+extension of the lock structure from Scheme 48.
+
+(with-lock lock thunk)
+
+This procedure obtains the requested lock, and then calls
+(thunk). When thunk returns, the lock is released. A non-local exit
+(e.g., throwing to a saved continuation or raising an exception) also
+causes the lock to be released.
+
+After a normal return from thunk, its return values are returned
+by with-lock.

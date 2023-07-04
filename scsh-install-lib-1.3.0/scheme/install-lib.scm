@@ -153,7 +153,7 @@
 
 (define (permissions->string perms)
   (let ((decode (lambda (mask str)
-                  (if (zero? (bitwise-and perms mask)) "-" str))))
+                  (if (zero? (bitwise-and (file-mode->integer perms) mask)) "-" str))))
     (string-append (decode #o400 "r") (decode #o200 "w") (decode #o100 "x")
                    (decode #o040 "r") (decode #o020 "w") (decode #o010 "x")
                    (decode #o004 "r") (decode #o002 "w") (decode #o001 "x"))))
@@ -715,7 +715,7 @@
     (-create-directory&parents target-dir)
     (delete-file-or-fail target-full-name)
     (-call-with-output-file target-full-name
-      (lambda (port) (write-string str port)))
+      (lambda (port) (write str port)))
     (-set-file-mode (open-input-file target-full-name) (get-perms perms target-full-name))))
 
 (define (install-string str target-name location . rest)

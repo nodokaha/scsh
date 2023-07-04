@@ -1,0 +1,51 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-6.html">previous</a></span><span>, <a href="man-Z-H-8.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_5"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_5">Chapter 5</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_5">Writing CGI Scripts in Scheme</a></h1>
+<p>
+The <tt>cgi-scripts</tt> structure provides functionality useful for
+writing CGI scripts in Scheme.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(cgi-form-query<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>data-alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_152"></a>
+<blockquote>
+CGI scripts receive their parameters in various ways, depending on
+how they were called (e.g. by <tt>GET</tt> method).<p>
+This procedure translates the delivered form data into an alist of
+decoded strings, using the environment variables set by the server
+(<tt>REQUEST_METHOD</tt>, <tt>QUERY_STRING</tt> (for a <tt>GET</tt> request),
+<tt>CONTENT_LENGTH</tt> (for a <tt>POST</tt> request)).  So a query string
+like </p>
+<blockquote><tt>button=on&amp;reply=Oh,%20yes</tt></blockquote>becomes an alist
+<blockquote><tt>((&quot;button&quot; . &quot;on&quot;) (&quot;reply&quot; . &quot;Oh, yes&quot;))</tt></blockquote><p>
+<tt>Cgi-form-query</tt> only works for <tt>GET</tt> and <tt>POST</tt> methods.
+</p>
+</blockquote><p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-6.html">previous</a></span><span>, <a href="man-Z-H-8.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-12.html">previous</a></span><span>, <a href="man-Z-H-14.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_11"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_11">Chapter 11</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_11">Time and Daytime</a></h1>
+<p></p>
+<p>
+Many Unix hosts provide a RFC&nbsp;867 Daytime service which sends the
+current date and time as a human-readable character string. The
+daytime service is typically served on port 13 as both TCP and UDP.</p>
+<p>
+The RFC&nbsp;868 Time protocol provides a site-independent, machine
+readable date and time.  The Time service is typically served
+on port 37 as TCP and UDP. The idea is that you can confirm your
+system's idea of the time by polling several independent sites on the
+network.</p>
+<p>
+</p>
+<a name="node_sec_11.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_11.1">11.1&nbsp;&nbsp;Daytime</a></h2>
+<p>The <tt>rfc867</tt> structure contains an interface to Daytime protocol.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(rfc867-daytime/tcp <i>host</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_630"></a>
+<div align=left><tt>(rfc867-daytime/udp <i>host [timeout-or-<tt>#f</tt>]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_632"></a>
+<blockquote>
+These procedures asks <i>host</i> about the current daytime and
+return the host's answer (e.g., ``Thursday, April 4,
+2'').<p>
+<tt>Rfc867-daytime/tcp</tt> uses the TCP variant of the protocol.
+<tt>Rfc867-daytime/udp</tt> uses UDP and sends a single request to the
+server.  It allows the specification of an optional timeout; if not
+specified or <tt>#f</tt>, <tt>Rfc867-daytime/udp</tt> will wait
+indefinitely for an answer.  If the answer from the server doesn't
+arrive within the specified time, <tt>rfc867-daytime/udp</tt> returns
+<tt>#f</tt>.
+</p>
+</blockquote><p>
+</p>
+<a name="node_sec_11.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_11.2">11.2&nbsp;&nbsp;Time</a></h2>
+<p>The <tt>rfc868</tt> structure contains an interface to the Time protocol.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(rfc868-time/tcp <i>host</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_634"></a>
+<div align=left><tt>(rfc868-time/udp <i>host [timeout-or-<tt>#f</tt>]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_636"></a>
+<blockquote>
+These procedures asks <i>host</i> about the current time and return
+the host's answer.  This is the number of second since 1970, just as
+with scsh's <tt>time</tt> procedure.<p>
+<tt>rfc868-time/tcp</tt> uses the TCP variant of the protocol.
+<tt>rfc868-time/udp</tt> uses UDP and sends a single request to the
+server.  It allows the specification of an optional timeout; if not
+specified or <tt>#f</tt>, <tt>rfc868-time/udp</tt> will wait
+indefinitely for an answer.  If the answer from the server doesn't
+arrive within the specified time, <tt>rfc868-time/udp</tt> returns
+<tt>#f</tt>.
+</p>
+</blockquote><p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-12.html">previous</a></span><span>, <a href="man-Z-H-14.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

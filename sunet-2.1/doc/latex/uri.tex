@@ -1,0 +1,166 @@
+\chapter{Parsing and Processing URIs}\label{cha:uri}
+
+The \ex{uri} structure contains a library for dealing with URIs.
+
+\section{Notes on URI Syntax}
+
+A URI (Uniform Resource Identifier) is of following syntax:
+%
+\begin{inset}
+[\var{scheme}] \verb|:| \var{path} [\verb|?| \var{search}] [\verb|#| \var{fragid}]
+\end{inset}
+%
+Parts in brackets may be omitted.
+
+The URI contains characters like \verb|:| to indicate its different
+parts.  Some special characters are \emph{escaped} if they are a
+regular part of a name and not indicators for the structure of a URI.
+Escape sequences are of following scheme: \verb|%|\var{h}\var{h} where \var{h}
+is a hexadecimal digit.  The hexadecimal number refers to the
+ASCII of the escaped character, e.g.\ \verb|%20| is space (ASCII
+32) and \verb|%61| is `a' (ASCII 97). This module
+provides procedures to escape and unescape strings that are meant to
+be used in a URI.
+
+\section{Procedures}
+
+\defun{parse-uri} {uri-string } {scheme path search
+    frag-id} \label{proc:parse-uri}
+\begin{desc}
+  Parses an \var{uri\=string} into its four fields.
+  The fields are \emph{not} unescaped, as the rules for
+  parsing the \var{path} component in particular need unescaped
+  text, and are dependent on \var{scheme}. The URL parser is
+  responsible for doing this.  If the \var{scheme}, \var{search}
+  or \var{fragid} portions are not specified, they are \sharpf.
+  Otherwise, \var{scheme}, \var{search}, and \var{fragid} are
+  strings. \var{path} is a non-empty string list---the path split
+  at slashes.
+\end{desc}
+
+Here is a description of the parsing technique. It is inwards from
+both ends:
+\begin{itemize}
+\item First, the code searches forwards for the first reserved
+  character (\verb|=|, \verb|;|, \verb|/|, \verb|#|, \verb|?|,
+  \verb|:| or \verb|space|).  If it's a colon, then that's the
+  \var{scheme} part, otherwise there is no \var{scheme} part. At
+  all events, it is removed.
+\item Then the code searches backwards from the end for the last reserved
+  char.  If it's a sharp, then that's the \var{fragid} part---remove it.
+\item Then the code searches backwards from the end for the last reserved
+  char.  If it's a question-mark, then that's the \var{search}
+  part----remove it.
+\item What's left is the path.  The code split it at slashes. The
+  empty string becomes a list containing the empty string.
+\end{itemize}
+%  
+This scheme is tolerant of the various ways people build broken
+URI's out there on the Net\footnote{So it does not absolutely conform
+  to RFC~1630.}, e.g.\ \verb|=| is a reserved character, but used
+unescaped in the search-part. It was given to me\footnote{That's
+  Olin Shivers.} by Dan Connolly of the W3C and slightly modified.
+
+\defun{unescape-uri}{string [start] [end]}{string}
+\begin{desc}
+  \ex{Unescape-uri} unescapes a string. If \var{start} and/or \var{end} are
+  specified, they specify start and end positions within \var{string}
+  should be unescaped.
+\end{desc}
+%
+This procedure should only be used \emph{after} the URI was parsed,
+since unescaping may introduce characters that blow up the
+parse---that's why escape sequences are used in URIs.
+
+\defvar{uri-escaped-chars}{char-set}
+\begin{desc}
+  This is a set of characters (in the sense of SRFI~14) which are
+  escaped in URIs.  RFC 2396 defines this set as all characters which 
+  are neither letters, nor digits, nor one of the following characters:
+   \verb|-|, \verb|_|, \verb|.|, \verb|!|, %$
+   \verb|~|, \verb|*|, \verb|'|, \verb|(|, \verb|)|.
+\end{desc}
+
+\defun{escape-uri} {string [escaped-chars]} {string}
+\begin{desc}
+  This procedure escapes characters of \var{string} that are in
+  \var{escaped\=chars}. \var{Escaped\=chars} defaults to
+  \ex{uri\=escaped\=chars}.  
+\end{desc}
+%
+Be careful with using this procedure to chunks of text with
+syntactically meaningful reserved characters (e.g., paths with URI
+slashes or colons)---they'll be escaped, and lose their special
+meaning. E.g.\ it would be a mistake to apply \ex{escape-uri} to
+\begin{verbatim}
+//lcs.mit.edu:8001/foo/bar.html
+\end{verbatim}
+%
+because the sla\-shes and co\-lons would be escaped.
+
+\defun{split-uri}{uri start end} {list}
+\begin{desc}
+  This procedure splits \var{uri} at slashes. Only the substring given
+  with \var{start} (inclusive) and \var{end} (exclusive) as indices is
+  considered.  \var{start} and $\var{end} - 1$ have to be within the
+  range of \var{uri}.  Otherwise an \ex{index-out-of-range} exception
+  will be raised.
+  
+  Example: \codex{(split-uri "foo/bar/colon" 4 11)} returns
+  \codex{("bar" "col")}
+\end{desc}
+
+\defun{uri-path->uri}{path}{string}
+\begin{desc}
+  This procedure generates a path out of a URI path list by inserting
+  slashes between the elements of \var{plist}.
+\end{desc}
+%
+If you want to use the resulting string for further operation, you
+should escape the elements of \var{plist} in case they contain
+slashes, like so:
+%
+\begin{verbatim}
+(uri-path->uri (map escape-uri pathlist))
+\end{verbatim}
+
+\defun{simplify-uri-path}{path}{list}
+\begin{desc}
+  This procedure simplifies a URI path.  It removes \verb|"."| and
+  \verb|"/.."| entries from path, and removes parts before a root.
+  The result is a list, or \sharpf{} if the path tries to back up past
+  root.
+\end{desc}
+%
+According to RFC~2396, relative paths are considered not to start with
+\verb|/|.  They are appended to a base URL path and then simplified.
+So before you start to simplify a URL try to find out if it is a
+relative path (i.e. it does not start with a \verb|/|).
+
+Examples:
+%
+\begin{alltt}
+(simplify-uri-path (split-uri  "/foo/bar/baz/.."  0 15))
+\(\Rightarrow\) ("" "foo" "bar")
+
+(simplify-uri-path (split-uri "foo/bar/baz/../../.." 0 20))
+\(\Rightarrow\) ()
+
+(simplify-uri-path (split-uri "/foo/../.." 0 10))
+\(\Rightarrow\) #f
+
+(simplify-uri-path (split-uri "foo/bar//" 0 9))
+\(\Rightarrow\) ("")     
+
+(simplify-uri-path (split-uri "foo/bar/" 0 8))
+\(\Rightarrow\) ("")
+
+(simplify-uri-path (split-uri "/foo/bar//baz/../.." 0 19))
+\(\Rightarrow\) #f
+\end{alltt}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

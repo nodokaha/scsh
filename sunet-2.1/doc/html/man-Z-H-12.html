@@ -1,0 +1,142 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-11.html">previous</a></span><span>, <a href="man-Z-H-13.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_10"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_10">Chapter 10</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_10">RFC&nbsp;822 Library</a></h1>
+<p>
+The <tt>rfc822</tt> structure provides rudimentary support for parsing
+headers according to RFC&nbsp;822 <i>Standard for the format of ARPA
+Internet text messages</i>.  These headers show up in SMTP messages,
+HTTP headers, etc.</p>
+<p>
+An RFC&nbsp;822 header field consists of a <i>field name</i> and a
+<i>field body</i>, like so:
+</p>
+<pre class=verbatim>Subject: RFC 822 can format itself in the ARPA
+</pre><p>
+Here, the field name is `<tt>Subject</tt>', and the field name is `<tt>RFC 822 can format itself in the ARPA</tt>' (note the leading space).
+The field body can be spread over several lines:
+</p>
+<pre class=verbatim>Subject: RFC 822 can format itself
+  in the ARPA
+</pre><p>
+In this case, RFC&nbsp;822 specifies that the meaning of the field body is
+actually all the lines of the body concatenated, without the
+intervening line breaks.</p>
+<p>
+The <tt>rfc822</tt> structure provides two sets of parsing
+procedures -- one represents field bodies in the RFC-822-specified
+meaning, as a single string, the other (with <tt>-with-line-breaks</tt>
+appended to the names) reflects the line breaks and represents the
+bodies as a list of string, one for each line.  The latter set only
+marginally useful -- mainly for code that needs to output headers in
+the same form as they were originally provided.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(read-rfc822-field <i>[port] [read-line]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>name body</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_620"></a>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(read-rfc822-field-with-line-breaks <i>[port] [read-line]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>name body-lines</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_622"></a>
+<blockquote><p>
+Read one field from the port, and return two values:
+</p>
+<dl><dt></dt><dd>
+</dd><dt><b><i>name</i></b></dt><dd> This is a symbol describing the field
+name, such as <tt>subject</tt> or <tt>to</tt>.  The symbol consists of all
+lower-case letters.<a name="call_footnote_Temp_18"></a><a href="#footnote_Temp_18"><sup><small>10</small></sup></a>
+</dd><dt><b><i>body</i> or <i>body-lines</i></b></dt><dd> This is the field body.
+<i>Body</i> is a single string, <i>body-lines</i> is a list of
+strings, one for each line of the body.  In each case,
+the terminating <tt>cr</tt>/<tt>lf</tt>'s (but nothing else) are
+trimmed from each string.
+</dd></dl><p>
+When there are no more fields -- EOF or a blank line has terminated
+the header section -- then both procedures returns [<tt>#f</tt> 
+<tt>#f</tt>].</p>
+<p>
+<i>Port</i> is an optional input port to read from -- it defaults to
+the value of <tt>(current-input-port)</tt>.</p>
+<p>
+<i>Read-line</i> is an optional parameter specifying a procedure of
+one argument (the input port) used to read the raw header lines.
+The default used by these procedures terminates lines with
+either <tt>cr</tt>/<tt>lf</tt> or just <tt>lf</tt>, and it trims the terminator
+from the line.  This procedure should trim the terminator of the
+line, so an empty line is returned as an empty string.</p>
+<p>
+The procedure raises an error if the syntax of the read field (the
+line returned by the read-line-function) is illegal according to
+RFC&nbsp;822.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(read-rfc822-headers <i>[port] [read-line]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_624"></a>
+<div align=left><tt>(read-rfc822-headers-with-line-breaks <i>[port] [read-line]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_626"></a>
+<blockquote>
+This procedure reads in and parses a section of text that looks like
+the header portion of an RFC&nbsp;822 message.  It returns an association
+list mapping field names (a symbol such as <tt>date</tt> or <tt>subject</tt>) to 
+field bodies.  The representation of the field bodies is as with
+<tt>read-rfc822-field</tt> and <tt>read-rfc822-field-with-line-breaks</tt>.<p>
+These procedures preserve the order of the header fields.  Note that
+several header fields might share the same field name -- in that
+case, the returned alist will contain several entries with the same
+<tt>car</tt>.</p>
+<p>
+<i>Port</i> and <i>read-line</i> are as with <tt>read-rfc822-field</tt>
+and <tt>read-rfc822-field-with-line-breaks</tt>.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(rfc822-time-&gt;string <i>time</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_628"></a>
+<blockquote>
+This formats a time value (as returned by scsh's <tt>time</tt>)
+according to the requirements of the RFC&nbsp;822 <tt>Date</tt> header
+field.  The format looks like this:
+<pre class=verbatim>Sun, 06 Nov 1994 08:49:37 GMT
+</pre><p>
+</p>
+</blockquote><p>
+
+</p>
+<div class=footnoterule><hr></div><p></p>
+<div class=footnote><p><a name="footnote_Temp_18"></a><a href="#call_footnote_Temp_18"><sup><small>10</small></sup></a> In fact, it <tt>read-rfc822-field</tt>
+uses the preferred case for symbols of the underlying Scheme
+implementation which, in the case of scsh, happens to be lower-case.</p>
+</div>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-11.html">previous</a></span><span>, <a href="man-Z-H-13.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

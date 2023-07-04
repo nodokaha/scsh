@@ -1,0 +1,216 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-4.html">previous</a></span><span>, <a href="man-Z-H-6.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_3"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_3">Chapter 3</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_3">Parsing and Processing URIs</a></h1>
+<p></p>
+<p>
+The <tt>uri</tt> structure contains a library for dealing with URIs.</p>
+<p>
+</p>
+<a name="node_sec_3.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_3.1">3.1&nbsp;&nbsp;Notes on URI Syntax</a></h2>
+<p>A URI (Uniform Resource Identifier) is of following syntax:
+</p>
+<blockquote>
+[<i>scheme</i>] <code class=verbatim>:</code> <i>path</i> [<code class=verbatim>?</code> <i>search</i>] [<code class=verbatim>#</code> <i>fragid</i>]
+</blockquote>
+Parts in brackets may be omitted.<p>
+The URI contains characters like <code class=verbatim>:</code> to indicate its different
+parts.  Some special characters are <em>escaped</em> if they are a
+regular part of a name and not indicators for the structure of a URI.
+Escape sequences are of following scheme: <code class=verbatim>%</code><i>h</i><i>h</i> where <i>h</i>
+is a hexadecimal digit.  The hexadecimal number refers to the
+ASCII of the escaped character, e.g. <code class=verbatim>%20</code> is space (ASCII
+32) and <code class=verbatim>%61</code> is `a' (ASCII 97). This module
+provides procedures to escape and unescape strings that are meant to
+be used in a URI.</p>
+<p>
+</p>
+<a name="node_sec_3.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_3.2">3.2&nbsp;&nbsp;Procedures</a></h2>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-uri <i>uri-string </i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>scheme path search
+frag-id</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_104"></a> 
+<blockquote>
+Parses an <i>uri-string</i> into its four fields.
+The fields are <em>not</em> unescaped, as the rules for
+parsing the <i>path</i> component in particular need unescaped
+text, and are dependent on <i>scheme</i>. The URL parser is
+responsible for doing this.  If the <i>scheme</i>, <i>search</i>
+or <i>fragid</i> portions are not specified, they are <tt>#f</tt>.
+Otherwise, <i>scheme</i>, <i>search</i>, and <i>fragid</i> are
+strings. <i>path</i> is a non-empty string list -- the path split
+at slashes.
+</blockquote><p>
+Here is a description of the parsing technique. It is inwards from
+both ends:
+</p>
+<ul>
+<li><p>First, the code searches forwards for the first reserved
+character (<code class=verbatim>=</code>, <code class=verbatim>;</code>, <code class=verbatim>/</code>, <code class=verbatim>#</code>, <code class=verbatim>?</code>,
+<code class=verbatim>:</code> or <code class=verbatim>space</code>).  If it's a colon, then that's the
+<i>scheme</i> part, otherwise there is no <i>scheme</i> part. At
+all events, it is removed.
+</p>
+<li><p>Then the code searches backwards from the end for the last reserved
+char.  If it's a sharp, then that's the <i>fragid</i> part -- remove it.
+</p>
+<li><p>Then the code searches backwards from the end for the last reserved
+char.  If it's a question-mark, then that's the <i>search</i>
+part -- -remove it.
+</p>
+<li><p>What's left is the path.  The code split it at slashes. The
+empty string becomes a list containing the empty string.
+</p>
+</ul><p>
+This scheme is tolerant of the various ways people build broken
+URI's out there on the Net<a name="call_footnote_Temp_6"></a><a href="#footnote_Temp_6"><sup><small>3</small></sup></a>, e.g. <code class=verbatim>=</code> is a reserved character, but used
+unescaped in the search-part. It was given to me<a name="call_footnote_Temp_7"></a><a href="#footnote_Temp_7"><sup><small>4</small></sup></a> by Dan Connolly of the W3C and slightly modified.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(unescape-uri <i>string [start] [end]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_106"></a>
+<blockquote>
+<tt>Unescape-uri</tt> unescapes a string. If <i>start</i> and/or <i>end</i> are
+specified, they specify start and end positions within <i>string</i>
+should be unescaped.
+</blockquote>
+This procedure should only be used <em>after</em> the URI was parsed,
+since unescaping may introduce characters that blow up the
+parse -- that's why escape sequences are used in URIs.<p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_108"></a></p>
+<div align=left><tt>uri-escaped-chars</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char-set&nbsp;</div>
+
+<blockquote>
+This is a set of characters (in the sense of SRFI&nbsp;14) which are
+escaped in URIs.  RFC 2396 defines this set as all characters which 
+are neither letters, nor digits, nor one of the following characters:
+<code class=verbatim>-</code>, <code class=verbatim>_</code>, <code class=verbatim>.</code>, <code class=verbatim>!</code>, <code class=verbatim>~</code>, <code class=verbatim>*</code>, <code class=verbatim>'</code>, <code class=verbatim>(</code>, <code class=verbatim>)</code>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(escape-uri <i>string [escaped-chars]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_110"></a>
+<blockquote>
+This procedure escapes characters of <i>string</i> that are in
+<i>escaped-chars</i>. <i>Escaped-chars</i> defaults to
+<tt>uri-escaped-chars</tt>.  
+</blockquote>
+Be careful with using this procedure to chunks of text with
+syntactically meaningful reserved characters (e.g., paths with URI
+slashes or colons) -- they'll be escaped, and lose their special
+meaning. E.g. it would be a mistake to apply <tt>escape-uri</tt> to
+<pre class=verbatim>//lcs.mit.edu:8001/foo/bar.html
+</pre><p>
+because the slashes and colons would be escaped.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(split-uri <i>uri start end</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_112"></a>
+<blockquote>
+This procedure splits <i>uri</i> at slashes. Only the substring given
+with <i>start</i> (inclusive) and <i>end</i> (exclusive) as indices is
+considered.  <i>start</i> and <i>end</i>  <tt>-</tt>  1 have to be within the
+range of <i>uri</i>.  Otherwise an <tt>index-out-of-range</tt> exception
+will be raised.<p>
+Example: </p>
+<blockquote><tt>(split-uri &quot;foo/bar/colon&quot; 4 11)</tt></blockquote>returns
+<blockquote><tt>(&quot;bar&quot; &quot;col&quot;)</tt></blockquote></blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(uri-path-&gt;uri <i>path</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_114"></a>
+<blockquote>
+This procedure generates a path out of a URI path list by inserting
+slashes between the elements of <i>plist</i>.
+</blockquote>
+If you want to use the resulting string for further operation, you
+should escape the elements of <i>plist</i> in case they contain
+slashes, like so:
+<pre class=verbatim>(uri-path-&gt;uri (map escape-uri pathlist))
+</pre><p></p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(simplify-uri-path <i>path</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_116"></a>
+<blockquote>
+This procedure simplifies a URI path.  It removes <code class=verbatim>&quot;.&quot;</code> and
+<code class=verbatim>&quot;/..&quot;</code> entries from path, and removes parts before a root.
+The result is a list, or <tt>#f</tt> if the path tries to back up past
+root.
+</blockquote>
+According to RFC&nbsp;2396, relative paths are considered not to start with
+<code class=verbatim>/</code>.  They are appended to a base URL path and then simplified.
+So before you start to simplify a URL try to find out if it is a
+relative path (i.e. it does not start with a <code class=verbatim>/</code>).<p>
+Examples:
+</p>
+<pre class=verbatim>(simplify-uri-path (split-uri  &quot;/foo/bar/baz/..&quot;  0 15))
+==&gt; (&quot;&quot; &quot;foo&quot; &quot;bar&quot;)
+
+(simplify-uri-path (split-uri &quot;foo/bar/baz/../../..&quot; 0 20))
+==&gt; ()
+
+(simplify-uri-path (split-uri &quot;/foo/../..&quot; 0 10))
+==&gt; #f
+
+(simplify-uri-path (split-uri &quot;foo/bar//&quot; 0 9))
+==&gt; (&quot;&quot;)     
+
+(simplify-uri-path (split-uri &quot;foo/bar/&quot; 0 8))
+==&gt; (&quot;&quot;)
+
+(simplify-uri-path (split-uri &quot;/foo/bar//baz/../..&quot; 0 19))
+==&gt; #f
+</pre><p></p>
+<p>
+
+</p>
+<div class=footnoterule><hr></div><p></p>
+<div class=footnote><p><a name="footnote_Temp_6"></a><a href="#call_footnote_Temp_6"><sup><small>3</small></sup></a> So it does not absolutely conform
+to RFC&nbsp;1630.</p>
+<p><a name="footnote_Temp_7"></a><a href="#call_footnote_Temp_7"><sup><small>4</small></sup></a> That's
+Olin Shivers.</p>
+</div>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-4.html">previous</a></span><span>, <a href="man-Z-H-6.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

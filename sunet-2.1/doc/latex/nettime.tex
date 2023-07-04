@@ -1,0 +1,57 @@
+\chapter{Time and Daytime}\label{cha:ntp}
+
+Many Unix hosts provide a RFC~867 Daytime service which sends the
+current date and time as a human-readable character string. The
+daytime service is typically served on port 13 as both TCP and UDP.
+
+The RFC~868 Time protocol provides a site-independent, machine
+readable date and time.  The Time service is typically served
+on port 37 as TCP and UDP. The idea is that you can confirm your
+system's idea of the time by polling several independent sites on the
+network.
+
+\section{Daytime}
+
+The \ex{rfc867} structure contains an interface to Daytime protocol.
+
+\defun{rfc867-daytime/tcp}{host}{string}
+\defunx{rfc867-daytime/udp}{host [timeout-or-\sharpf]}{string-or-\sharpf}
+\begin{desc}
+  These procedures asks \var{host} about the current daytime and
+  return the host's answer (e.g., ``Thursday, April 4,
+  2'').
+  
+  \ex{Rfc867-daytime/tcp} uses the TCP variant of the protocol.
+  \ex{Rfc867-daytime/udp} uses UDP and sends a single request to the
+  server.  It allows the specification of an optional timeout; if not
+  specified or \sharpf{}, \ex{Rfc867-daytime/udp} will wait
+  indefinitely for an answer.  If the answer from the server doesn't
+  arrive within the specified time, \ex{rfc867-daytime/udp} returns
+  \sharpf.
+\end{desc}
+
+\section{Time}
+
+The \ex{rfc868} structure contains an interface to the Time protocol.
+
+\defun{rfc868-time/tcp}{host}{string}
+\defunx{rfc868-time/udp}{host [timeout-or-\sharpf]}{string-or-\sharpf}
+\begin{desc}
+  These procedures asks \var{host} about the current time and return
+  the host's answer.  This is the number of second since 1970, just as
+  with scsh's \texttt{time} procedure.
+
+  \ex{rfc868-time/tcp} uses the TCP variant of the protocol.
+  \ex{rfc868-time/udp} uses UDP and sends a single request to the
+  server.  It allows the specification of an optional timeout; if not
+  specified or \sharpf{}, \ex{rfc868-time/udp} will wait
+  indefinitely for an answer.  If the answer from the server doesn't
+  arrive within the specified time, \ex{rfc868-time/udp} returns
+  \sharpf.
+\end{desc}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

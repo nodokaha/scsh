@@ -1,0 +1,23 @@
+The SRFI-10 structure defines an octothorpe reader syntax, comma, as specified
+in SRFI 10.  It also defines a procedure, DEFINE-READER-CONSTRUCTOR, for user-
+defined reader constructors.
+
+(DEFINE-READER-CONSTRUCTOR <symbol> <procedure>) -> unspecific       ;procedure
+  Define SYMBOL to be a reader constructor, calling PROCEDURE at read-time;
+  that is, for any instances of #,(SYMBOL <arg> ...), PROCEDURE will be applied
+  to the arguments ARG ....
+
+The test/ directory contains a couple of examples.  A structure whose name is
+of the form SRFI-10-TEST/<foo> corresponds to test/<foo>.scm.
+
+This implementation of SRFI 10 is not perfect: it will give errors regarding
+invalid data in quotations if your reader constructors construct anything that
+isn't an S-expression, and all that's only if you quote those; if you don't
+quote the things, you'll get even worse errors.
+
+There is one built-in reader constructor:
+
+#,(DEFINE-READER-CONSTRUCTOR <name> <procedure-expression>) ;reader constructor
+  Just like the DEFINE-READER-CONSTRUCTOR procedure, except that NAME must be a
+  literal symbol, and this operates at read-time.  PROCEDURE-EXPRESSION will be
+  evaluated in the what interaction environment is in state during read-time.

@@ -1,0 +1,134 @@
+wm.lo: wm.c \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/stdc-predef.h \
+ xlib.h ../../c/config.h \
+ /nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/X.h \
+ /nix/store/kgxrb021mrn0ij41zkaayknmsp4xi57m-libX11-1.8.4-dev/include/X11/Xlib.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/sys/types.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/features.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/features-time64.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/wordsize.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/timesize.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/sys/cdefs.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/long-double.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/gnu/stubs.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/gnu/stubs-64.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/typesizes.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/time64.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/clock_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/clockid_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/time_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/timer_t.h \
+ /nix/store/hqbh8ibqaq8x6riwz48xvyx4dvvldd9f-gcc-12.2.0/lib/gcc/x86_64-unknown-linux-gnu/12.2.0/include/stddef.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/stdint-intn.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/endian.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/endian.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/endianness.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/byteswap.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/uintn-identity.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/sys/select.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/select.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/sigset_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/__sigset_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/struct_timeval.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/struct_timespec.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/select2.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/pthreadtypes.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/thread-shared-types.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/pthreadtypes-arch.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/atomic_wide_counter.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/struct_mutex.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/struct_rwlock.h \
+ /nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/Xfuncproto.h \
+ /nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/Xosdefs.h \
+ /nix/store/kgxrb021mrn0ij41zkaayknmsp4xi57m-libX11-1.8.4-dev/include/X11/Xutil.h \
+ /nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/keysym.h \
+ /nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/keysymdef.h \
+ /nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Intrinsic.h \
+ /nix/store/kgxrb021mrn0ij41zkaayknmsp4xi57m-libX11-1.8.4-dev/include/X11/Xresource.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/string.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/libc-header-start.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/locale_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/__locale_t.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/strings.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/strings_fortified.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/string_fortified.h \
+ /nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Core.h \
+ /nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Composite.h \
+ /nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Constraint.h \
+ /nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Object.h \
+ /nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/RectObj.h \
+ /nix/store/8nw6h2bdy5lj049zpb55pfgy94bdfm43-scheme48-1.9.2/include/scheme48.h \
+ /nix/store/8nw6h2bdy5lj049zpb55pfgy94bdfm43-scheme48-1.9.2/include/scheme48arch.h \
+ /nix/store/hqbh8ibqaq8x6riwz48xvyx4dvvldd9f-gcc-12.2.0/lib/gcc/x86_64-unknown-linux-gnu/12.2.0/include/stdint.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/stdint.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/wchar.h \
+ /nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/stdint-uintn.h \
+ /nix/store/8nw6h2bdy5lj049zpb55pfgy94bdfm43-scheme48-1.9.2/include/scheme48write-barrier.h
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/stdc-predef.h:
+xlib.h:
+../../c/config.h:
+/nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/X.h:
+/nix/store/kgxrb021mrn0ij41zkaayknmsp4xi57m-libX11-1.8.4-dev/include/X11/Xlib.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/sys/types.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/features.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/features-time64.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/wordsize.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/timesize.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/sys/cdefs.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/long-double.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/gnu/stubs.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/gnu/stubs-64.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/typesizes.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/time64.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/clock_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/clockid_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/time_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/timer_t.h:
+/nix/store/hqbh8ibqaq8x6riwz48xvyx4dvvldd9f-gcc-12.2.0/lib/gcc/x86_64-unknown-linux-gnu/12.2.0/include/stddef.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/stdint-intn.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/endian.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/endian.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/endianness.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/byteswap.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/uintn-identity.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/sys/select.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/select.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/sigset_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/__sigset_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/struct_timeval.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/struct_timespec.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/select2.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/pthreadtypes.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/thread-shared-types.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/pthreadtypes-arch.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/atomic_wide_counter.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/struct_mutex.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/struct_rwlock.h:
+/nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/Xfuncproto.h:
+/nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/Xosdefs.h:
+/nix/store/kgxrb021mrn0ij41zkaayknmsp4xi57m-libX11-1.8.4-dev/include/X11/Xutil.h:
+/nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/keysym.h:
+/nix/store/gl91xz6rfkdkkqwpxmmizjmciw6sd3jg-xorgproto-2021.5/include/X11/keysymdef.h:
+/nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Intrinsic.h:
+/nix/store/kgxrb021mrn0ij41zkaayknmsp4xi57m-libX11-1.8.4-dev/include/X11/Xresource.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/string.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/libc-header-start.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/locale_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/types/__locale_t.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/strings.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/strings_fortified.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/string_fortified.h:
+/nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Core.h:
+/nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Composite.h:
+/nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Constraint.h:
+/nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/Object.h:
+/nix/store/z016jbpxx28bm4c4a6di01ywpqv4nwzr-libXt-1.2.1-dev/include/X11/RectObj.h:
+/nix/store/8nw6h2bdy5lj049zpb55pfgy94bdfm43-scheme48-1.9.2/include/scheme48.h:
+/nix/store/8nw6h2bdy5lj049zpb55pfgy94bdfm43-scheme48-1.9.2/include/scheme48arch.h:
+/nix/store/hqbh8ibqaq8x6riwz48xvyx4dvvldd9f-gcc-12.2.0/lib/gcc/x86_64-unknown-linux-gnu/12.2.0/include/stdint.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/stdint.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/wchar.h:
+/nix/store/dpk5m64n0axk01fq8h2m0yl9hhpq2nqk-glibc-2.37-8-dev/include/bits/stdint-uintn.h:
+/nix/store/8nw6h2bdy5lj049zpb55pfgy94bdfm43-scheme48-1.9.2/include/scheme48write-barrier.h:

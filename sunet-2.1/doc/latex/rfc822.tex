@@ -1,0 +1,107 @@
+\chapter{RFC~822 Library}\label{cha:rfc822}
+%
+The \ex{rfc822} structure provides rudimentary support for parsing
+headers according to RFC~822 \textit{Standard for the format of ARPA
+  Internet text messages}.  These headers show up in SMTP messages,
+HTTP headers, etc.
+
+An RFC~822 header field consists of a \textit{field name} and a
+\textit{field body}, like so:
+%
+\begin{verbatim}
+Subject: RFC 822 can format itself in the ARPA
+\end{verbatim}
+%
+Here, the field name is `\ex{Subject}', and the field name is `\ex{
+  RFC 822 can format itself in the ARPA}' (note the leading space).
+The field body can be spread over several lines:
+%
+\begin{verbatim}
+Subject: RFC 822 can format itself
+  in the ARPA
+\end{verbatim}
+%
+In this case, RFC~822 specifies that the meaning of the field body is
+actually all the lines of the body concatenated, without the
+intervening line breaks.
+
+The \ex{rfc822} structure provides two sets of parsing
+procedures---one represents field bodies in the RFC-822-specified
+meaning, as a single string, the other (with \ex{-with-line-breaks}
+appended to the names) reflects the line breaks and represents the
+bodies as a list of string, one for each line.  The latter set only
+marginally useful---mainly for code that needs to output headers in
+the same form as they were originally provided.
+
+\defun{read-rfc822-field}{[port] [read-line]}{name body}
+\defun{read-rfc822-field-with-line-breaks}{[port] [read-line]}{name body-lines}
+\begin{desc}
+  
+  Read one field from the port, and return two values:
+  %
+  \begin{description}
+  \item[\var{name}] This is a symbol describing the field
+    name, such as \ex{subject} or \ex{to}.  The symbol consists of all
+    lower-case letters.\footnote{In fact, it \ex{read-rfc822-field}
+      uses the preferred case for symbols of the underlying Scheme
+      implementation which, in the case of scsh, happens to be lower-case.}
+  \item[\var{body} or \var{body-lines}] This is the field body.
+    \var{Body} is a single string, \var{body-lines} is a list of
+    strings, one for each line of the body.  In each case,
+    the terminating \ex{cr}/\ex{lf}'s (but nothing else) are
+    trimmed from each string.
+  \end{description}
+  %
+  When there are no more fields---EOF or a blank line has terminated
+  the header section---then both procedures returns [\sharpf\ 
+  \sharpf].
+
+  \var{Port} is an optional input port to read from---it defaults to
+  the value of \ex{(current-input-port)}.
+  
+  \var{Read-line} is an optional parameter specifying a procedure of
+  one argument (the input port) used to read the raw header lines.
+  The default used by these procedures terminates lines with
+  either \ex{cr}/\ex{lf} or just \ex{lf}, and it trims the terminator
+  from the line.  This procedure should trim the terminator of the
+  line, so an empty line is returned as an empty string.
+  
+  The procedure raises an error if the syntax of the read field (the
+  line returned by the read-line-function) is illegal according to
+  RFC~822.
+\end{desc}
+
+\defun{read-rfc822-headers} {[port] [read-line]} {alist}
+\defunx{read-rfc822-headers-with-line-breaks} {[port] [read-line]} {alist}
+\begin{desc}
+  This procedure reads in and parses a section of text that looks like
+  the header portion of an RFC~822 message.  It returns an association
+  list mapping field names (a symbol such as \ex{date} or \ex{subject}) to 
+  field bodies.  The representation of the field bodies is as with
+  \ex{read-rfc822-field} and \ex{read-rfc822-field-with-line-breaks}.
+  
+  These procedures preserve the order of the header fields.  Note that
+  several header fields might share the same field name---in that
+  case, the returned alist will contain several entries with the same
+  \ex{car}.
+  
+  \var{Port} and \var{read-line} are as with \ex{read-rfc822-field}
+  and \ex{read-rfc822-field-with-line-breaks}.
+\end{desc}
+
+\defun{rfc822-time->string}{time}{string}
+\begin{desc}
+  This formats a time value (as returned by scsh's \ex{time})
+  according to the requirements of the RFC~822 \ex{Date} header
+  field.  The format looks like this:
+%
+\begin{verbatim}
+Sun, 06 Nov 1994 08:49:37 GMT
+\end{verbatim}
+\end{desc}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

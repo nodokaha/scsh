@@ -1,0 +1,151 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man.html">previous</a></span><span>, <a href="man-Z-H-2.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span class=disable>contents</span><span><span class=disable>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_Temp_1"></a>
+<h1 class=chapter>
+<div class=chapterheading>&nbsp;</div><br>
+<a href="#node_toc_node_chap_Temp_1">Contents</a></h1>
+<p><a name="node_toc_start"></a></p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_1"></a><a href="man-Z-H-3.html#node_chap_1">1&nbsp;&nbsp;Overview</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_1.1"></a><a href="man-Z-H-3.html#node_sec_1.1">1.1&nbsp;&nbsp;Obtaining the system</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_1.2"></a><a href="man-Z-H-3.html#node_sec_1.2">1.2&nbsp;&nbsp;How to install SUnet</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_1.3"></a><a href="man-Z-H-3.html#node_sec_1.3">1.3&nbsp;&nbsp;How to use the packages</a><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_2"></a><a href="man-Z-H-4.html#node_chap_2">2&nbsp;&nbsp;HTTP server</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.1"></a><a href="man-Z-H-4.html#node_sec_2.1">2.1&nbsp;&nbsp;Starting and configuring the server</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.2"></a><a href="man-Z-H-4.html#node_sec_2.2">2.2&nbsp;&nbsp;Requests</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.3"></a><a href="man-Z-H-4.html#node_sec_2.3">2.3&nbsp;&nbsp;Responses</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.4"></a><a href="man-Z-H-4.html#node_sec_2.4">2.4&nbsp;&nbsp;Response Bodies</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.5"></a><a href="man-Z-H-4.html#node_sec_2.5">2.5&nbsp;&nbsp;Request Handlers</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.5.1"></a><a href="man-Z-H-4.html#node_sec_2.5.1">2.5.1&nbsp;&nbsp;Basic Request Handlers</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.5.2"></a><a href="man-Z-H-4.html#node_sec_2.5.2">2.5.2&nbsp;&nbsp;Static Content Request Handlers</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.6"></a><a href="man-Z-H-4.html#node_sec_2.6">2.6&nbsp;&nbsp;CGI Server</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.7"></a><a href="man-Z-H-4.html#node_sec_2.7">2.7&nbsp;&nbsp;Scheme-Evaluating Request Handlers</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.7.1"></a><a href="man-Z-H-4.html#node_sec_2.7.1">2.7.1&nbsp;&nbsp;The <tt>loser</tt> structure</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.7.2"></a><a href="man-Z-H-4.html#node_sec_2.7.2">2.7.2&nbsp;&nbsp;The <tt>toothless</tt> structure</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.7.3"></a><a href="man-Z-H-4.html#node_sec_2.7.3">2.7.3&nbsp;&nbsp;The <tt>toothless-eval</tt> structure</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.8"></a><a href="man-Z-H-4.html#node_sec_2.8">2.8&nbsp;&nbsp;Writing Request Handlers</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.8.1"></a><a href="man-Z-H-4.html#node_sec_2.8.1">2.8.1&nbsp;&nbsp;Parsing HTML Forms</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_2.9"></a><a href="man-Z-H-4.html#node_sec_2.9">2.9&nbsp;&nbsp;SSL encryption with Apache</a><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_3"></a><a href="man-Z-H-5.html#node_chap_3">3&nbsp;&nbsp;Parsing and Processing URIs</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_3.1"></a><a href="man-Z-H-5.html#node_sec_3.1">3.1&nbsp;&nbsp;Notes on URI Syntax</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_3.2"></a><a href="man-Z-H-5.html#node_sec_3.2">3.2&nbsp;&nbsp;Procedures</a><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_4"></a><a href="man-Z-H-6.html#node_chap_4">4&nbsp;&nbsp;Parsing and Processing URLs</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_4.1"></a><a href="man-Z-H-6.html#node_sec_4.1">4.1&nbsp;&nbsp;Server Records</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_4.2"></a><a href="man-Z-H-6.html#node_sec_4.2">4.2&nbsp;&nbsp;HTTP URLs</a><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_5"></a><a href="man-Z-H-7.html#node_chap_5">5&nbsp;&nbsp;Writing CGI Scripts in Scheme</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_6"></a><a href="man-Z-H-8.html#node_chap_6">6&nbsp;&nbsp;SUrflet server</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1"></a><a href="man-Z-H-8.html#node_sec_6.1">6.1&nbsp;&nbsp;Howto</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.1"></a><a href="man-Z-H-8.html#node_sec_6.1.1">6.1.1&nbsp;&nbsp;Introduction</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.2"></a><a href="man-Z-H-8.html#node_sec_6.1.2">6.1.2&nbsp;&nbsp;How to run the SUnet webserver that handles SUrflets </a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_Temp_8"></a><a href="man-Z-H-8.html#node_sec_Temp_8">Obtaining necessary packages</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_Temp_9"></a><a href="man-Z-H-8.html#node_sec_Temp_9">Starting the SUrflet server</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.3"></a><a href="man-Z-H-8.html#node_sec_6.1.3">6.1.3&nbsp;&nbsp;How to send web pages</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.3.1"></a><a href="man-Z-H-8.html#node_sec_6.1.3.1">6.1.3.1&nbsp;&nbsp;My first SUrflet </a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.3.2"></a><a href="man-Z-H-8.html#node_sec_6.1.3.2">6.1.3.2&nbsp;&nbsp;Dynamic content</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.3.3"></a><a href="man-Z-H-8.html#node_sec_6.1.3.3">6.1.3.3&nbsp;&nbsp;Several web pages in a row</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.3.4"></a><a href="man-Z-H-8.html#node_sec_6.1.3.4">6.1.3.4&nbsp;&nbsp;Begin and end of sessions</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.3.5"></a><a href="man-Z-H-8.html#node_sec_6.1.3.5">6.1.3.5&nbsp;&nbsp;Abbreviations in SXML</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.4"></a><a href="man-Z-H-8.html#node_sec_6.1.4">6.1.4&nbsp;&nbsp;How to write web forms</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.4.1"></a><a href="man-Z-H-8.html#node_sec_6.1.4.1">6.1.4.1&nbsp;&nbsp;Simple web forms</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.4.2"></a><a href="man-Z-H-8.html#node_sec_6.1.4.2">6.1.4.2&nbsp;&nbsp;Return types other than strings</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.4.3"></a><a href="man-Z-H-8.html#node_sec_6.1.4.3">6.1.4.3&nbsp;&nbsp;Annotated input fields</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.4.4"></a><a href="man-Z-H-8.html#node_sec_6.1.4.4">6.1.4.4&nbsp;&nbsp;Sending error messages</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.4.5"></a><a href="man-Z-H-8.html#node_sec_6.1.4.5">6.1.4.5&nbsp;&nbsp;Your own input fields</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.5"></a><a href="man-Z-H-8.html#node_sec_6.1.5">6.1.5&nbsp;&nbsp;Program flow control</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.5.1"></a><a href="man-Z-H-8.html#node_sec_6.1.5.1">6.1.5.1&nbsp;&nbsp;Dispatching to more than one successor web page</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.5.2"></a><a href="man-Z-H-8.html#node_sec_6.1.5.2">6.1.5.2&nbsp;&nbsp;Annotated dispatching</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.5.3"></a><a href="man-Z-H-8.html#node_sec_6.1.5.3">6.1.5.3&nbsp;&nbsp;Callbacks</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.6"></a><a href="man-Z-H-8.html#node_sec_6.1.6">6.1.6&nbsp;&nbsp;Data management</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.7"></a><a href="man-Z-H-8.html#node_sec_6.1.7">6.1.7&nbsp;&nbsp;My own SXML</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.7.1"></a><a href="man-Z-H-8.html#node_sec_6.1.7.1">6.1.7.1&nbsp;&nbsp;Terms and theoretical background</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.1.7.2"></a><a href="man-Z-H-8.html#node_sec_6.1.7.2">6.1.7.2&nbsp;&nbsp;Outlook</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2"></a><a href="man-Z-H-8.html#node_sec_6.2">6.2&nbsp;&nbsp;API description</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.1"></a><a href="man-Z-H-8.html#node_sec_6.2.1">6.2.1&nbsp;&nbsp;The SUrflet server</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.2"></a><a href="man-Z-H-8.html#node_sec_6.2.2">6.2.2&nbsp;&nbsp;SUrflets </a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.3"></a><a href="man-Z-H-8.html#node_sec_6.2.3">6.2.3&nbsp;&nbsp;SUrflet management</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.4"></a><a href="man-Z-H-8.html#node_sec_6.2.4">6.2.4&nbsp;&nbsp;Surflet Request</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.5"></a><a href="man-Z-H-8.html#node_sec_6.2.5">6.2.5&nbsp;&nbsp;Surflet Response</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.6"></a><a href="man-Z-H-8.html#node_sec_6.2.6">6.2.6&nbsp;&nbsp;Sessions</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.6.1"></a><a href="man-Z-H-8.html#node_sec_6.2.6.1">6.2.6.1&nbsp;&nbsp;Session management</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.6.2"></a><a href="man-Z-H-8.html#node_sec_6.2.6.2">6.2.6.2&nbsp;&nbsp;Session data</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.7"></a><a href="man-Z-H-8.html#node_sec_6.2.7">6.2.7&nbsp;&nbsp;Basic I/O</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.8"></a><a href="man-Z-H-8.html#node_sec_6.2.8">6.2.8&nbsp;&nbsp;Web I/O</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.8.1"></a><a href="man-Z-H-8.html#node_sec_6.2.8.1">6.2.8.1&nbsp;&nbsp;SXML</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.8.2"></a><a href="man-Z-H-8.html#node_sec_6.2.8.2">6.2.8.2&nbsp;&nbsp;Special SXML tags</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.8.3"></a><a href="man-Z-H-8.html#node_sec_6.2.8.3">6.2.8.3&nbsp;&nbsp;Do it yourself: your own SXML</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.9"></a><a href="man-Z-H-8.html#node_sec_6.2.9">6.2.9&nbsp;&nbsp;Continuation-URL</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.10"></a><a href="man-Z-H-8.html#node_sec_6.2.10">6.2.10&nbsp;&nbsp;Input fields</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_Temp_14"></a><a href="man-Z-H-8.html#node_sec_Temp_14">Getting the bindings</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_Temp_15"></a><a href="man-Z-H-8.html#node_sec_Temp_15">Retrieving the Scheme values</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_Temp_16"></a><a href="man-Z-H-8.html#node_sec_Temp_16">Creating and using input fields</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.10.1"></a><a href="man-Z-H-8.html#node_sec_6.2.10.1">6.2.10.1&nbsp;&nbsp;Do it yourself: your own input fields</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.11"></a><a href="man-Z-H-8.html#node_sec_6.2.11">6.2.11&nbsp;&nbsp;Web addresses</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.11.1"></a><a href="man-Z-H-8.html#node_sec_6.2.11.1">6.2.11.1&nbsp;&nbsp;Evaluatable web addresses</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.12"></a><a href="man-Z-H-8.html#node_sec_6.2.12">6.2.12&nbsp;&nbsp;Callbacks</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.13"></a><a href="man-Z-H-8.html#node_sec_6.2.13">6.2.13&nbsp;&nbsp;Outdater</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_6.2.14"></a><a href="man-Z-H-8.html#node_sec_6.2.14">6.2.14&nbsp;&nbsp;Simple SUrflets</a><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_7"></a><a href="man-Z-H-9.html#node_chap_7">7&nbsp;&nbsp;FTP Server</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_8"></a><a href="man-Z-H-10.html#node_chap_8">8&nbsp;&nbsp;FTP Client</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_9"></a><a href="man-Z-H-11.html#node_chap_9">9&nbsp;&nbsp;Parsing Netrc Files</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_10"></a><a href="man-Z-H-12.html#node_chap_10">10&nbsp;&nbsp;RFC&nbsp;822 Library</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_11"></a><a href="man-Z-H-13.html#node_chap_11">11&nbsp;&nbsp;Time and Daytime</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_11.1"></a><a href="man-Z-H-13.html#node_sec_11.1">11.1&nbsp;&nbsp;Daytime</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_11.2"></a><a href="man-Z-H-13.html#node_sec_11.2">11.2&nbsp;&nbsp;Time</a><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_12"></a><a href="man-Z-H-14.html#node_chap_12">12&nbsp;&nbsp;SMTP Client</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_13"></a><a href="man-Z-H-15.html#node_chap_13">13&nbsp;&nbsp;POP3 Client</a></b><br>
+</p>
+<p><b>
+&nbsp; &nbsp; <a name="node_toc_node_chap_14"></a><a href="man-Z-H-16.html#node_chap_14">14&nbsp;&nbsp;DNS Client Library</a></b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_14.1"></a><a href="man-Z-H-16.html#node_sec_14.1">14.1&nbsp;&nbsp;Overview</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_14.2"></a><a href="man-Z-H-16.html#node_sec_14.2">14.2&nbsp;&nbsp;Conditions</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_14.3"></a><a href="man-Z-H-16.html#node_sec_14.3">14.3&nbsp;&nbsp;High-level Interface</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_14.4"></a><a href="man-Z-H-16.html#node_sec_14.4">14.4&nbsp;&nbsp;Low-level Interface</a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_14.5"></a><a href="man-Z-H-16.html#node_sec_14.5">14.5&nbsp;&nbsp;Parsing <tt>/etc/resolv.conf</tt></a><br>
+&nbsp; &nbsp; &nbsp; &nbsp; <a name="node_toc_node_sec_14.6"></a><a href="man-Z-H-16.html#node_sec_14.6">14.6&nbsp;&nbsp;IP Addresses as Dotted Strings</a><br>
+</p>
+<p>
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man.html">previous</a></span><span>, <a href="man-Z-H-2.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span class=disable>contents</span><span><span class=disable>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

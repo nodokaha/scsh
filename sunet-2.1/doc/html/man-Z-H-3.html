@@ -1,0 +1,127 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-2.html">previous</a></span><span>, <a href="man-Z-H-4.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_1"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_1">Chapter 1</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_1">Overview</a></h1>
+<p></p>
+<p>
+The Scheme Untergrund Networking Package (<i>SUnet</i>, for short)
+is a collection of applications and libraries for Internet hacking in
+Scheme.  It runs under Scsh, the Scheme shell.  SUnet includes the
+following components:
+</p>
+<dl><dt></dt><dd>
+</dd><dt><b>The SUnet Web server</b></dt><dd>
+This is a highly configurable HTTP 1.0 server in Scheme.
+The server is accompanied by some libraries which may also
+be used separately:
+<ul>
+<li><p>URI and URL parsers and unparsers
+</p>
+<li><p>a library for writing CGI scripts in Scheme
+</p>
+<li><p>server extensions for interfacing to CGI scripts
+</p>
+<li><p>server extensions for uploading Scheme code
+</p>
+<li><p>simple structured HTML output library 
+</p>
+</ul><p></p>
+<p>
+The server also ships with a sophisticated interface for writing
+server-side Web applications called <i>SUrflets</i>.</p>
+<p>
+</p>
+</dd><dt><b>The SUnet ftp server</b></dt><dd>
+This is a complete anonymous ftp server in Scheme.
+</dd><dt><b>ftp client library</b></dt><dd> This library allows you to access ftp
+servers programmatically.
+</dd><dt><b>netrc library</b></dt><dd> This library parses authentication information
+contained in <code class=verbatim>~/.netrc</code>.
+</dd><dt><b>SMTP client library</b></dt><dd> This library allows you to forge mail from
+the comfort of your own Scheme process.
+</dd><dt><b>POP3 client library</b></dt><dd>
+This library allows you to access your POP3 mailbox from inside scsh.
+</dd><dt><b>RFC822 header library</b></dt><dd> This library parses email-style headers.
+</dd><dt><b>Daytime and Time protocol client libraries</b></dt><dd>
+These libraries lets you find out what time it is without paying for a
+Rolex.
+</dd><dt><b>DNS client library</b></dt><dd> This is a complete, multithreaded DNS
+library.
+</dd><dt><b>An <tt>ls</tt> clone</b></dt><dd> This library displays Unix-style directory
+listings without running <tt>ls</tt>.
+</dd></dl><p></p>
+<p>
+</p>
+<a name="node_sec_1.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_1.1">1.1&nbsp;&nbsp;Obtaining the system</a></h2>
+<p>The SUnet code is available
+<a href="http://www.scsh.net/resources/sunet.html">here</a>.  To run the code, you need
+version 0.6.6 or later of <a href="http://www.scsh.net/">scsh</a>.</p>
+<p>
+</p>
+<a name="node_sec_1.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_1.2">1.2&nbsp;&nbsp;How to install SUnet</a></h2>
+<p>Starting with version 2.1 SUnet conforms to the packaging proposal for
+scsh by Michel Schinz and needs Michel's installation library to
+install properly. For more information, please see
+<a href="http://lamp.epfl.ch/~schinz/scsh_packages/">http://lamp.epfl.ch/~schinz/scsh_packages/</a>.</p>
+<p>
+In short, this means that you can install SUnet by unpacking the SUnet
+tarball and issuing the following command in the created directory:</p>
+<p>
+</p>
+<pre class=verbatim>scsh-install-pkg --prefix /path/to/your/package/root
+</pre><p></p>
+<p>
+See the file INSTALL for the generic installation instructions for
+scsh packages.  </p>
+<p>
+You need to install version 4.9 of the SSAX package to use SUnet. SSAX
+is available from <a href="http://lamp.epfl.ch/~schinz/scsh_packages/">http://lamp.epfl.ch/~schinz/scsh_packages/</a>.</p>
+<p>
+</p>
+<a name="node_sec_1.3"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_1.3">1.3&nbsp;&nbsp;How to use the packages</a></h2>
+<p>After installation, you can use the <code class=verbatim>-lel</code> command-line option to
+load the package definitions. If you installed SUnet including
+SUrflets (the default), you need to load SSAX as well:
+</p>
+<pre class=verbatim>atari-2600[72] scsh -lel SSAX-4.9/load.scm -lel sunet-2.1/load.scm
+Welcome to scsh 0.6.6 (King Conan)
+Type ,? for help.
+</pre><p>
+Now, all structures defined by SUnet and SSAX are available:
+</p>
+<pre class=verbatim>&gt; ,open ftp
+Load structure ftp (y/n)? y
+[netrc netrc.scm]
+[ftp ftp.scm]
+&gt; <i>call library code</i>
+&gt; ,exit
+atari-2600[73]
+</pre><p></p>
+<p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-2.html">previous</a></span><span>, <a href="man-Z-H-4.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

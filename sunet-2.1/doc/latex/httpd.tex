@@ -1,0 +1,742 @@
+\chapter{HTTP server}\label{cha:httpd}
+%
+The SUnet HTTP Server is a complete industrial-strength implementation
+of the HTTP 1.0 protocol.  It is highly configurable and allows the writing
+of dynamic web pages that run inside the server without going through
+complicated and slow protocols like CGI or Fast/CGI.
+       
+\section{Starting and configuring the server}
+
+All procedures described in this section are exported by the
+\texttt{httpd} structure.
+
+The Web server is started by calling the \ex{httpd} procedure, which takes
+one argument, an options value:
+
+\defun{httpd}{options}{\noreturn}
+\begin{desc}
+  This procedure starts the server. The \var{options} argument
+  specifies various configuration parameters, explained below.
+  
+  The server's basic loop is to wait on the port for a connection from
+  an HTTP client. When it receives a connection, it reads in and
+  parses the request into a special request data structure.  Then the
+  server forks a thread which binds the current I/O ports to the
+  connection socket, and then hands off to the top-level
+  request handler (which must be specified in the options). The
+  request handler is responsible for actually serving
+  the request---it can be any arbitrary computation.  Its output goes
+  directly back to the HTTP client that sent the request.
+   
+  Before calling the request handler to service the request, the HTTP
+  server installs an error handler that fields any uncaught error,
+  sends an error reply to the client, and aborts the request
+  transaction.  Hence any error caused by a request handler will be
+  handled in a reasonable and robust fashion.
+\end{desc}
+%
+The \var{options} argument can be constructed through a number of procedures
+with names of the form \texttt{with-\ldots}.  Each of these procedures
+either creates a fresh options value or adds a configuration parameter
+to an old options argument.  The configuration parameter value is
+always the first argument, the (old) options value the optional second
+one.  Here they are:
+
+\defun{with-port}{port [options]}{options}
+\begin{desc}
+  This specifies the port on which the server listens.  Defaults to 80.
+\end{desc}
+
+\defun{with-root-directory}{root-directory [options]}{options} 
+\begin{desc}
+  This specifies the current directory of the server.  Note that this
+  is \emph{not} the document root directory.  Defaults to \texttt{/}.
+\end{desc}
+
+\defun{with-fqdn}{fqdn [options]}{options}
+\begin{desc}
+  This specifies the fully-qualified domain name the server uses in
+  automatically generated replies, or \ex{\#f} if the server should
+  query DNS for the fully-qualified domain name..  Defaults to \ex{\#f}.
+\end{desc}
+
+\defun{with-reported-port}{reported-port [options]}{options}
+\begin{desc}
+  This specifies the port number the server uses in automatically
+  generated replies or \ex{\#f} if the reported port is the same as
+  the port the server is listening on.  (This is useful if you're
+  running the server through an accelerating proxy.)  Defaults to
+  \ex{\#f}.
+\end{desc}
+
+\defun{with-server-admin}{mail-address [options]}{options}
+\begin{desc}
+  This specifies the email address of the server administrator the
+  server uses in automatically generated replies.  Defaults to \ex{\#f}.
+\end{desc}
+
+\defun{with-request-handler}{request-handler [options]}{options}
+\begin{desc}
+  This specifies the request handler of the server to which the server
+  delegates the actual work.  More on that subject below in
+  Section~\ref{httpd:request-handlers}.  This parameter must be specified.
+\end{desc}
+
+\defun{with-simultaneous-requests}{requests [options]}{options}
+\begin{desc}
+  This specifies a limit on the number of simultaneous requests the
+  server servers.  If that limit is exceeded during operation, the
+  server will hold off on new requests until the number of
+  simultaneous requests has sunk below the limit again.  If this
+  parameter is \ex{\#f}, no limit is imposed.  Defaults to \ex{\#f}.
+\end{desc}
+
+\defun{with-log-file}{log-file [options]}{options}
+\begin{desc}
+  This specifies the name of a log file for the server where it writes
+  Common Log Format logging information.  It can also be a port in
+  which case the information is logged to that port, or \ex{\#f} for
+  no logging.  Defaults to \ex{\#f}.
+  
+  To allow rotation of log files, the server re-opens the log file
+  whenever it receives a \texttt{USR1} signal.
+\end{desc}
+
+\defun{with-syslog?}{syslog? [options]}{options}
+\begin{desc}
+  This specifies whether the server will log information about
+  incoming to the Unix syslog facility.  Defaults to \ex{\#t}.
+\end{desc}
+
+\defun{with-resolve-ip?}{resolve-ip? [options]}{options}
+\begin{desc}
+  This specifies whether the server writes the domain names rather
+  than numerical IPs to the output log it produces.  Defaults to
+  \ex{\#t}.
+\end{desc}
+
+To avoid paranthitis, the \ex{make-httpd-options} procedure eases the
+construction of the options argument:
+
+\defun{make-httpd-options}{transformer value \ldots}{options}
+\begin{desc}
+  This constructs an options value from an argument list of parameter
+  transformers and parameter values.  The arguments come in pairs,
+  each an option transformer from the list above, and a value for that
+  parameter.  \ex{Make-httpd-options} returns the resulting options value.
+\end{desc}
+
+For example,
+\begin{alltt}
+(httpd (make-httpd-options
+         with-request-handler (rooted-file-handler "/usr/local/etc/httpd")
+         with-root-directory "/usr/local/etc/httpd"))
+\end{alltt}
+  %
+  starts the server on port 80 with
+  \ex{/usr/local/etc/httpd} as its root directory and
+  lets it serve any file out from this directory.
+  % #### note about rooted-file-handler
+
+
+\section{Requests}
+\label{httpd:requests}
+
+Request handlers operate on \textit{requests} which contain the
+information needed to generate a page.  The relevant procedures to
+dissect requests are defined in the \texttt{httpd-requests} structure:
+
+\defun{request?}{value}{boolean}
+\defunx{request-method}{request}{string}
+\defunx{request-uri}{request}{string}
+\defunx{request-url}{request}{url}
+\defunx{request-version}{request}{pair}
+\defunx{request-headers}{request}{list}
+\defunx{request-socket}{request}{socket}
+\begin{desc}
+  The procedure inspect request values.  \ex{Request?} is a predicate
+  for requests.  \ex{Request-method} extracts the method of the HTTP
+  request; it's a string such as \verb|"GET"|, \verb|"PUT"|.
+  \ex{Request-uri} returns the escaped URI string as read from request
+  line.  \ex{Request-url} returns an HTTP URL value (see the
+  description of the \ex{url} structure in \ref{cha:url}).
+  \ex{Request-version} returns \verb|(major . minor)| integer pair
+  representing the version specified in the HTTP request.
+  \ex{Request-headers} returns an association lists of header field
+  names and their values, each represented by a list of strings, one
+  for each line.  \ex{Request-socket} returns the socket connected
+  to the client.\footnote{Request handlers should not perform I/O on the
+    request record's socket.  Request handlers are frequently called
+    recursively, and doing I/O directly to the socket might bypass a
+    filtering or other processing step interposed on the current I/O ports
+    by some superior request handler.}
+\end{desc}
+
+\section{Responses}
+\label{sec:http-responses}
+
+A path handler must return a \textit{response} value representing the
+content to be sent to the client.  The machinery presented here for
+constructing responses lives in the \ex{httpd-responses} structure.
+
+\defun{make-response}{status-code maybe-message seconds mime extras
+  body}{response}
+\begin{desc}
+  This procedure constructs a response value.  \var{Status-code} is an
+  HTTP status code (more on that below).  \var{Maybe-message} is a a
+  message elaborating on the circumstances of the status code; it can
+  also be \sharpf{} meaning that the server should send a default
+  message associated with the status code.  \var{Seconds} natural
+  number indicating the time the content was created, typically the
+  value of \verb|(time)|.  \var{Mime} is a string indicating the MIME
+  type of the response (such as \verb|"text/html"| or
+  \verb|"application/octet-stream"|).  \var{Extras} is an association
+  list with extra headers to be added to the response; its elements
+  are pairs, each of which consists of a symbol representing the field
+  name and a string representing the field value.  \var{Body}
+  represents the body of the response; more on that below.
+\end{desc}
+
+\defun{make-redirect-response}{location}{response}
+\begin{desc}
+  This is a helper procedure for constructing HTTP redirections.  The
+  server will serve the new file indicated by \var{location}.
+  \var{Location} must be URI-encoded and begin with a slash.
+\end{desc}
+
+\defun{make-error-response}{status-code request [message] extras \ldots}{response}
+\begin{desc}
+  This is a helper procedure for constructing error responses.
+  \var{code} is status code of the response (see below). \var{Request}
+  is the request that led to the error.  \var{Message} is an optional
+  string containing an error message written in HTML, and \var{extras}
+  are further optional arguments containing further message lines to
+  be added to the web page that's generated.
+
+  \ex{Make-error-response} constructs a response value which generates
+  a web page containg a short explanatory message for the error at hand.
+\end{desc}
+
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{|l|l|l|}
+    \hline
+   ok &                 200 & OK\\\hline
+   created &            201 & Created\\\hline
+   accepted &           202 & Accepted\\\hline
+   prov-info &          203 & Provisional Information\\\hline
+   no-content &         204 & No Content\\\hline
+
+   mult-choice &        300 & Multiple Choices\\\hline
+   moved-perm &         301 & Moved Permanently\\\hline
+   moved-temp &         302 & Moved Temporarily\\\hline
+   method &             303 & Method (obsolete)\\\hline
+   not-mod &            304 & Not Modified\\\hline
+
+   bad-request &        400 & Bad Request\\\hline
+   unauthorized &       401 & Unauthorized\\\hline
+   payment-req &        402 & Payment Required\\\hline
+   forbidden &          403 & Forbidden\\\hline
+   not-found &          404 & Not Found\\\hline
+   method-not-allowed & 405 & Method Not Allowed\\\hline
+   none-acceptable &    406 & None Acceptable\\\hline
+   proxy-auth-required & 407 & Proxy Authentication Required\\\hline
+   timeout &            408 & Request Timeout\\\hline
+   conflict &           409 & Conflict\\\hline
+   gone &               410 & Gone\\\hline
+   internal-error &     500 & Internal Server Error\\\hline
+   not-implemented &    501 & Not Implemented\\\hline
+   bad-gateway &        502 & Bad Gateway\\\hline
+   service-unavailable & 503 & Service Unavailable\\\hline
+   gateway-timeout &    504 & Gateway Timeout\\\hline
+  \end{tabular}
+  \caption{HTTP status codes}
+  \label{tab:status-code-names}
+\end{table}
+
+\dfn{status-code}{\synvar{name}}{status-code}{syntax}
+\defunx{name->status-code}{symbol}{status-code}
+\defunx{status-code-number}{status-code}{integer}
+\defunx{status-code-message}{status-code}{string}
+\begin{desc}
+  The \ex{status-code} syntax returns a status code where
+  \synvar{name} is the name from Table~\ref{tab:status-code-names}.
+  \ex{Name->status-code} also returns a status code for a name
+  represented as a symbol.  For a given status code,
+  \ex{status-code-number} extracts its number, and
+  \ex{status-code-message} extracts its associated default message.
+\end{desc}
+
+\section{Response Bodies}
+\label{httpd:response-bodies}
+
+A \textit{response body} represents the body of an HTTP response.
+There are several types of response bodies, depending on the
+requirements on content generation.
+
+\defun{make-writer-body}{proc}{body}
+\begin{desc}
+  This constructs a response body from a \textit{writer}---a procedure
+  that prints the page contents to a port.  The \var{proc} argument
+  must be a procedure accepting an output port (to which \var{proc}
+  prints the body) and the options value passed to the \ex{httpd}
+  invocation.
+\end{desc}
+
+\defun{make-reader-writer-body}{proc}{body}
+\begin{desc}
+  This constructs a response body from a \textit{reader/writer}---a
+  procedure that prints the page contents to a port, possibly after
+  reading input from the socket of the HTTP connection.  The
+  \var{proc} argument must be a procedure accepting three arguments:
+  an input port (associated with the HTTP connection socket), an
+  output port (to which \var{proc} prints the body), and the options
+  value passed to the \ex{httpd} invocation.
+\end{desc}
+
+\section{Request Handlers}
+\label{httpd:request-handlers}
+
+A request handler generates the actual content for a request; request
+handlers form a simple algebra and may be combined and composed in
+various ways.
+
+
+A request handler is a procedure of two arguments like this:
+\defun{request-handler}{path req}{response}
+\begin{desc}
+  \var{Req} is a request. The \semvar{path} argument is the URL's
+  path, parsed and split at slashes into a string list. For example,
+  if the Web client dereferences URL
+  %
+\begin{verbatim}
+http://clark.lcs.mit.edu:8001/h/shivers/code/web.tar.gz
+\end{verbatim}
+  then the server would pass the following path to the top-level
+  handler:
+  %
+\begin{verbatim}
+("h" "shivers" "code" "web.tar.gz")
+\end{verbatim}
+  %
+  The \var{path} argument's pre-parsed representation as a string
+  list makes it easy for the request handler to implement recursive
+  operations dispatch on URL paths.
+
+  The request handler must return an HTTP response.
+\end{desc}
+
+\subsection{Basic Request Handlers}
+ 
+The web server comes with a useful toolbox of basic request handlers
+that can be used and built upon.  The following procedures are
+exported by the \ex{httpd\=basic\=handlers} structure:
+
+\defvar{null-request-handler}{request-handler}
+\begin{desc}
+  This request handler always generated a \ex{not-found} error
+  response, no patter what the request is.
+\end{desc}
+
+\defun{make-predicate-handler}{predicate handler
+  default-handler}{request-handler}
+\begin{desc}
+  The request handler returned by this procedure first calls
+  \var{predicate} on its path and request; it then acts like
+  \var{handler} if the predicate returned a true vale, and like
+  \var{default-handler} if the predicate returned \sharpf.
+\end{desc}
+
+\defun{make-host-name-handler}{hostname handler default-handler}{request-handler}
+\begin{desc}
+  The request handler returned by this procedure compares the host
+  name specified in the request with \var{hostname}: if they match, it
+  acts like \var{handler}, otherwise, it acts like
+  \var{default-handler}.
+\end{desc}
+
+\defun{make-path-predicate-handler}{predicate handler
+  default-handler}{request-handler}
+\begin{desc}
+  The request handler returned by this procedure first calls
+  \var{predicate} on its path; it then acts like \var{handler} if the
+  predicate returned a true vale, and like \var{default-handler} if
+  the predicate returned \sharpf.
+\end{desc}
+
+\defun{make-path-prefix-handler}{path-prefix handler default-handler}{request-handler}
+\begin{desc}
+  This constructs a request handler that calls \var{handler} on its
+  argument if \var{path-prefix} (a string) is the first element of the
+  requested path; it calls \var{handler} on the rest of the path and
+  the original request.  Otherwise, the handler acts like
+  \var{default-handler}.
+\end{desc}
+
+\defun{alist-path-dispatcher}{handler-alist default-handler}{request-handler}
+\begin{desc}
+  This procedure takes as arguments an alist mapping strings to path
+  handlers, and a default request handler, and returns a handler that
+  dispatches on its path argument.  When the new request handler is
+  applied to a path 
+\begin{verbatim}
+("foo" "bar" "baz")
+\end{verbatim}
+  it uses the
+  first element of the path---\ex{foo}---to index into the
+  alist.  If it finds an associated request handler in the alist, it
+  hands the request off to that handler, passing it the tail of the
+  path, in this case
+\begin{verbatim}
+("bar" "baz")
+\end{verbatim}
+  %
+  On the other hand, if the path is
+  empty, or the alist search does not yield a hit, we hand off to the
+  default path handler, passing it the entire original path,
+\begin{verbatim}
+("foo" "bar" "baz")
+\end{verbatim}
+  %
+  This procedure is how you say: ``If the first element of the URL's
+  path is `foo', do X; if it's `bar', do Y; otherwise, do Z.''
+  The slash-delimited URI path structure implies an associated tree of
+  names. The request-handler system and the alist dispatcher allow you to
+  procedurally define the server's response to any arbitrary subtree
+  of the path space.
+          
+  Example: A typical top-level request handler is
+\begin{alltt}          
+(define ph
+  (alist-path-dispatcher
+      `(("h"       . ,(home-dir-handler "public\_html"))
+        ("cgi-bin" . ,(cgi-handler "/usr/local/etc/httpd/cgi-bin"))
+        ("seval"   . ,seval-handler))
+      (rooted-file-handler "/usr/local/etc/httpd/htdocs")))
+\end{alltt}
+    
+    This means:
+\begin{itemize}          
+\item If the path looks like \ex{("h"\ob{} "shivers"\ob{}
+    "code"\ob{} "web.\ob{}tar.\ob{}gz")}, pass the path
+  \ex{("shivers"\ob{} "code"\ob{} "web.\ob{}tar.\ob{}gz")} to a
+  home-directory request handler.
+\item If the path looks like \ex{("cgi-\ob{}bin"\ob{} "calendar")},
+    pass ("calendar") off to the CGI request handler.
+  \item If the path looks like \ex{("seval"\ob{} \ldots)}, the tail
+    of the path is passed off to the code-uploading \ex{seval} path
+    handler.
+  \item Otherwise, the whole path is passed to a rooted file handler,
+    who will convert it into a filename, rooted at
+    \ex{/usr/\ob{}lo\ob{}cal/\ob{}etc/\ob{}httpd/\ob{}htdocs},
+    and serve that file.
+\end{itemize}
+\end{desc}
+
+\subsection{Static Content Request Handlers}
+
+The request handlers described in this section are for serving static
+content off directory trees in the file system.  They live in the
+\ex{httpd-file-directory-handlers} structure.
+
+The request handlers in this section eventually call an internal
+procedure named \ex{file\=serve} for serving files which implements a
+simple directory-generation service using the following rules:
+\begin{itemize}
+\item If the filename has the form of a directory (i.e., it ends with
+  a slash), then \ex{file\=serve} actually looks for a file named
+  \ex{index.html} in that directory.
+\item If the filename names a directory, but is not in directory form
+  (i.e., it doesn't end in a slash, as in
+  ``\ex{/usr\ob{}in\ob{}clu\ob{}de}'' or ``\ex{/usr\ob{}raj}''),
+  then \ex{file\=serve} sends back a ``301 moved permanently''
+  message, redirecting the client to a slash-terminated version of the
+  original URL. For example, the URL
+  \ex{http://\ob{}clark.\ob{}lcs.\ob{}mit.\ob{}edu/\ob{}~shi\ob{}vers}
+  would be redirected to
+  \ex{http://\ob{}clark.\ob{}lcs.\ob{}mit.\ob{}edu/\ob{}~shi\ob{}vers/}
+\item If the filename names a regular file, it is served to the
+  client.
+\end{itemize}
+%
+The \ex{httpd-file-directory-handlers} all take an options value as an
+argument, similar to the options for \ex{httpd} itself.
+
+The \var{options} argument can be constructed through a number of procedures
+with names of the form \texttt{with-\ldots}.  Each of these procedures
+either creates a fresh options value or adds a configuration parameter
+to an old options argument.  The configuration parameter value is
+always the first argument, the (old) options value the optional second
+one.  Here they are:
+
+\defun{with-file-name->content-type}{proc [options]}{options}
+\begin{desc}
+  This specifies a procedure for determining the MIME content type
+  (``\ex{text/html},'' ``\ex{application/octet-stream}'' etc.)
+  from a file name.  \var{Proc} takes a file name as an argument and
+  must return a string.  (This is relevant in directory listings.)  The default is a procedure able to handle the
+  more common file extensions.
+\end{desc}
+
+\defun{with-file-name->content-encoding}{proc [options]}{options}
+\begin{desc}
+  This specifies a procedure for determining the MIME content encoding
+  (if the file is compressed, gzipped, etc.) from a file name.
+  (This is relevant in directory listings.)  
+  \var{Proc} takes a file name as an argument and must return two
+  values: the equivalent, unencoded file name (i.e., without the
+  trailing \ex{.Z} or \ex{.gz}) and a string representing the content
+  encoding.
+\end{desc}
+
+\defun{with-file-name->icon-url}{proc [options]}{options}
+\begin{desc}
+  This specifies a procedure for determining the icon to be displayed
+  next to a file name in a directory listing.
+  \var{Proc} takes a file name as an argument and must return a URL
+  for the corresponding icon or \sharpf.
+\end{desc}
+
+\defun{with-blank-icon-url}{file-name-or-\sharpf{} [options]}{options}
+\begin{desc}
+  This specifies a file name (or its absence) for the special icon
+  that must be as wide as the icons returned by the previous procedure
+  but that is blank.
+\end{desc}
+
+\defun{with-back-icon-url}{file-name-or-\sharpf{} [options]}{options}
+\begin{desc}
+  This specifies a file name (or its absence) for the special icon
+  that is displayed next to the ``parent directory'' link in directory
+  listings.
+\end{desc}
+
+\defun{with-unknown-icon-url}{file-name-or-\sharpf{}
+  [options]}{options}
+\begin{desc}
+  This specifies a file name (or its absence) for the special icon
+  that is displayed next to the unknown entries in directory listings.
+\end{desc}
+
+The \ex{make-file-directory-options} procedure eases the construction
+of the options argument:
+
+\defun{make-file-directory-options}{transformer value \ldots}{options}
+\begin{desc}
+  This constructs an options value from an argument list of parameter
+  transformers and parameter values.  The arguments come in pairs,
+  each an option transformer from the list above, and a value for that
+  parameter.  \ex{Make-file-directory-options} returns the resulting
+  options value.
+\end{desc}
+%
+Here are procedure for constructing static content request handlers:
+%
+\defun{rooted-file-handler}{root [options]}{request-handler} 
+\begin{desc}
+  This returns a request handler that serves files from a particular
+  root in the file system.  Only the \ex{GET} operation is provided.
+  The path argument passed to the handler is converted into a
+  filename, and appended to \var{root}.  The file name is checked for
+  \ex{..}  components, and the transaction is aborted if it does.
+  Otherwise, the file is served to the client.
+\end{desc}
+
+\defun{rooted-file-or-directory-handler}{root [options]}{request-handler} 
+\begin{desc}
+Dito, but also serve directory indices for directories without
+\ex{index.html}. 
+\end{desc}
+
+\defun{home-dir-handler}{subdir [options]}{request-handler}
+\begin{desc}
+  This procedure builds a request handler that does basic file serving
+  out of home directories. If the resulting \var{request-handler} is
+  passed a path of the form \ex{(\var{user} . \var{file-path})}, then it serves the file
+  \ex{\var{subdir}/\var{file-path}} inside the user's home directory.
+    
+  The request handler only handles GET requests; the filename is not
+  allowed to contain \ex{..} elements.
+\end{desc}
+
+\defun{tilde-home-dir-handler}{subdir default-request-handler [options]}{request-handler}
+\begin{desc}
+  This returns request handler that examines the car of the path. If
+  it is a string beginning with a tilde, e.g., \ex{"~ziggy"}, then the
+  string is taken to mean a home directory, and the request is served
+  similarly to a home-dir-handler request handler. Otherwise, the
+  request is passed off in its entirety to the
+  \var{default-request-handler}.
+\end{desc}
+ 
+\section{CGI Server}
+
+The procedure(s) described here live in the \ex{httpd-cgi-handlers}
+structure.
+
+\defun{cgi-handler}{bin-dir [cgi-bin-path]}{request-handler}
+\begin{desc}
+  Returns a request handler for CGI scripts located in
+  \var{bin-dir}.  \var{Cgi-bin-dir} specifies the value of the
+  \ex{PATH} variable of the environment the CGI scripts run in. It defaults
+  to
+\begin{verbatim}
+/bin:/usr/bin:/usr/ucb:/usr/bsd:/usr/local/bin
+\end{verbatim}
+  The CGI scripts are called as specified by CGI/1.1\footnote{see
+    \url{http://hoohoo.ncsa.uiuc.edu/cgi/interface.html} for a sort of
+    specification.}.
+
+  Note that the CGI handler looks at the name of the CGI script to
+  determine how it should be handled:
+  \begin{itemize}
+  \item If the name of the script starts with `\ex{nph-}', its reply
+    is read, the RFC~822-fields like \ex{Content-Type} and \ex{Status}
+    are parsed and the client is sent back a real HTTP reply,
+    containing the rest of the script's output.
+    
+  \item If the name of the script doesn't start with `\ex{nph-}',
+    its output is sent back to the client directly. If its return code
+    is not zero, an error message is generated.
+\end{itemize}
+\end{desc}      
+
+\section{Scheme-Evaluating Request Handlers}
+
+The \ex{httpd-seval-handlers} structure contains a handler which
+demonstrates how to safely evaluate Scheme code uploaded from the
+client to the server.
+
+\defvar{seval-handler}{request-handler}
+\begin{desc}
+  This request handler is suitable for receiving code entered into an
+  HTML text form. The Scheme code being uploaded is being \ex{POST}ed
+  to the server (from a form).  The code should be URI-encoded in the
+  URL as \texttt{program=}$\left<\mathrm{stuff}\right>$.
+  $\mathrm{stuff}$ must be an (URI-encoded) Scheme expression which
+  the handler evaluates in a separate subprocess.  (It waits for 10
+  seconds for a result, then kills the subprocess.)  The handler then
+  prints the return values of the Scheme code.
+\end{desc}
+
+The following structures define environments that are \RnRS without
+features that could examine or effect the file system.  You can also
+use them as models of how to execute code in other protected
+environments in \scm.
+
+\subsection{The \protect{\texttt{loser}} structure}
+The \ex{loser} package exports only one procedure:
+
+\begin{defundesc}{loser}{name}{nothing}
+  Raises an error like ``Illegal call \var{name}''.
+\end{defundesc}
+
+\subsection{The \protect{\texttt{toothless}} structure}
+The \ex{toothless} structure contains everything of \RnRS except
+that following procedure cause an error if called:
+\begin{itemize}
+\item \ex{call-with-input-file}
+\item \ex{call-with-output-file}
+\item \ex{load}
+\item \ex{open-input-file}
+\item \ex{open-output-file}
+\item \ex{transcript-on}
+\item \ex{with-input-from-file}
+\item \ex{with-input-to-file}
+\item \ex{eval}
+\item \ex{interaction-environment}
+\item \ex{scheme-report-environment}
+\end{itemize}
+
+\subsection{The \protect{\texttt{toothless-eval}} structure}
+
+\begin{defundesc}{eval-safely} {expression} {any result}
+  Creates a brand-new structure, imports the \ex{toothless} structure,
+  and evaluates \semvar{expression} in it. When the evaluation is
+  done, the environment is thrown away, so \semvar{expression}'s
+  side-effects don't persist from one \ex{eval\=safely} call to the
+  next.  If \semvar{expression} raises an error exception,
+  \ex{eval-safely} returns \sharpf.
+\end{defundesc}
+
+\section{Writing Request Handlers}
+
+\subsection{Parsing HTML Forms}
+
+In HTML forms, field data are turned into a single string, of the form
+\texttt{\synvar{name}=\synvar{val}\&\synvar{name}=\synvar{val}\ldots}.
+The \ex{parse-html-forms} structure provides simple functionality to
+parse these strings.
+
+\defun{parse-html-form-query}{string}{alist}
+\begin{desc}
+  This parses \verb|"foo=x&bar=y"| into \verb|(("foo" . "x") ("bar" .
+  "y"))|.  Substrings are plus-decoded (i.-e.\ plus characters are
+  turned into spaces) and then URI-decoded.
+
+  This implementation is
+  slightly sleazy as it will successfully parse a string like
+  \verb|"a&b=c&d=f"| into \verb|(("a&b" . "c") ("d" .  "f"))| without
+  a complaint.
+\end{desc}
+
+\section{SSL encryption with Apache}
+
+Network traffic with a HTTP server is usually encrypted and protected
+from manipulation using the cryptographic algorithm provided by an
+implementation of the \textit{secure socket layer}, SSL for short.
+SUnet does not have support for SSL yet.  However, an Apache
+web-server with SSL support can be configured as a proxy.  In this
+setup the Apache web-server accepts encrypted requests and forwards
+them to a SUnet web-server running locally.  This section describes
+how to set up Apache as an encrypting proxy, assuming the reader has
+basic knowledge about Apache and its configuration directives.
+
+The following excerpt shows a minimalist SSL virtual host that
+forwards requests to a SUnet server.
+
+\begin{alltt}
+<VirtualHost 134.2.12.82:443>
+  DocumentRoot "/www/some-domain/htdocs"
+  ServerName www.some-domain.de
+  ServerAdmin admin@some-domain.de
+  ErrorLog /www/some-domain/logs/error_log
+
+  ProxyRequests off
+  ProxyPass / http://localhost:8080/
+  ProxyPassReverse / http://localhost:8080/
+
+  SSLEngine on
+  SSLRequireSSL
+
+  SSLCertificateFile /www/some-domain/cert/some-domain.cert
+  SSLCertificateKeyFile /www/some-domain/cert/some-domain.key
+</VirtualHost>
+\end{alltt}
+
+First, a virtual host is added to Apache's configuration file.  This
+virtual host listens for incoming connections on port 443, which is
+the standard port for encrypted HTTP traffic.  \texttt{SSLRequireSSL}
+ensures that server accepts encrypted connections only.
+
+In terms of the Apache documentation, the web-server acts as a so
+called \textit{reverse proxy}.  The option \texttt{ProxyRequests} has
+a misleading name.  Setting this option to off does only turns off
+Apache's facility to act as a \textit{forward proxy} and has no effect
+on the configuration directives for reverse proxies.  Actually,
+turning on \texttt{ProxyRequests} is dangerous, because this turns
+Apache into a proxy server that can be used from anywhere to access
+any site that is accessible to the Apache server.
+
+In this setting, all requests get forwarded to a SUnet web-server
+which listens for incoming connections on localhost port 8080 only,
+thus, it is not reachable from a remote machine.  Apache forwards all
+requests to the host and port specified by the \texttt{ProxyPass}
+directive.  \texttt{ProxyPassReverse} specifies how
+\texttt{Location}-Header fields of HTTP redirect messages send by the
+SUNet server are translated.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

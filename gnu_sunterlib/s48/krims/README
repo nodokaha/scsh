@@ -1,0 +1,149 @@
+sunterlib/s48/krims -- Odds and Ends
+
+structure SRFI-1+ -- SRFI-1 + REST
+
+The structure SRFI-1+ extends the list lib with REST := CDR.  [ I dearly
+like (FIRST . REST) lists and (CAR . CDR) trees. ]
+
+                                  *
+
+structure SRFI-9+ -- SRFI-9 + DEFINE-RECORD-DISCLOSER
+
+The structure SRFI-9+ extends SRFI-9 by the convenient record disclosing
+facility from DEFINE-RECORD-TYPES:
+
+(define-record-type rt <make> predicate <field spec> ...)       SYNTAX
+
+just as SRFI-9.
+
+
+(define-record-discloser rt d) --> unspecified                  PROCEDURE
+
+just as DEFINE-RECORD-TYPES:  Install the procedure D : rt -> list
+as discloser for records of type RT where RT has been defined with
+DEFINE-RECORD-TYPE (from above) and D maps its input record to a
+printable list starting with a symbol.
+
+                                  *
+
+structure ONEBOL -- poor man's unit testing framework (sans framework)
+
+Caution, it is really primitive (but ate not much of my time so far:
+its main raison d'etre).
+
+
+(fail msg e0 ...)                                             PROCEDURE
+
+Synopsis:  Signal a failure with message MSG and related values E0 ...
+
+
+
+(assert exp x0 ...)                                              SYNTAX
+
+Signal a failure if EXP is false, reporting both the failed assertion EXP
+(literally) and the values of X0 ...  Don't evaluate X0 ... if EXP holds
+true.
+
+
+(deny exp x0 ...)                                                SYNTAX
+
+Signal a failure if EXP is true, reporting both the failed assertion
+(NOT EXP) literally and the values of X0 ...  Don't evaluate X0 ...
+if EXP doesn't hold true.
+
+
+(should-raise condition exp)                                     SYNTAX
+(should-raise* condition thunk)                               PROCEDURE
+
+Evaluate the expression EXP resp. call the THUNK and signal a failure
+if the expression or thunk doesn't raise the CONDITION.
+
+
+(shouldnt-raise condition exp)                                  SYNTAX
+(shouldnt-raise* condition thunk)                            PROCEDURE
+
+Evaluate the expression EXP resp. call the THUNK and signal a failure
+if the expression or thunk does raise the CONDITION.
+
+
+(failure? condition)                                         PROCEDURE
+(error? condition)                                           PROCEDURE
+
+Convenience exports, also available from structure CONDITIONS.
+
+                                  *
+
+
+structure KRIMS -- Odds and Ends
+
+The structure KRIMS gathers miscellaneous tiny utilities mainly for use
+of other sunterlib projects.
+
+(assert exp x0 ...)                                              SYNTAX
+
+Signal an error if EXP is false, reporting both the failed assertion EXP
+(literally) and the values of X0 ...  Don't evaluate X0 ... if EXP holds
+true.
+
+                                  *
+
+
+(receive/name loop formals exp form0 ...)                        SYNTAX
+
+RECEIVE/NAME is a multi-values analogue of named LET (but much less
+useful) that helps when chaining n-valued n-ary functions, for instance.
+
+Synopsis:  Bind LOOP to a macro wrapped around the procedure LUP with
+parameter list FORMALS and body FORM0 ... so that
+* (LOOP multi-valued-expression) calls LUP with the values of
+  multi-valued-expression , and
+* (LOOP exp0 ...) becomes (LUP exp0 ...)
+
+Syntax:  (receive/name <identifier> <formals> <expression> <body>)
+with non-terminals from R5RS.
+
+Semantics:  (A special case is good enough.)
+Assuming the LOOP tag isn't shadowed in the context `...'
+
+            (receive/name loop (x y) exp0
+              ... (loop exp1) ...)
+is eqv to
+            (receive (x y) exp0
+              (let lup ((x x) (y y))
+                ... (receive (x y) exp1
+                      (lup x y)) ...))
+
+and         (receive/name loop (x y) exp0
+              ... (loop exp1 exp1) ...)
+is eqv to
+            (receive (x y) exp0
+              (let lup ((x x) (y y))
+                ... (lup exp1 exp2) ...))
+
+Example:
+
+  (define (shove n xs) (values (- n 1) (cons n xs)))
+  (receive/name loop (n xs) (values 7 '())
+    (if (= n 0)
+        (display xs)
+        (loop (shove n xs))))
+  ==> (1 2 3 4 5 6 7)
+                                  *
+
+(gen-dispatch ((predicate action) ...) e0 e1 ... en)             SYNTAX
+
+Dispatch action on type of first argument E0:  feed E0 ... EN to the
+first action such that the PREDICATE holds for E0.  Signal an error
+if nothing goes.
+
+Example:
+          (gen-dispatch ((string? string-ref)
+                         (vector? vector-ref)
+                         (list? list-ref))
+                        '#(a zopp 36) 2)
+          ==> 36
+
+[ Yes, this macro doesn't help much. ]
+
+                                 oOo
+

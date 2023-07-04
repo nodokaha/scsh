@@ -1,0 +1,81 @@
+GUIDLINES FOR CONTRIBUTORS
+
+ADDING A NEW LIBRARY
+
+0. This library only accepts code with the modified bsd license in the
+(generated) file COPYING.
+
+1. Create a new subdirectory of s48 or scsh for your library. Only
+touch files in your library's tree.
+
+2. Your library's tree should have at least these files:
+  AUTHORS -- (CHANGED in Sunterlib 0.6) a list of your library's
+    copyright(s), keep the year up to date if you make changes to your
+    library. If the code is from the public domain, then substitute
+    "Public Domain" for "Copyright".
+  BLURB -- a one or two line description of your library. It should
+    start with the name of your library's directory followed by a
+    colon.
+  NEWS -- (NEW in Sunterlib 0.6) each contributed library has
+    its own version number. Start with whatever version
+    number is appropriate for your library. To avoid releasing
+    different versions under the same number, if the Sunterlib version
+    has changed, then bump the local version number before changing
+    your library. Remember to keep the local NEWS file up to date with
+    your library. Remember to keep the version number up to date with
+    your package definition.
+  pkg-def.scm -- (NEW in Sunterlib 0.6) the package definition for
+    your library. Use the COPYING procedure to generate the COPYING
+    file. For an example, see s48/args-fold/pkg-def.scm
+
+Our administration and the build systems depends on those files.
+
+  README -- a text file documenting your library. Recomended
+  package.scm -- (WAS interfaces.scm, packages.scm before Sunterlib
+    0.6) the interfaces and packages defined by your
+    library. Recomended
+
+3. Add an entry for your library to the NEWS file in the top-level
+directory of Sunterlib.
+
+CONVENTIONS
+
+Sunterlib welcomes contributions from many authors. Please help keep
+spacing consistant in the library:
+
+1. Don't commit files indented with tabs. In (x)emacs, use:
+ (setq-default indent-tabs-mode nil)
+
+2. Use linefeed to end lines, not CR or CR-LF.
+
+3. Don't commit files with trailing spaces. In (x)emacs, use
+"remove-trailing-spaces" use:
+
+(defun remove-trailing-spaces ()
+  "Remove trailing spaces from the end of the lines in the buffer"
+  (interactive)
+  (let ((p (point))
+	s)
+    ;; Check for, and potentially remove whitespace appearing at the
+    ;; end of different lines.
+    (progn
+      (goto-char (point-min))
+      ;; search for anything, but space, taab or newline: [^ \t\n].
+      ;; Record a matched substirng consisting of
+      ;; one or more spaces and tabs: \\([ \t])
+      ;; at the end of the line: &
+      ;;
+      (while ;; (re-search-forward "[^ \t\n]\\([ \t]+\\)$" nil t)
+	  (re-search-forward "\\([ \t]+\\)$" nil t)
+	(message "found trailing space at %d-%d" (match-beginning 0) (match-end 0))
+	(delete-region (match-beginning 0) (match-end 0)))
+      (goto-char p) ; restore cursor
+      nil)))
+
+If you want to make remove-trailing-spaces automatically, then this
+after-save-hook will check for trailing spaces AFTER every save. You
+can use undo to revert the modification (before saving the trimmed
+version) in the rare case that removing trailing spaces is not
+desired:
+
+(add-hook 'after-save-hook 'remove-trailing-spaces)

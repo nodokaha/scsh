@@ -1,0 +1,3546 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-7.html">previous</a></span><span>, <a href="man-Z-H-9.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_6"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_6">Chapter 6</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_6">SUrflet server</a></h1>
+<p></p>
+<p>
+The SUrflet server enables you to write server side scripted web
+programs in Scheme.  
+There are lots of example files in
+<tt>scheme/httpd/surflet/webserver/root/surflets</tt> from which you
+can copy freely.</p>
+<p>
+</p>
+<p>
+</p>
+<a name="node_sec_6.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_6.1">6.1&nbsp;&nbsp;Howto</a></h2>
+<p></p>
+<p>
+This howto gives a short introduction in how to write a SUrflet.  It
+is concentrated on the practical side rather on describing the
+SUrflet API in detail to give you instant succes in running your own
+surflets.  See section <a href="#node_sec_6.2">6.2</a> for the (technical) API
+description. </p>
+<p>
+</p>
+<a name="node_sec_6.1.1"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.1">6.1.1&nbsp;&nbsp;Introduction</a></h3>
+<p>For those who don't know it already, SUrflets are pieces of code that
+can be executed interactively through a website.  There is a SUrflet handler who administrates their execution and suspension.  The
+SUrflet handler is part of the SUnet webserver.  SUrflets ease the
+implementation of web applications in two ways, compared to other
+server-side scripting tools like Java<sup>TM</sup>Servlets or
+Microsoft&reg;Active Server Pages or PHP:</p>
+<p>
+</p>
+<ol>
+<li><p>SUrflets have an automatic program flow control like any
+other usual program (but unlike usual web programs), <em>i.e.</em>the web
+designer doesn't have to care about session management at all. The
+sequence of the web pages result from their appearance in the program
+like the print statements in any other usual program.</p>
+<p>
+</p>
+<li><p>SUrflets come along with a library for robust user
+interaction.  SUrflets represent interaction elements of the web page
+like text input fields or dropdown lists in the SUrflet program by
+specific objects.  A web designer can plug in these objects into a
+website and use them to read out the user input.
+</p>
+</ol><p></p>
+<p>
+The following sections probably assume that you have basic knowledge
+of the SUnet webserver and scsh.  The environment variable
+<tt>$sunet</tt> refers to the top level directory of your sunet
+installation.  On my system this is <tt>/home/andreas/sw/sunet</tt>.</p>
+<p>
+</p>
+<a name="node_sec_6.1.2"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.2">6.1.2&nbsp;&nbsp;How to run the SUnet webserver that handles SUrflets </a></h3>
+<p>The following sections will show pieces of SUrflet code you might
+want to try out.  Therefore you need the SUnet webserver running with
+the ability to serve SUrflets.  This section tells you how to do it.</p>
+<p>
+</p>
+<a name="node_sec_Temp_8"></a>
+<h5><a href="man-Z-H-1.html#node_toc_node_sec_Temp_8">Obtaining necessary packages</a></h5>
+<p>You need Oleg's SSAX package
+(for scsh), to be able to use surflets:</p>
+<p>
+</p>
+<ul>
+<li><p>Download Oleg's SSAX package from
+<a href="http://prdownloads.sf.net/ssax/ssax-sr5rs-plt200-4.9.tar.gz?download">http://prdownloads.sf.net/ssax/ssax-sr5rs-plt200-4.9.tar.gz?download</a>.</p>
+<p>
+</p>
+<li><p>Download the SSAX package kit from
+<a href="http://lamp.epfl.ch/~schinz/scsh_packages">http://lamp.epfl.ch/~schinz/scsh_packages</a>.  </p>
+<p>
+</p>
+<li><p>Uncompress and untar both tarballs in the same directory.
+This will create a directory called <tt>SSAX</tt>, to which I will
+refer to as <tt>$SSAX</tt>.  The package kit will add a file
+<tt>pkg-def.scm</tt> to the <tt>SSAX</tt> directory.</p>
+<p>
+</p>
+<li><p>Install SSAX as a scsh package by issuing the command
+<tt>scsh-install-pkg -prefix /path/to/your/package/root</tt> in the
+<tt>$SSAX</tt> directory.  If you don't yet have the packaging
+utility of Michel Schinz, you can obtain it from
+<a href="http://lamp.epfl.ch/~schinz/scsh_packages">http://lamp.epfl.ch/~schinz/scsh_packages</a>.</p>
+<p>
+If you don't want to install SSAX with the packaging utility, you
+can adjust the scripts to directly load the SSAX package definitions
+from <i>$SSAX/lib/packages.scm.  Note that the original file
+has a typo which you can correct with</p>
+<p>
+</p>
+<pre class=verbatim>    cd $SSAX
+    patch -p1 &lt; $sunet/httpd/surflets/SSAX-goodhtml-patch
+  </pre><p></p>
+<p>
+</p>
+</ul><p></i></p>
+<p>
+</p>
+<a name="node_sec_Temp_9"></a>
+<h5><a href="man-Z-H-1.html#node_toc_node_sec_Temp_9">Starting the SUrflet server</a></h5>
+<p>You can start the SUnet webserver along with the
+SUrflet-handler now.  The SUnet distribution comes with a script that
+does this for you:</p>
+<p>
+</p>
+<pre class=verbatim>$ /path/to/your/package/root/sunet/web-server/start-surflet-server
+</pre><p></p>
+<p>
+Please be patient, scsh has to load a lot of libraries.  If the
+loading succeeds you will see something like this:</p>
+<p>
+</p>
+<pre class=verbatim>[andreas@hgt web-server]$ ./start-surflet-server
+Loading...
+reading options: ()
+Going to run SUrflet server with:
+ htdocs-dir:    /home/andreas/bin/lib/scsh/0.6/sunet-2.1/web-server/root/htdocs   
+ surflet-dir:   /home/andreas/bin/lib/scsh/0.6/sunet-2.1/web-server/root/surflets 
+ images-dir:    /home/andreas/bin/lib/scsh/0.6/sunet-2.1/web-server/root/img
+ port:          8080
+ log-file-name: /tmp/httpd.log
+ a maximum of 5 simultaneous requests, syslogging activated, 
+ and home-dir-handler (public_html) activated.
+
+ NOTE: This is the SUrflet server. It does not support cgi.
+</pre><p></p>
+<p>
+This means the server is up and running.  Try to connect to
+<a href="http://localhost:8080">http://localhost:8080</a> with your browser and you will see the
+welcome page of the SUnet server.  There's a link to the
+SUrflets homepage.  You can also already try out some of the
+SUrflets that come with the distribution.</p>
+<p>
+You will probably notice a long response time the first time you load
+the first SUrflet.  This is because the server has to load the
+SUrflet libraries.  The server handles further requests to SUrflets faster.</p>
+<p>
+If the port the SUrflet server tries to use is occupied, you will see
+an error message similar to this one:</p>
+<p>
+</p>
+<pre class=verbatim>Error: 98
+       &quot;Address already in use&quot;
+       #Procedure 11701 (%bind in scsh-level-0)
+       4
+       2
+       (0 . 8080)
+</pre><p></p>
+<p>
+In this case, pass another port number to the script, <em>e.g.</em>8000:
+</p>
+<blockquote><tt>start-surflet-server -p 8000</tt></blockquote><p>
+The <tt>-help</tt> option will show you more parameters that you can
+adjust, but you won't need them for this howto.</p>
+<p>
+</p>
+<a name="node_sec_6.1.3"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.3">6.1.3&nbsp;&nbsp;How to send web pages</a></h3>
+<p>This section will discuss some of the various ways in which you can
+send a web page to a browser that contacted your SUrflet.</p>
+<p>
+</p>
+<a name="node_sec_6.1.3.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.3.1">6.1.3.1&nbsp;&nbsp;My first SUrflet </a></h4>
+<p></p>
+<p>
+Traditionally,  your first program in any programming language prints
+something like ``Hello, World!''.  We follow this tradition:</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (send-html/finish
+       '(html (body (h1 &quot;Hello, world!&quot;)))))
+    ))
+</pre><p></p>
+<p>
+You can either save a file with that content in the SUrflets directory the server mentioned at startup or you can use the file
+<tt>howto/hello.scm</tt> that comes along with the SUrflets distribution and which is located in the server's standard SUrflets directory.  Let's go through the small script step by step:</p>
+<p>
+</p>
+<pre class=verbatim>(define-structure surflet surflet-interface
+</pre><p></p>
+<p>
+This defines a module named <tt>surflet</tt> which implements the
+interface <tt>surflet-interface</tt>.  <tt>surflet-interface</tt> just
+states that the module exports a function named <tt>main</tt> to which
+we will come shortly.  For those of you who know about the scsh module
+system: Yes, SUrflets are basically scsh modules that are loaded
+dynamically during run time.</p>
+<p>
+</p>
+<pre class=verbatim>  (open surflets
+        scheme-with-scsh)
+</pre><p></p>
+<p>
+The <tt>open</tt> form lists all the modules the SUrflet needs.  You
+will probably always need the two modules that are stated here
+(namely <tt>surflets</tt> and <tt>scheme-with-scsh</tt>).  If you need
+other modules, like <tt>srfi-13</tt> for string manipulation, this is
+the place where you want to state it.</p>
+<p>
+</p>
+<pre class=verbatim>  (begin
+</pre><p></p>
+<p>
+This just opens the body of the SUrflet.  All your SUrflet code goes
+here.<a name="call_footnote_Temp_10"></a><a href="#footnote_Temp_10"><sup><small>5</small></sup></a></p>
+<p>
+</p>
+<pre class=verbatim>    (define (main req)
+</pre><p></p>
+<p>
+Here is the <tt>main</tt> function that the interface declared this
+SUrflet will implement.  The <tt>main</tt> function is the entry point
+to your SUrflet:  The server calls this function every time a user
+browses to your SUrflet the first time.  The server calls <tt>main</tt>
+with one argument: a representation of the inital request of the
+browser.  We don't have to worry about that at this point.</p>
+<p>
+</p>
+<pre class=verbatim>      (send-html/finish
+       '(html (body (h1 &quot;Hello, world!&quot;)))))
+    ))
+</pre><p></p>
+<p>
+<tt>send-html/finish</tt> is one of three function you will regularly
+use to send web pages to the browser.  The other two functions are
+<tt>send-html</tt> and <tt>send-html/suspend</tt>.
+<tt>send-html/finish</tt> - as the name already suggests - sends a
+HTML page to the browser and finishes the SUrflet.  <tt>send-html</tt>
+just sends the HTML page and does not return. 
+<tt>send-html/suspend</tt> sends the HTML page and suspends the
+SUrflet, <em>i.e.</em>it waits until the user continues with the SUrflet, 
+<em>e.g.</em>by submitting a webform.  We will discuss <tt>send-html</tt> and
+<tt>send-html/suspend</tt> in detail later.  I will refer to these three
+functions as the <em>sending functions</em>.</p>
+<p>
+In a SUrflet, HTML pages are represented as lists, or, to be more
+precise, as SXML (S-expression based XML). The first
+element of a SXML list is a symbol stating the HTML tag.  The other
+elements of a SXML list are the contents that are enclosed by this
+HTML tag.  The contents can be other SXML lists, too.  Here are some
+examples of SXML lists and how they translate to HTML:</p>
+<p>
+</p>
+<table border=0><tr><td valign=top >SXML: </td><td valign=top ><code class=verbatim>'(p &quot;A paragraph.&quot;)}</code>  </td></tr>
+<tr><td valign=top >HTML: </td><td valign=top ><code class=verbatim>&lt;p&gt;A paragraph.\htmltag{/p}}</code></td></tr>
+<tr><td valign=top ></td></tr>
+<tr><td valign=top >SXML: </td><td valign=top ><code class=verbatim>'(p &quot;A paragraph.&quot; (br) &quot;With break line.&quot;)}</code> </td></tr>
+<tr><td valign=top >HTML: </td><td valign=top ><code class=verbatim>&lt;p&gt;A paragraph.&lt;br&gt;With break line.&lt;/p&gt;}</code></td></tr>
+<tr><td valign=top ></td></tr>
+<tr><td valign=top >SXML: </td><td valign=top ><code class=verbatim>'(p &quot;Nested&quot; (p &quot;paragraphs&quot;))}</code></td></tr>
+<tr><td valign=top >HTML: </td><td valign=top ><code class=verbatim>&lt;p&gt;Nested&lt;p&gt;paragraphs&lt;/p&gt;&lt;/p&gt;}</code></td></tr>
+<tr><td valign=top ></td></tr></table><p>
+Attributes are stated by a special list whose first element is the
+at-symbol.  The attribute list must be the second element in the list:</p>
+<p>
+</p>
+<table border=0><tr><td valign=top >SXML: </td><td valign=top ><code class=verbatim>'(a (@ (href &quot;attr.html&quot;)) &quot;Attributed HTML tags.&quot;)</code></td></tr>
+<tr><td valign=top >HTML: </td><td valign=top ><code class=verbatim>&lt;a href=&quot;attr.html&quot;&gt;Attributed HTML tags.&lt;/a&gt;</code></td></tr>
+<tr><td valign=top ></td></tr>
+<tr><td valign=top >SXML: </td><td valign=top ><code class=verbatim>'(a (@ (href &quot;attr2.html&quot;) (target &quot;\_blank&quot;)) &quot;2
+attributes.&quot;)}</code> </td></tr>
+<tr><td valign=top >HTML: </td><td valign=top ><code class=verbatim>&lt;a href=&quot;attr2.html&quot; target=&quot;\_blank&quot;&gt;2 attributes.&lt;/a&gt;}</code>
+</td></tr></table><p>
+As you see from the SUrflet example, <tt>send-html/finish</tt> expects
+SXML as an argument.  In the example, the SXML translates to the
+following HTML code:
+</p>
+<pre class=verbatim>&lt;html&gt;&lt;body&gt;&lt;h1&gt;Hello, world!&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre><p></p>
+<p>
+Please note, that there is no check for valid HTML or even XHTML
+here.  The only thing the translation process takes care of are
+special characters in strings like the ampersand (<tt>&amp;</tt>).  The
+translation process replaces them by their HTML representation (<em>e.g.</em>,
+<tt>&amp;amp;</tt>) so you don't have to worry about that when you use
+strings.  Everything else like using valid HTML tags or valid
+attributes is your responsibility.</p>
+<p>
+</p>
+<a name="node_sec_6.1.3.2"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.3.2">6.1.3.2&nbsp;&nbsp;Dynamic content</a></h4>
+<p>Let's extend our first SUrflet example by some dynamic content, <em>e.g.</em>by displaying the current time using scsh's <tt>format-date</tt>
+function.  As the HTML page is basically represented as a list, this
+can be done like this:</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (send-html/finish
+       `(html (body (h1 &quot;Hello, world!&quot;)
+                    (p &quot;The current date and time is &quot;
+                       ,(format-date &quot;~H:~M:~S ~p ~m/~d/~Y&quot; 
+                                     (date)))))))
+    ))
+</pre><p></p>
+<p>
+This SUrflet can be found in <tt>howto/hello-date.scm</tt>.  The
+beginning of this SUrflet is the same as in the previous example.
+The difference lies in the argument to <tt>send-html/finish</tt>.  Note
+that the argument starts with a backquote (<tt>`</tt>) rather than with
+a regular quote (<tt>'</tt>) as in the previous example.</p>
+<p>
+Instead of passing a ``static'' list, <em>i.e.</em>a list whose contents are
+given before execution, this SUrflet uses the quasiquote and unquote
+feature of Scheme to create a ``dynamic'' list, <em>i.e.</em>a list whose
+contents are given only during execution.  A ``dynamic'' list is
+introduced by a backquote (<tt>`</tt>) and its dynamic contents are
+noted by commata (<tt>,</tt>).  Thus, if the SUrflet is executed while
+I am writing this howto, the argument to <tt>send-html/finish</tt> above
+is translated to</p>
+<p>
+</p>
+<pre class=verbatim>       '(html (body (h1 &quot;Hello, world!&quot;)
+                    (p &quot;The current date and time is &quot;
+                       &quot;13:09:03 PM 11/18/2003&quot;)))))
+</pre><p></p>
+<p>
+<em>before</em> it is passed to <tt>send-html/finish</tt>.  Thus, using
+dynamic content can be easily done with Scheme's quasiquote and
+unquote feature.  Of course, you can build your list in any way you
+want; the quasiquote notation is just a convenient way to do it.</p>
+<p>
+</p>
+<a name="node_sec_6.1.3.3"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.3.3">6.1.3.3&nbsp;&nbsp;Several web pages in a row</a></h4>
+<p>The previous example SUrflets only showed one page and finished
+afterwards.  Here, we want to present two web pages in a row.  We use
+the previously mentioned function <tt>send-html/suspend</tt>, which
+suspends after it has sent the page and continues when the user
+clicked for the next page.  In contrast to <tt>send-html/finish</tt>,
+that expected SXML, <tt>send-html/suspend</tt> expects a function that
+takes an argument and returns SXML.  The parameter the function gets
+(here: <tt>k-url</tt>) is the URL that points to the next
+page:<a name="call_footnote_Temp_11"></a><a href="#footnote_Temp_11"><sup><small>6</small></sup></a></p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (send-html/suspend
+       (lambda (k-url)
+         `(html (body (h1 &quot;Hello, world!&quot;)
+                      (p (a (@ (href ,k-url)) &quot;Next page --&gt;&quot;))))))
+      (send-html/finish
+       '(html (body (h1 &quot;Hello, again!&quot;)))))
+    ))
+</pre><p></p>
+<p>
+This SUrflet can be found in <tt>howto/hello-twice.scm</tt>.  This
+example first displays a web page with the message ``Hello, world!''
+and a link to the next page labeled with ``Next page -&gt;''.  When the
+user clicks on the provided link, <tt>send-html/suspend</tt> returns and
+the next statement after the call to <tt>send-html/suspend</tt> is
+executed.  Here it is <tt>send-html/finish</tt> which shows a web page
+with the message ``Hello, again!''.</p>
+<p>
+When <tt>send-html/suspend</tt> returns, (almost) the complete context
+of the running SUrflet is restored.  Thus, every variable in the
+SUrflet will retain its value during suspension.  The consequence is
+that you don't have to worry about sessions, sesssion variables and
+alike.  The user can freely use the back button of her browser or
+clone a window while the SUrflet will keep on responding in the
+expected way.  This is all automatically managed by the
+SUrflet-handler.  </p>
+<p>
+The only exception are variables whose values are changed by side
+effects, <em>e.g.</em>if you change a variable via <tt>set!</tt>.  These
+variables keep their modified values, allowing communication between
+sessions of the same SUrflet.<a name="call_footnote_Temp_12"></a><a href="#footnote_Temp_12"><sup><small>7</small></sup></a></p>
+<p>
+</p>
+<a name="node_sec_6.1.3.4"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.3.4">6.1.3.4&nbsp;&nbsp;Begin and end of sessions</a></h4>
+<p>So far I don't have mentioned too much details about sessions.  The
+reason is, as mentioned before, that the SUrflet handler takes care
+of the session automatically as described in the previous paragraph.
+</p>
+<p>
+The only thing you have to worry about is when your session
+<em>ends</em>.  As long as your session hasn't been finished by
+<tt>send-html/finish</tt>, the user can move freely between the web
+pages your SUrflet provides.  Once you've finished the session via
+<tt>send-html/finish</tt>, this freedom ends.  As the session is over,
+the user will get an error message when he tries to recall some web
+page from the server.  The server will tell the user about the
+possible reasons for the error (namely that most likely the session
+was finished) and provides a link to the beginning of a new session.</p>
+<p>
+Thus, <tt>send-html/suspend</tt> suspends the current execution of a
+SUrflet, returning with the request for the next web page of your
+SUrflet and <tt>send/finish</tt> finishes the session.  The third
+sending function is <tt>send-html</tt> which just sends a web page.
+<tt>send-html</tt> does not return and does not touch the session of
+your SUrflet instance.</p>
+<p>
+</p>
+<a name="node_sec_6.1.3.5"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.3.5">6.1.3.5&nbsp;&nbsp;Abbreviations in SXML</a></h4>
+<p></p>
+<p>
+The example in subsection ``Several web pages in a row'' wrote down
+the link to the next web page explicitly via the ``a''-tag.  As
+websites contain a lot of links, the sending functions (like
+<tt>send-html/finish</tt>) allow an abbreviation.  The following SXML
+snippets are equivalent:</p>
+<p>
+</p>
+<pre class=verbatim>(a (@ (href ,k-url)) &quot;Next page --&gt;&quot;)
+(url ,k-url &quot;Next page --&gt;&quot;)
+</pre><p></p>
+<p>
+<tt>url</tt> expects the target address as the next element and includes
+every text afterwards as part of the link. </p>
+<p>
+There are also some other abbreviations.  <tt>(nbsp)</tt> inserts
+`<tt>&amp;nbsp;</tt>' into the HTML, <tt>(*COMMENT* <tt>...</tt>)</tt> inserts a
+comment, and with <tt>(plain-html <tt>...</tt>)</tt> you can insert arbitrary
+HTML code (<em>i.e.</em>strings) directly , without any string conversions.
+The last abbreviation, <tt>surflet-form</tt>, is discussed in the next
+section.</p>
+<p>
+</p>
+<a name="node_sec_6.1.4"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.4">6.1.4&nbsp;&nbsp;How to write web forms</a></h3>
+<p>The SUrflets come along with a libary for easy user interaction.  The
+following subsections will show how to write web forms and how to get
+the data the user has entered.</p>
+<p>
+</p>
+<a name="node_sec_6.1.4.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.4.1">6.1.4.1&nbsp;&nbsp;Simple web forms</a></h4>
+<p>Let's write a SUrflet that reads user input and prints it out on the
+next page:</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (let* ((text-input (make-text-field))
+             (submit-button (make-submit-button))
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (body 
+                        (h1 &quot;Echo&quot;)
+                        (surflet-form ,k-url
+                                      (p &quot;Please enter something:&quot;
+                                         ,text-input
+                                         ,submit-button)))))))
+             (bindings (get-bindings req))
+             (user-input (input-field-value text-input bindings)))
+        (send-html/finish
+         `(html (body
+                 (h1 &quot;Echo result&quot;)
+                 (p &quot;You've entered: '&quot; ,user-input &quot;'.&quot;))))))
+))
+</pre><p></p>
+<p>
+Here are the details to the code in <tt>main</tt>:</p>
+<p>
+</p>
+<pre class=verbatim>    (define (main req)
+      (let* ((text-input (make-text-field))
+             (submit-button (make-submit-button))
+</pre><p></p>
+<p>
+<tt>make-text-field</tt> and <tt>make-submit-button</tt> define two user
+interaction elements: a text input field and a submit button.
+SUrflets represent user interaction elements by <tt>Input-field</tt>
+objects.  Thus, user interaction elements are first class values in
+SUrflet, unlike in many other web scripting languages, <em>e.g.</em>Java
+surflets, PHP or Microsoft Active Server Pages, <em>i.e.</em>you have a
+representation of a user interaction element in your program that you
+can pass to functions, receive them as return values, etc.  You'll
+soon see the advantages of this approach.</p>
+<p>
+</p>
+<pre class=verbatim>           (req (send-html/suspend
+                 (lambda (k-url)
+                   `(html 
+                     (body 
+                      (h1 &quot;Echo&quot;)
+                      (surflet-form ,k-url
+                                    (p &quot;Please enter something:&quot;
+                                       ,text-input
+                                       ,submit-button)))))))
+</pre><p></p>
+<p>
+Instead of discarding the return value of <tt>send-html/suspend</tt> as
+in the examples of the previous section, this time we'll save the
+return value, as it will contain the data the user has entered in our
+text input field.</p>
+<p>
+The definition of the website is as described in the previous section
+except for the new abbreviation <tt>surflet-form</tt>.
+<tt>surflet-form</tt> creates the HTML code for a web form and expects
+as its next value the URL to the next webpage as provided by
+<tt>send-html/suspend</tt>, here named
+<tt>k-url</tt>.  The remaining arguments constitute the content of the
+web form.  Thus, the code above is equal to the following SXML:</p>
+<p>
+</p>
+<pre class=verbatim>(form (@ (action ,k-url) (method &quot;GET&quot;))
+  (p &quot;Please enter something:&quot;
+     ,text-input
+     ,submit-button))
+</pre><p></p>
+<p>
+If you want to use the POST method instead of the default GET method,
+add the symbol <tt>'POST</tt> after the URL:</p>
+<p>
+</p>
+<pre class=verbatim>(surflet-form ,k-url
+              POST
+              (p &quot;Please enter something:&quot;
+                 ,text-input
+                 ,submit-button))
+</pre><p></p>
+<p>
+The web page <tt>send-html/suspend</tt> sends to the browser looks like
+in figure [missing]. 
+After the user has entered his data into
+the web form, <tt>send-html/suspend</tt> returns with the request object
+of the browser for the next page.  This request object contains the
+data the user has entered.</p>
+<p>
+</p>
+<pre class=verbatim>             (bindings (get-bindings req))
+</pre><p></p>
+<p>
+With the function <tt>get-bindings</tt> we pull out the user data of the
+request object.  Here we save the user data into the variable
+<tt>bindings</tt>.  <tt>get-bindings</tt> works for both request methods
+<tt>GET</tt> and <tt>POST</tt>.</p>
+<p>
+</p>
+<pre class=verbatim>           (user-input (input-field-value text-input bindings)))
+</pre><p></p>
+<p>
+With the function <tt>input-field-value</tt> and the extracted user data
+we can read the value for an <tt>input-field</tt>.   Here, we want to
+know what the user has entered into the <tt>text-input-field</tt>.</p>
+<p>
+</p>
+<pre class=verbatim>        (send-html/finish
+         `(html (body
+                 (h1 &quot;Echo result&quot;)
+                 (p &quot;You've entered: '&quot; ,user-input &quot;'.&quot;))))))
+</pre><p></p>
+<p>
+After we have extracted what the user has entered into the text field,
+we can show the final page of our SUrflet and echo her input.</p>
+<p>
+Thus, the scheme for user interaction is about the following:</p>
+<p>
+</p>
+<ul>
+<li><p>Create the user interaction elements, <tt>input-field</tt>s, you
+want to use in your web page.
+</p>
+<li><p>Send the web page with <tt>send-html/suspend</tt> to the browser.
+Plug in the <tt>input-field</tt>s in the web page as if they were usual
+values.  Save the return value of <tt>send-html/suspend</tt>.
+</p>
+<li><p>Extract the user data from the return value of
+<tt>send-html/suspend</tt>.
+</p>
+<li><p>Read the values of each <tt>input-field</tt> out of the extracted
+user data with <tt>input-field-value</tt>.
+</p>
+</ul><p></p>
+<p>
+The complete list of functions that create <tt>input-fields</tt> can be
+found in the API in section <a href="#node_sec_6.2">6.2</a>.</p>
+<p>
+</p>
+<a name="node_sec_6.1.4.2"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.4.2">6.1.4.2&nbsp;&nbsp;Return types other than strings</a></h4>
+<p></p>
+<p>
+As the user interaction elements are first class values in a SUrflet,
+they can return other types than strings.  For example the SUrflets come with a number input field, <em>i.e.</em>an input field that accepts only
+text that can be interpreted as a number.  If the user enters
+something that is not a number, <tt>input-field-value</tt> will return
+<tt>#f</tt>as the value of the number input field.  If you'd rather want
+an error to be raised, you can use <tt>raw-input-field-value</tt>
+instead.</p>
+<p>
+</p>
+<a name="node_sec_6.1.4.3"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.4.3">6.1.4.3&nbsp;&nbsp;Annotated input fields</a></h4>
+<p>The return value of an input field need not even be a primitive
+value.  The SUrflets library allows you to ``annotate'' your input
+fields with values which should be returned indicated by the user's
+input.  <em>E.g.</em>, consider this SUrflet:</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+	handle-fatal-error
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (let* ((select-input-field 
+              (make-select
+               (map make-annotated-select-option
+                    '(&quot;Icecream&quot; &quot;Chocolate&quot; &quot;Candy&quot;)
+                    '(1.5 2.0 0.5))))
+              (req (send-html/suspend
+                    (lambda (k-url)
+                      `(html 
+                        (head (title &quot;Sweet Store&quot;))
+                        (body
+                         (h1 &quot;Your choice&quot;)
+                         (surflet-form 
+                          ,k-url
+                          (p &quot;Select the sweet you want:&quot;
+                             ,select-input-field)
+                          ,(make-submit-button)))))))
+              (bindings (get-bindings req))
+              (price (input-field-value select-input-field 
+                                        bindings)))
+        (send-html/finish
+         `(html (head (title &quot;Receipt&quot;))
+                (body
+                 (h2 &quot;Your receipt:&quot;)
+                 (p &quot;This costs you $&quot; ,price &quot;.&quot;))))))
+))
+</pre><p></p>
+<p>
+Let's go through the important part of this SUrflet:</p>
+<p>
+</p>
+<pre class=verbatim>      (let* ((select-input-field 
+              (make-select
+               (map make-annotated-select-option
+                    '(&quot;Icecream&quot; &quot;Chocolate&quot; &quot;Candy&quot;)
+                    '(1.5 2.0 0.5))))
+</pre><p></p>
+<p>
+Here we define a select input field (a dropdown list).  Instead of
+only providing a list of values that shall show up in the dropdown
+list and later examining which one was selected and looking up the
+price for the sweet, we bind the values in the list with the price
+while we create the select input field.  When the select input field
+is shown in the browser, it will show the names of the sweets.  When
+we lookup the user's input, we will get the associated price for the
+sweet.  Again, this works not only with numbers, but with any
+arbitrary Scheme value (<em>e.g.</em>functions or records).</p>
+<p>
+</p>
+<a name="node_sec_6.1.4.4"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.4.4">6.1.4.4&nbsp;&nbsp;Sending error messages</a></h4>
+<p>If a user tries to forge a SUrflet-URL (<em>e.g.</em>by extracting the
+continuation URL from the HTML source and editing it), your SUrflet has to deal with unexpected values.  Usually, a forged SUrflet-URL
+will result in an error that is raised in one of the SUrflet library
+functions.  If you don't catch this error, the SUrflet handler will
+catch it for you, send an error message to the user
+<em>and terminate the current session</em> as your SUrflet obviously
+encountered an unexpected error and might be in an invalid state.  If
+you don't want this behavior, you can catch this error (like any other
+error that is raised by scsh) and send your own error message with
+<tt>send-error</tt> which is located in the <tt>surflets/error</tt>
+package.  The <tt>handle-fatal-error</tt> package can be useful in this
+context.  Here's an example, that modifies the example from the
+previous subsection (modifications emphasized):</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+<em>        handle-fatal-error</em>
+<em>        surflets/error</em>
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (let* ((select-input-field 
+              (make-select
+               (map make-annotated-select-option
+                    '(&quot;Icecream&quot; &quot;Chocolate&quot; &quot;Candy&quot;)
+                    '(1.5 2.0 0.5))))
+              (req (send-html/suspend
+                    (lambda (k-url)
+                      `(html 
+                        (head (title &quot;Sweet Store&quot;))
+                        (body
+                         (h1 &quot;Your choice&quot;)
+                         (surflet-form 
+                          ,k-url
+                          (p &quot;Select the sweet you want:&quot;
+                             ,select-input-field)
+                          ,(make-submit-button)))))))
+              (bindings (get-bindings req))
+<em>              (cost (with-fatal-error-handler               </em>
+<em>                     (lambda (condition decline)            </em>
+<em>                       (send-error (status-code bad-request)</em>
+<em>                                   req                      </em>
+<em>                                   &quot;No such option or internal </em>
+<em>                                    error. Please try again.&quot;))</em>
+<em>                     (raw-input-field-value select-input-field </em>
+<em>                                            bindings))))    </em>
+        (send-html/finish
+         `(html (head (title &quot;Receipt&quot;))
+                (body
+                 (h2 &quot;Your receipt:&quot;)
+                 (p &quot;This costs you $&quot; ,cost &quot;.&quot;))))))
+))
+</pre><p></p>
+<p>
+Let's examine the important part of this example:</p>
+<p>
+</p>
+<pre class=verbatim>              (cost (with-fatal-error-handler
+                     (lambda (condition decline)
+                       (send-error (status-code bad-request)
+                                   req
+                                   &quot;No such option or internal
+                                    error. Please try again.&quot;))
+                     (raw-input-field-value select-input-field 
+                                            bindings))))
+</pre><p></p>
+<p>
+As mentioned in <a href="#node_sec_6.1.4.2">6.1.4.2</a>, this SUrflet uses
+<tt>raw-input-field-value</tt> instead of <tt>input-field-value</tt>
+because the former raises an error while the latter returns <tt>#f</tt> in
+case of an error.</p>
+<p>
+If a user forges a continuation URL, <tt>raw-input-field-value</tt>
+might not be able to find a valid value for the
+<tt>select-input-field</tt> and raises an error.  This error is catched
+by the error handler which was installed by
+<tt>with-fatal-error-handler</tt>.  The error handler uses
+<tt>send-error</tt> to send an error message to the browser.  Its first
+argument is the status code of the error message.  See the
+documentation of the SUnet webserver for different status codes.  The
+second argument is the request which was processed while the error
+occured.  The last argument is a free text message to explain the
+cause of the error to the user.</p>
+<p>
+While in the original SUrflet the user will still see the resulting
+receipt web page with an empty dollar amount and has her session
+finished, this modified version will show an error message and won't
+finish the session.</p>
+<p>
+It is your choice, which version you choose, <em>i.e.</em>if you let the
+SUrflet handler handle the occuring error automatically or if you
+install your own error handlers and use <tt>raw-input-field-value</tt>.
+However, be careful if you use <tt>raw-input-field-value</tt> along with
+check boxes.  The HTML standard dictates that an unchecked check box
+does not appear in the data the browser sends to the server.  Thus,
+<tt>raw-input-field-value</tt> won't find the check box in the data and
+raise an error which is not a ``real'' error as you migh expect it.</p>
+<p>
+</p>
+<a name="node_sec_6.1.4.5"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.4.5">6.1.4.5&nbsp;&nbsp;Your own input fields</a></h4>
+<p>The SUrflet library contains constructors for all input fields that
+are described in the HTML&nbsp;2.0 standard.  See the SUrflet API in
+section <a href="#node_sec_6.2">6.2</a> for a complete list.  The SUrflet library also allows you to create your own input fields, <em>e.g.</em>an input
+field that only accepts valid dates as its input.  This subsection
+gives you a short overview how to do this.  You will find the details
+in the SUrflet API.</p>
+<p>
+Let's have a look at an SUrflet that uses its own input field.  The
+``input field'', called nibble input field, consists of four check
+boxes which represent bits of a nibble (half a byte).  The value of
+the input field is the number that the check boxes represent.  <em>E.g.</em>, if
+the user checks the last two checkboxes, the value of the nibble input
+field is 3.</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        surflets/my-input-fields
+        scheme-with-scsh)
+  (begin
+
+    (define (make-nibble-input-fields)
+      (let ((checkboxes (list (make-annotated-checkbox 8)
+                              (make-annotated-checkbox 4)
+                              (make-annotated-checkbox 2)
+                              (make-annotated-checkbox 1))))
+        (make-multi-input-field
+         #f &quot;nibble-input&quot;
+         (lambda (input-field bindings)
+           (let loop ((sum 0)
+                      (checkboxes checkboxes))
+             (if (null? checkboxes)
+                 sum
+                 (loop (+ sum (or (input-field-value (car checkboxes) 
+                                                     bindings)
+                                  0))
+                       (cdr checkboxes)))))
+         '()
+         (lambda (ignore)
+           checkboxes))))
+
+    (define nibble-input-field (make-nibble-input-fields))
+
+    (define (main req)
+      (let* ((req (send-html/suspend
+                   (lambda (new-url)
+                     `(html (title &quot;Nibble Input Widget&quot;)
+                            (body 
+                             (h1 &quot;Nibble Input Widget&quot;)
+                             (p &quot;Enter your nibble (msb left):&quot;)
+                             (surflet-form ,new-url
+                                           ,nibble-input-field
+                                           ,(make-submit-button)))))))
+             (bindings (get-bindings req))
+             (number (input-field-value nibble-input-field bindings)))
+        (send-html
+         `(html (title &quot;Result&quot;)
+                (body 
+                 (h2 &quot;Result&quot;)
+                 (p &quot;You've entered &quot; ,number &quot;.&quot;))))))
+    ))
+</pre><p></p>
+<p>
+Let's go through this SUrflet step by step.</p>
+<p>
+</p>
+<pre class=verbatim>(define-structure surflet surflet-interface
+  (open surflets
+        surflets/my-input-fields
+        scheme-with-scsh)
+</pre><p></p>
+<p>
+If you want to create your own input fields, you have to open the
+<tt>surflets/my-input-fields</tt> package.</p>
+<p>
+</p>
+<pre class=verbatim>  (begin
+    (define (make-nibble-input-fields)
+      (let ((checkboxes (list (make-annotated-checkbox 8)
+                              (make-annotated-checkbox 4)
+                              (make-annotated-checkbox 2)
+                              (make-annotated-checkbox 1))))
+</pre><p></p>
+<p>
+<tt>make-nibble-input-fields</tt> is the constructor for our new type of
+input field.  As mentioned before, we use check boxes to let the user
+enter the nibble.  We use annotated checkboxes for this purpose whose
+value is the value in the nibble.</p>
+<p>
+</p>
+<pre class=verbatim>        (make-multi-input-field
+         #f &quot;nibble-input&quot;
+</pre><p></p>
+<p>
+The value of our new input field will depend on the value of several
+real input fields.  Thus we create a multi input field.  If the value
+depended only on the browser data that is associated to the name of
+our input field, we would use <tt>make-input-field</tt> instead, which
+creates a usual input field.  <em>E.g.</em>, if we wanted to create a date input
+field that accepts only valid dates as input and used a text input
+field for this purpose, we would use <tt>make-input-field</tt>.</p>
+<p>
+The first two parameters is the name of the input field and its type.
+As we use checkboxes to represent our input field, we don't need the
+name field.  The type field is meant for debugging purposes, so you
+can identify the type of the input field during a debugging session.</p>
+<p>
+</p>
+<pre class=verbatim>         (lambda (input-field bindings)
+           (let loop ((sum 0)
+                      (checkboxes checkboxes))
+             (if (null? checkboxes)
+                 sum
+                 (loop (+ sum (or (input-field-value (car checkboxes) 
+                                                     bindings)
+                                  0))
+                       (cdr checkboxes)))))
+</pre><p></p>
+<p>
+The next parameter is the so called transformer function.
+<tt>raw-input-field-value</tt> calls the transformer function to
+determine the value of the input field depending on the given
+bindings.  The transformer function of a multi input field (which our
+nibble input field is) gets the input field and the bindings as
+parameters.  A usual input field would only get the data that is
+associated to its name.</p>
+<p>
+The transformer function of our nibble input field goes over each
+check box, looks it up in the bindings and adds its value to a sum, if
+<tt>input-field-value</tt> can find it.  If it can't find it, zero is
+added instead.  The value of our nibble input field is the resulting
+sum.</p>
+<p>
+The rest of the SUrflet is straight forward and not repeated here
+again.  We create, use and evaluate the nibble input field as we do
+with every other input field.</p>
+<p>
+</p>
+<a name="node_sec_6.1.5"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.5">6.1.5&nbsp;&nbsp;Program flow control</a></h3>
+<p>With the techniques shown so far it is rather difficult to create a
+web page that has several different successor webpages rather than
+only one web page.  This section will show you how to do this with the
+SUrflets.  Basically, there are two different methods how to perform
+this task.  One method is to mark each link in some way and evaluate
+the mark after <tt>send-html/suspend</tt> has returned.  The other
+method is to bind a callback function to each link that is called when
+the user selects the link.  This section shows both methods.</p>
+<p>
+</p>
+<a name="node_sec_6.1.5.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.5.1">6.1.5.1&nbsp;&nbsp;Dispatching to more than one successor web page</a></h4>
+<p>The basic idea of dispatching is to add a mark to a link and evaluate
+it after the user has clicked on a link and <tt>send-html/suspend</tt>
+returned.  Let's have a look at an example.  It shows an entry page at
+which the user states the language in which she wants to be greeted:</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+
+    (define (main req)
+      (let* ((english (make-address))
+             (german (make-address))
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (head (title &quot;Multi-lingual&quot;))
+                       (body 
+                        (h2 &quot;Select your language:&quot;)
+                        (ul
+                         (li (url ,(english k-url) &quot;English&quot;)
+                         (li (url ,(german k-url) &quot;Deutsch&quot;)))))))))
+             (bindings (get-bindings req)))
+        (case-returned-via bindings
+          ((english) (result-page &quot;Hello, how are you?&quot;))
+          ((german) (result-page &quot;Hallo, wie geht es Ihnen?&quot;)))))
+
+    (define (result-page text)
+      (send-html/finish
+       `(html 
+         (head (title &quot;Greeting&quot;))
+         (body
+          (h2 ,text)))))
+    ))
+</pre><p></p>
+<p>
+Let's see how <tt>main</tt> presents the different options:</p>
+<p>
+</p>
+<pre class=verbatim>    (define (main req)
+      (let* ((english (make-address))
+             (german (make-address))
+</pre><p></p>
+<p>
+Of course you don't have to worry about adding the mark to the links.
+Instead, we create the links with <tt>make-address</tt>.</p>
+<p>
+</p>
+<pre class=verbatim>             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (head (title &quot;Multi-lingual&quot;))
+                       (body 
+                        (h2 &quot;Select your language:&quot;)
+                        (ul
+                         (li (url ,(english k-url) &quot;English&quot;)
+                         (li (url ,(german k-url) &quot;Deutsch&quot;)))))))))
+</pre><p></p>
+<p>
+<tt>make-address</tt> returns a function you can call to create the
+link as we did here with</p>
+<p>
+</p>
+<pre class=verbatim> (li (url ,(english k-url) &quot;English&quot;)
+</pre><p></p>
+<p>
+This creates a list item which contains a hyperlink labeled
+``English''.  The hyperlink is created by the SXML abbreviation
+<tt>url</tt> as shown in <a href="#node_sec_6.1.3.5">6.1.3.5</a>.  Instead of just passing 
+the continuation URL <tt>k-url</tt> to <tt>url</tt>, we create the marked
+link by calling the function <tt>make-adddress</tt> gave us.</p>
+<p>
+</p>
+<pre class=verbatim>             (bindings (get-bindings req)))
+        (case-returned-via bindings
+          ((english) (result-page &quot;Hello, how are you?&quot;))
+          ((german) (result-page &quot;Hallo, wie geht es Ihnen?&quot;)))))
+</pre><p></p>
+<p>
+After <tt>send-html/suspend</tt> has returned, we can evaluate which
+link the user has clicked by using <tt>case-returned-via</tt>.
+<tt>case-returned-via</tt> works similar to the regular <tt>case</tt> of
+Scheme.  It evaluates the body of the form whose initial list contains
+the address that the user used to leave the website.  <em>E.g.</em>, if the user
+has selected ``German'' as her preferred language and clicked on the
+link we have named <tt>german</tt> in our SUrflet,
+<tt>case-returned-via</tt> will evaluate its second form and the
+SUrflet will display the greeting in German.</p>
+<p>
+<tt>case-returned-via</tt> is syntactic sugar like the regular
+<tt>case</tt>.  However, instead of <tt>equal?</tt> it uses
+<tt>returned-via</tt>.  <tt>returned-via</tt> takes the bindings and 
+and an address and returns <tt>#t</tt>, if the user left the web page via
+this address (<em>i.e.</em>, via the link that is represented by this address)
+and <tt>#f</tt>otherwise.  <tt>returned-via</tt> does not end with a
+question mark as it might return other values as well as we will see
+shortly.  Of course, it is your choice if you want to use
+<tt>case-returned-via</tt> or explicitly <tt>returned-via</tt>.</p>
+<p>
+</p>
+<a name="node_sec_6.1.5.2"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.5.2">6.1.5.2&nbsp;&nbsp;Annotated dispatching</a></h4>
+<p>The approach shown in the previous subsection has one major drawback:
+the meaning of an address becomes clear only when you look at the
+dispatching section of <tt>case-returned-via</tt>.  This subsection
+shows you how to link the meaning and the representation of an address
+closer together.</p>
+<p>
+We modify the previous code example slightly to this SUrflet (differences emphasized):</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (let* (<em>(language (make-annotated-address))</em>
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (head (title &quot;Multi-lingual&quot;))
+                       (body 
+                        (h2 &quot;Select your language:&quot;)
+                        (ul
+                         (li (url ,<em>(language k-url </em>
+<em>                                             &quot;Hello, how are you?&quot;)</em> 
+                                  &quot;English&quot;)
+                         (li (url ,<em>(language k-url </em>
+<em>                                             &quot;Hallo, wie geht es Ihnen?&quot;)</em>
+                                  &quot;Deutsch&quot;)))))))))
+             (bindings (get-bindings req)))
+        (case-returned-via bindings
+<em>          ((language) =&gt; result-page))))</em>
+
+    (define (result-page text)
+      (send-html/finish
+       `(html 
+         (head (title &quot;Greeting&quot;))
+         (body
+          (h2 ,text)))))
+    ))
+</pre><p></p>
+<p>
+Let's look at the differing parts:</p>
+<p>
+</p>
+<pre class=verbatim>      (let* ((language (make-annotated-address))
+</pre><p></p>
+<p>
+To link the meaning with the address itself, we use an annotated
+address.  As we can annotate the address now, we don't need two
+distinct addresses anymore.</p>
+<p>
+</p>
+<pre class=verbatim>          (li (url ,(language k-url 
+                              &quot;Hello, how are you?&quot;)
+                   &quot;English&quot;)
+          (li (url ,(language k-url 
+                              &quot;Hallo, wie geht es Ihnen?&quot;)
+                   &quot;Deutsch&quot;)))))))))
+</pre><p></p>
+<p>
+In addition to the continuation URL <tt>k-url</tt> we also annotate the
+address with a value.  Here we use the different greetings as the
+annotation.  The address can be annotated with any arbitrary Scheme
+value, <em>e.g.</em>functions or records.</p>
+<p>
+</p>
+<pre class=verbatim>        (case-returned-via bindings
+          ((language) =&gt; result-page))))
+</pre><p></p>
+<p>
+<tt>case-returned-via</tt> has an extended syntax similar to <tt>cond</tt>
+that it useful with annotated address.  The arrow `<tt>=&gt;</tt>' calls
+the following function with the annotation of the address via which
+the user has left the web page.  You can extract the annotation
+yourself with <tt>returned-via</tt> like this:</p>
+<p>
+</p>
+<pre class=verbatim>(result-page (returned-via language bindings))	
+</pre><p></p>
+<p>
+This will call <tt>result-page</tt> with the annotation of the address
+via which the user has left the web page.  <tt>returned-via</tt> returns
+<tt>#f</tt>, if the user didn't leave the web page via one of the links
+created with this address (which is not really possible in this
+example).</p>
+<p>
+</p>
+<a name="node_sec_6.1.5.3"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.5.3">6.1.5.3&nbsp;&nbsp;Callbacks</a></h4>
+<p>The other method to lead to different successor web pages is using
+callbacks.  A callback is a function that is called if the user leaves
+the web page via an associated link.  This is different from the
+dispatch method where <tt>send-html/suspend</tt> returns.  You can
+create a web page that only uses callbacks to lead to successor web
+pages and you don't have to use <tt>send-html/suspend</tt>.
+Instead, you can use <tt>send-html</tt>.</p>
+<p>
+Although it is possible to use several different callbacks in a single
+web page, this is not recommended.  The reason lies in the
+implementation of a callback, which saves the current continuation.
+Several different callbacks would result in the storage of the several
+slightly different continuations.  This is unnecessary, as you can
+annotate the callbacks with the arguments for the callback function.
+Let's see an example which is a variation of the previous examples
+(important parts / differences emphasized):</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        <em>surflets/callbacks</em>
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (let ((language <em>(make-annotated-callback result-page)</em>))
+        (<em>send-html</em>
+         `(html 
+           (head (title &quot;Multi-lingual&quot;))
+           (body 
+            (h2 &quot;Select your language:&quot;)
+            (ul
+             (li (url ,<em>(language &quot;Hello, how are you?&quot;)</em>
+                      &quot;English&quot;)
+                 (li (url ,<em>(language &quot;Hallo, wie geht es Ihnen?&quot;)</em>
+                          &quot;Deutsch&quot;)))))))))
+
+    (define <em>(result-page req text)</em>
+      (send-html/finish
+       `(html 
+         (head (title &quot;Greeting&quot;))
+         (body
+          (h2 ,text)))))
+    ))
+</pre><p></p>
+<p>
+The differences to the dispatch method are the following: you have to
+open the <tt>surflets/callbacks</tt> package to use callbacks, you don't
+use the continuation URL to create the callback link, and the
+callbacked function must accept the request from the browser as the
+first argument.  Furthermore, you don't have to use
+<tt>send-html/suspend</tt>, if a user can only leave your web page via
+callbacks.  However, it can be sensible to combine the dispatch and
+the callback method, in which case you have to use
+<tt>send-html/suspend</tt>.</p>
+<p>
+Note that is nonsensical to create a callback on top level, <em>i.e.</em>the
+call to <tt>make-annotated-callback</tt> must occur every time
+<tt>main</tt> is called and not only once when the SUrflet is read into
+memory.  For the same reason it is nonsensical in most cases to reuse
+a callback.</p>
+<p>
+The SUrflet library provides also a wrapper function with which you
+can instruct the callback to call different functions instead of a
+single one.  If you create your callback like</p>
+<p>
+</p>
+<pre class=verbatim>(let ((callback (make-annotated-callback callback-function)))
+   <tt>...</tt>)
+</pre><p></p>
+<p>
+you can instruct the callback to call different functions like this:</p>
+<p>
+</p>
+<pre class=verbatim>(callback function1 arg1 arg2)
+<tt>...</tt><br>
+(callback function2 arg3 arg4 arg5)
+</pre><p></p>
+<p>
+Again, it is your choice which option you want to use.  Note that
+calling a function with several arguments and of different amount each
+time is also possible if you only use a single function for the
+callback.</p>
+<p>
+</p>
+<a name="node_sec_6.1.6"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.6">6.1.6&nbsp;&nbsp;Data management</a></h3>
+<p>When you write web programs, there are usually two kinds of data that
+you use: data that is local to each instance of a SUrflet, <em>e.g.</em>the
+user's login, and data that is global to each instance of a SUrflet,
+<em>e.g.</em>a port to a logfile.  Changes to local data is only visible to
+each session of a SUrflet, while changes to global data is visible
+to every session of a SUrflet.</p>
+<p>
+The SUrflet library does not really distinguish between these two
+types of data, but provides ways to realize both of them in a
+convenient way that is not (really) different from the way you handle
+these data types in a regular Scheme program.</p>
+<p>
+If a data item is globally used in your SUrflet, define it global
+(on top level) and change its values with <tt>set!</tt>.   If a data
+item is locally used, define it locally (in your function) and do not
+change its value with <tt>set!</tt>.  </p>
+<p>
+If the following sounds too technical to you, you can safely skip this
+paragraph.  The reason why the distinction between global and local
+data is done via whether you mutate the data's value with <tt>set!</tt>
+is that the SUrflets are implemented with continuations.
+Continuations cannot reflect changes that are done via <tt>set!</tt> (or
+side effects in general) and thus such changes are globally visible.
+On the other hand continuations represent states of a program and a
+reified continuations reifies also the values of all data.</p>
+<p>
+But what to do if you happen to want to change your <em>local</em>
+data's value with <tt>set!</tt>?  The SUrflet library provides a place
+where you store such mutable local data and two functions to access
+it: <tt>set-session-data!</tt> sets the mutable local data and
+<tt>get-session-data</tt> reads the mutable local data.  Here is an
+example.  It uses the callback technique that was presented in the
+previous section.  If you haven't read that section, you only need to
+know that <tt>show-page</tt> is called again and again as long as the
+user keeps on clicking on ``Click''.</p>
+<p>
+</p>
+<pre class=verbatim>
+(define-structure surflet surflet-interface
+  (open surflets
+        surflets/callbacks
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (set-session-data! -1)
+      (let ((start (make-annotated-callback show-page)))
+        (show-page req 'click start)))
+
+    (define (show-page req what callback)
+      (if (eq? what 'click)
+          (click callback)
+          (cancel)))
+
+    (define (click callback)
+      (set-session-data! (+ 1 (get-session-data)))
+      (send-html
+       `(html 
+         (head (title &quot;Click counter&quot;))
+         (body
+          (h2 &quot;Click or cancel&quot;)
+          (p &quot;You've already clicked &quot; 
+             ,(get-session-data) 
+             &quot; times.&quot;)
+          (p (url ,(callback 'click callback) &quot;Click&quot;)
+             (url ,(callback 'cancel callback) &quot;Cancel&quot;))))))
+
+    (define (cancel)
+      (send-html/finish
+       `(html
+         (head (title &quot;Click counter finished&quot;))
+         (body
+          (h2 &quot;Finished&quot;)
+          (p &quot;after &quot; ,(get-session-data) &quot; clicks.&quot;)))))
+))
+</pre><p></p>
+<p>
+At the beginning of <tt>main</tt> we initialize the mutable local data
+with <tt>set-session-data!</tt>.</p>
+<p>
+</p>
+<pre class=verbatim>    (define (main req)
+      (set-session-data! -1)
+      (let ((start (make-annotated-callback show-page)))
+        (show-page req 'click start)))
+</pre><p></p>
+<p>
+Afterwards, we create and save a callback that will be called again
+and again.  We call <tt>show-page</tt> with the callback to show the
+first web page.</p>
+<p>
+</p>
+<pre class=verbatim>    (define (show-page req what callback)
+      (if (eq? what 'click)
+          (click callback)
+          (cancel)))
+</pre><p></p>
+<p>
+<tt>show-page</tt> evaluates its second argument <tt>what</tt> to
+determine what to do next: continue or cancel.</p>
+<p>
+</p>
+<pre class=verbatim>    (define (click callback)
+      (set-session-data! (+ 1 (get-session-data)))
+      (send-html
+       `(html 
+         (head (title &quot;Click counter&quot;))
+         (body
+          (h2 &quot;Click or cancel&quot;)
+          (p &quot;You've already clicked &quot; 
+             ,(get-session-data) 
+             &quot; times.&quot;)
+          (p (url ,(callback 'click callback) &quot;Click&quot;)
+             (url ,(callback 'cancel callback) &quot;Cancel&quot;))))))
+</pre><p></p>
+<p>
+If the user continues, <tt>click</tt> increases the mutable local
+counter and shows the next page.  </p>
+<p>
+Note that we don't use <tt>send-html/suspend</tt> here because we use
+the callback to lead to the next web page.  If the user clicks on the
+link labeled with ``Click'' or ``Cancel'', <tt>show-page</tt> will be
+called with <tt>'click</tt> or <tt>'cancel</tt>, respectively, and the
+callback as parameters.  This creates an endless loop without saving
+endless states of the SUrflet.</p>
+<p>
+<tt>cancel</tt> shows the final page with the amount of clicks
+performed.  </p>
+<p>
+</p>
+<a name="node_sec_6.1.7"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.1.7">6.1.7&nbsp;&nbsp;My own SXML</a></h3>
+<p>Section <a href="#node_sec_6.1.3.1">6.1.3.1</a> introduced SXML, the way how SUrflets represent HTML.   This section will show you, how you can create your
+own rules to translate from SXML to HTML.</p>
+<p>
+</p>
+<a name="node_sec_6.1.7.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.7.1">6.1.7.1&nbsp;&nbsp;Terms and theoretical background</a></h4>
+<p>This subsection will introduce the main concepts of the translation
+process and some necessary terms we will use in the following.</p>
+<p>
+The translation process from SXML to HTML takes two steps.  In the
+first step, SXML is translated to an intermediate form.  This is done
+by the <i>translator</i>.  In the second step, the intermediate form
+is printed into an HTML string.  This is done by the
+<i>printer</i>.  The intermediate form looks very much like SXML,
+but contains only <i>atoms</i> or, recursively, list of atoms.
+Atoms are numbers, characters, strings, <tt>#f</tt>, and the empty list.
+We call the intermediate form an <i>atom tree</i> and the list from
+which we've started an <i>SXML tree</i>.</p>
+<p>
+The basic unit in the translation process is a <i>conversion
+rule</i>.  A conversion rule consists of a trigger and a conversion
+function.  As its first element, the trigger identifies the list for
+which the translator shall call the conversion function.  The
+translator calls the conversion function with all list elements as
+parameters and replaces the whole list by the result of the conversion
+function.  The result of the conversion function is supposed to be an
+atom tree.</p>
+<p>
+The translator takes the SXML tree and a list of conversion rules as
+arguments.  It then traverses the SXML tree depth first and calls the
+conversion functions according to the triggers it encounters,
+replacing the nodes in the SXML tree with the return values of each
+conversion function called.  The result of this translation step will
+be an atom tree, which the printer will print into a string or port.</p>
+<p>
+The translator calls the conversion function in two different modes,
+depending on the conversion rule.  The regular mode is the
+<i>preprocess</i> mode:  the translator translates every argument of
+the conversion function before calling it.  The other mode is the
+<i>unprocessed</i> mode:  the translator calls the conversion
+function directly without preprocessing the arguments.  This is, the
+translator stops traversing the SXML tree at nodes that trigger a
+conversion rule in unprocessed mode.  </p>
+<p>
+There are two default triggers which you can't use in your translation
+rules: <tt>*default*</tt> and <tt>*text*</tt>.  <tt>*default*</tt> as the
+trigger marks the default conversion rule which the translator uses if
+no other conversion rule triggers.  <tt>*text*</tt> marks the text
+conversion rule and triggers, if the node in the SXML tree is a
+string.  In the standard conversion rule set the text conversion rule
+performs HTML escaping, <em>e.g.</em>for the ampersand (&amp;).</p>
+<p>
+</p>
+<a name="node_sec_6.1.7.2"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.1.7.2">6.1.7.2&nbsp;&nbsp;Outlook</a></h4>
+<p>More to come soon about SUrflets consisting of different parts and
+individual SXML.</p>
+<p>
+</p>
+<p>
+
+</p>
+<a name="node_sec_6.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_6.2">6.2&nbsp;&nbsp;API description</a></h2>
+<p></p>
+<p>
+The SUrflet server comes with an extensive set of modules.  This
+section describes the modules and the programming interfaces.  See the
+howto section <a href="#node_sec_6.1">6.1</a> for a practical guide.  Note that
+most of the procedures mentioned here are meant to be called from
+within a SUrflet.</p>
+<p>
+</p>
+<a name="node_sec_6.2.1"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.1">6.2.1&nbsp;&nbsp;The SUrflet server</a></h3>
+<p>The SUrflet server provides basic procedures to send web content to a
+client.  To enable the SUnet webserver to serve SUrflets, you have to
+add the SUrflet handler to it, which resides in the
+<a name="node_idx_154"></a><tt>surflet-handler</tt> structure.  <em>E.g.</em>:</p>
+<p>
+</p>
+<pre class=verbatim>(httpd 
+  (make-httpd-options
+   <tt>...</tt><br>
+with-request-handler 
+   (alist-path-dispatcher
+    (list
+     (cons &quot;surflet&quot; (surflet-handler (with-surflet-path 
+                                       &quot;web-server/root/surflets&quot;))))
+     (rooted-file-or-directory-handler &quot;web-server/root/htdocs&quot;))))
+</pre><p></p>
+<p>
+This will set up the SUrflet handler to handle requests directed to
+the directory <tt>/surflet/</tt>.  The SUrflet handler can only handle
+requests directed to SUrflets.  Here's the interface description:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(surflet-handler <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_156"></a>
+<blockquote>
+This procedures sets up the SUrflet handler and returns the
+according request handler for the SUnet webserver.  The options
+argument is similar to the one passed to <tt>httpd</tt> and is exlpained
+below.<p>
+The SUrflet handler accepts requests (solely) to SUrflets whose
+file name must have the extension <tt>.scm</tt>.  The structure of
+SUrflets is explained below.  The SUrflet handler receives the
+<tt>request</tt> from <tt>httpd</tt>, translates it to a
+<tt>surflet-request</tt> and passes it to the requested SUrflet.  The
+SUrflet in turn is expected to return a <tt>surflet-response</tt>,
+which the SUrflet handler translates to a <tt>repsonse</tt> for
+<tt>httpd</tt>.  Thus, the SUrflet deals only with <tt>surflet-request</tt>
+and <tt>surflet-response</tt> objects.  The structure of these objects
+and how they are passed around is explained below.</p>
+<p>
+A SUrflet may also return a <tt>redirect</tt> <tt>response</tt>, which the
+SUrflet handler passes to the <tt>httpd</tt> untouched.  See
+<a href="man-Z-H-4.html#node_sec_2.3">2.3</a> for details.</p>
+<p>
+The SUrflet handler calls the SUrflet wrapped into an error
+handler that catches any error the SUrflet may yield.  In this
+case, it terminates the SUrflets session (see below for more on
+sessions) and returns an <tt>error</tt> <tt>response</tt> to <tt>httpd</tt> with
+the error code 500 &quot;Internal Server Error&quot; and a description of
+the error.
+</p>
+</blockquote><p>
+The <i>options</i> argument can be constructed in a similar way to the
+options argument of <tt>httpd</tt>.  The procedures' names are of the form
+<tt>with-<tt>...</tt></tt> and they all either create a new option or add a
+new parameter to a given option.  The new parameter is always the
+first argument while the (old) option the optional second one.  The
+following procedures reside in the  <a name="node_idx_158"></a><tt>surflet-handler/options</tt>
+structure.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-surflet-path <i>surflet-path [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_160"></a>
+<blockquote>
+This specifies the path in which the SUrflet handler looks for
+SUrflets.  The <i>surflet-path</i> is a string.  This option must be
+given for the handler to work.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-session-lifetime <i>seconds [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_162"></a>
+<blockquote>
+This specifies the initial lifetime of a session.  The lifetime of a
+session is the number of seconds the SUrflet handler waits for a
+response from a client for that session, before she automatically
+finishes it.  See below for details on sessions.  Defaults to 600,
+<em>i.e.</em>10 minutes.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-cache-surflets? <i>cache-surflets? [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_164"></a>
+<blockquote>
+This specifices whether the SUrflet handler caches SUrflets.  The
+caching of SUrflets is a prerequisite for SUrflet wide global
+variables.  See below for details on the scope of variables in
+SUrflets.  Defaults to <tt>#t</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-make-session-timeout-text <i>timeout-text-procedure
+[options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_166"></a>
+<blockquote>
+This specifies a procedure that generates the timeout text.  The
+SUrflet handler displays the timeout text when she receives a
+request for a SUrflet session that does not exist, either because
+the SUrflet finished its session, the session has timed out, or the
+URL is illformed.  The default is an English text with an
+explanation of the possible reasons and a link to a new session of
+the requested SUrflet.  <i>timeout-text-procedure</i> accepts the
+string path to the SUrflet that was requested and returns a string.
+</blockquote><p>
+Similar to the <tt>httpd</tt> options there exists a procedure to avoid
+parenthisis:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-surflet-options <i>transformer value <tt>...</tt></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_168"></a>
+<blockquote>
+This constructs an options value from an argument list of parameter
+transformers and parameter values.  The arguments come in pairs,
+each an option transformer from the list above, and a value for that
+parameter. <tt>make-surflet-options</tt> returns the resulting options
+value.
+</blockquote><p>
+For example,</p>
+<p>
+</p>
+<pre class=verbatim>(surflet-handler 
+  (make-surflet-options
+   with-surflet-path &quot;root/surflets&quot;
+   with-session-timeout 3600))
+</pre><p></p>
+<p>
+defines the SUrflet handler to serve SUrflets from the directory
+<tt>root/surflets</tt> and to timeout unused sessions after one hour.</p>
+<p>
+The SUrflet handler allows runtime read and write access to her
+options:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(options-surflet-path <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_170"></a>
+<div align=left><tt>(options-session-lifetime <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>integer</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_172"></a>
+<div align=left><tt>(options-cache-surflets? <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_174"></a>
+<div align=left><tt>(options-make-session-timeout-text <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_176"></a>
+<blockquote>
+These procedures return the stored value for the respective option.
+See above for the description of the options.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(set-options-surflet-path! <i>options surflet-path</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_178"></a>
+<div align=left><tt>(set-options-session-lifetime! <i>options seconds</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_180"></a>
+<div align=left><tt>(set-options-cache-surflets?! <i>options cache-surflets?</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_182"></a>
+<div align=left><tt>(set-options-make-session-timeout-text! <i>options timeout-text-procedure</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>undefined</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_184"></a>
+<blockquote>
+These procedures change the respective option value.  See above for
+the description of the arguments.  Note that changing the
+<i>surflet-path</i> within a SUrflet may result in the SUrflets being unreachable.  Turning the cache off will not empty the
+SUrflet cache.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.2"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.2">6.2.2&nbsp;&nbsp;SUrflets </a></h3>
+<p>Technically, SUrflets are Scheme48 structures, that have the name
+<tt>surflet</tt> and export a <tt>main</tt> procedure.  The file in which their
+definition reside must have the extension <tt>.scm</tt>.  The <tt>main</tt>
+procedure must accept the initial <tt>surflet-request</tt> as an argument.
+She may or may not return, but if she does, she must return either a
+<tt>surflet response</tt> or a <tt>redirect response</tt>.  For example, this
+is a valid SUrflet definition:</p>
+<p>
+</p>
+<pre class=verbatim>(define-structure surflet surflet-interface
+  (open scheme-with-scsh
+        surflets)
+  (begin
+    (define (main req)
+       (send-html/finish
+         '(html (body (p &quot;Hello world!&quot;)))))
+))
+</pre><p></p>
+<p>
+<tt>surflet-interface</tt> is a predefined interface description that
+exports the <tt>main</tt> procedure.  It is recommended to use this
+interface.  <a name="node_idx_186"></a><tt>surflets</tt> is a structure that combines the most
+commonly used structures to write SUrflets.  <tt>send-html/finish</tt> is
+one of the procedures that sends HTML to the client.  More on this
+below.</p>
+<p>
+As SUrflets are Scheme48 structures, you can use all capabilities of
+the Scheme48 module language.  See the documentation of Scheme48 for
+details.</p>
+<p>
+SUrflets should not use the <tt>shift-reset</tt> structure, as this might
+confuse the SUrflet handler.  The use of threads within a surflet is
+currently discouraged, as some procedures might not work, especially
+procedures dealing with session IDs.</p>
+<p>
+</p>
+<a name="node_sec_6.2.3"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.3">6.2.3&nbsp;&nbsp;SUrflet management</a></h3>
+<p>Upon an initial client request, the SUrflet handler looks for the
+requested SUrflet, loads it dynamically, installs an error handler
+and calls the <tt>main</tt> function of the SUrflet with the initial
+<tt>surflet-request</tt>.   To minimize the time of loading a SUrflet,
+the SUrflet handler caches the structure of the SUrflet in a cache,
+the SUrflet cache.  As the SUrflet is cached, its global values will
+remain unchanged even through times when there are no active sessions
+of the SUrflet.  Changing global SUrflet values is a possibility to
+exchange data between different sessions of the same SUrflet.  Note
+that you have to take care to serialize the access to commonly shared,
+mutated data.</p>
+<p>
+The SUrflet handler allows access to its cache via the following
+procedures.  The access to these procedures is currently
+unrestricted but may be restricted in future versions of the
+SUrflet server.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-loaded-surflets<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_188"></a>
+<blockquote>
+This returns a list of the file names of the loaded SUrflets. 
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(unload-surflet <i>surflet</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_190"></a>
+<blockquote>
+This removes the <i>surflet</i> from the SUrflet cache.  The
+<i>surflet</i> is identified by its file name, as returned from
+<tt>get-loaded-surflets</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(reset-surflet-cache!<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_192"></a>
+<blockquote>
+This empties the SUrflet cache.
+</blockquote><p>
+Of course, when a SUrflet is removed from the cache, the values in
+its sessions remain untouched.  However, if the SUrflet is newly
+loaded into the SUrflet cache, the SUrflet handler treats it like a
+new SUrflet, <em>i.e.</em>the sessions of the &quot;old&quot; and the &quot;new&quot; SUrflet (though physically the same) do <em>not</em> share their global data in
+any way.</p>
+<p>
+</p>
+<a name="node_sec_6.2.4"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.4">6.2.4&nbsp;&nbsp;Surflet Request</a></h3>
+<p>SUrflets get their input from <tt>surflet-request</tt> objects.   The
+relevant procedures are the following.  They are all exported by the
+<a name="node_idx_194"></a><tt>surflet-handler/requests</tt> alias <a name="node_idx_196"></a><tt>surflet-requests</tt> structure.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(surflet-request? <i>object</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_198"></a>
+<div align=left><tt>(surflet-request-method <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_200"></a>
+<div align=left><tt>(surflet-request-input-port <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-port/undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_202"></a>
+<div align=left><tt>(surflet-request-uri <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_204"></a>
+<div align=left><tt>(surflet-request-url <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>url</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_206"></a>
+<div align=left><tt>(surflet-request-version <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>pair</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_208"></a>
+<div align=left><tt>(surflet-request-headers <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_210"></a>
+<blockquote>
+The procedures inspect <tt>surflet-request</tt> values.  Most of them
+return the values of the underlying <tt>request</tt> object from
+<tt>httpd</tt>.  <tt>surflet-request?</tt> is a predicate for <tt>surflet
+request</tt>s.  <tt>surflet-request-method</tt> extracts the method of the
+HTTP request; it's a string and either <tt>&quot;GET&quot;</tt> or <tt>&quot;POST&quot;</tt>.
+SUrflets won't receive requests with other methods.
+<tt>surflet-request-input-port</tt> returns an input-port that contains
+data from the client on <tt>POST</tt> requests and that the SUrflet can
+safely read.  If the request is no <tt>POST</tt> request, its value is
+undefined.  <tt>surflet-request-uri</tt> returns the escaped URI string
+as read from the request line.  <tt>surflet-request-url</tt> returns the
+respective HTTP URL value (see the description of the <tt>url</tt>
+structure in chapter <a href="man-Z-H-6.html#node_chap_4">4</a>).  <tt>surflet-request-version</tt>
+returns a <code class=verbatim>(major . minor)</code> integer pair representing the
+version specified in the HTTP request.  <tt>surflet-request-headers</tt>
+returns an association lists of header field names and their values,
+each represented by a list of strings, one for each line.
+</blockquote><p>
+For some unknown weird cases, there are also these two procedures:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(surflet-request-socket <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>socket</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_212"></a>
+<div align=left><tt>(surflet-request-request <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_214"></a>
+<blockquote>
+<tt>surflet-request-socket</tt> returns the socket connected to the
+client.  As with <tt>request</tt>s, SUrflets should not perform I/O on
+this socket.  See section <a href="man-Z-H-4.html#node_sec_2.2">2.2</a> for reasoning.
+<tt>surflet-request-requst</tt> allows access to the underlying
+<tt>request</tt> object from <tt>httpd</tt>.  Both procedures should not be
+necessary in normal operation and their usage is discouraged.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.5"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.5">6.2.5&nbsp;&nbsp;Surflet Response</a></h3>
+<p>SUrflets answer to a request by sending a <tt>surflet-response</tt> to
+the SUrflet handler.  The next section deals with how the surflet
+responses are sent to the SUrflet handler.  The relevant procedures
+for <tt>surflet-response</tt> are the following.  They are all exported by
+the <a name="node_idx_216"></a><tt>surflet-handler/responses</tt> alias <a name="node_idx_218"></a><tt>surflet-response</tt>
+structure.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-surflet-response <i>status content-type headers
+data</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>surflet-response</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_220"></a>
+<blockquote>
+This creates a <tt>surflet-response</tt>.  <i>status</i> is the status
+code of the response.  See section <a href="man-Z-H-4.html#node_sec_2.3">2.3</a> for
+details on this.  <i>content-type</i> is the MIME type of the data,
+<em>e.g.</em><tt>&quot;text/html&quot;</tt>.  <i>headers</i> is an association list of
+headers to be added to the response, each of which consists of a
+symbol representing the field name and a string representing the
+field value.  <i>data</i> is the actual data.  It must be either a
+string or a list of values that will be <tt>display</tt>ed.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(valid-surflet-response-data? <i>object</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_222"></a>
+<blockquote>
+This is a predicate on objects that may be surflet data, <em>i.e.</em>a
+string or a list (of objects that will be <tt>display</tt>ed).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(surflet-response? <i>object</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_224"></a>
+<div align=left><tt>(surflet-response-status <i>surflet-response</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>status-code</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_226"></a>
+<div align=left><tt>(surflet-response-content-type <i>surflet-response</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_228"></a>
+<div align=left><tt>(surflet-response-headers <i>surflet-response</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_230"></a>
+<div align=left><tt>(surflet-response-data <i>surflet-response</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>surflet-data</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_232"></a>
+<blockquote>
+The procedures return <tt>surflet-response</tt> values.
+<tt>surflet-response?</tt> is a predicate for <tt>surflet-response</tt>s.
+<tt>surflet-response-status</tt> returns the status code of the
+response.  See section <a href="man-Z-H-4.html#node_sec_2.3">2.3</a> for details on the
+status code.  <tt>surflet-response-content-type</tt> returns the MIME
+type of the response.  <tt>surflet-response-headers</tt> returns the
+association list of header field names and their values, each
+represented by a list of strings, one for each line.
+<tt>surflet-response-data</tt> returns the data of the
+<tt>surflet-response</tt>, the actual answer of the SUrflet.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.6"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.6">6.2.6&nbsp;&nbsp;Sessions</a></h3>
+<p>A <a name="node_idx_234"></a>session is a set of web pages that logically belong
+together, <em>e.g.</em>a user surfing through her webmail.  A session starts
+with the initial request for a SUrflet and ends either explicitly by
+the SUrflet, or implicitly after a timeout.  A third, not so common
+case is its deletion from the session table.</p>
+<p>
+The procedures presented in this subsection are all accessible via the
+<a name="node_idx_236"></a><tt>surflets/sessions</tt> structure.</p>
+<p>
+</p>
+<a name="node_sec_6.2.6.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.6.1">6.2.6.1&nbsp;&nbsp;Session management</a></h4>
+<p>The SUrflet handler automatically manages the sessions for each
+SUrflet, thus the SUrflet does not have to deal with sessions or
+state control (as it is the case with most other programming
+interfaces for web applications).  In particular, a SUrflet does not
+have to take care of saving the contents of variables before emitting
+a web page and restoring the values later upon the next request, or
+determining how far the user has proceeded in the application.  The
+only thing a SUrflet may want to do is to tell the SUrflet handler
+when a session finished by calling <tt>send/finish</tt> or an equivalent
+procedure (see below).</p>
+<p>
+Although a SUrflet does not have to deal with the management of the
+sessions, the SUrflet handler allows access to its management
+structures.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(instance-session-id<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>session-id</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_238"></a>
+<blockquote>
+This returns the session ID for the current session.  The current
+session is the session from which the function is called.  The
+SUrflet handler guarantees that there won't be two sessions with
+the same ID for any given point in time.  However, session IDs may
+be reused.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-session <i>session-id</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>session</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_240"></a>
+<blockquote>
+This returns the session for the given session ID.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-sessions<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_242"></a>
+<blockquote>
+This returns the complete list of all active session of the SUrflet handler.  The list is an association list with the session-id as key
+and the session as value.<p>
+The access to this procedure is currently unrestricted but may be
+restricted in future versions of the SUrflet server.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(delete-session! <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_244"></a>
+<blockquote>
+This deletes the specified session from the session table.  Future
+requests to the session are answered with the timeout text.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(session-alive? <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_246"></a>
+<blockquote>
+This returns <tt>#t</tt>, if the specified session is alive, <em>i.e.</em>requests to it will be answered by the appropriate SUrflet.
+Otherwise, she returns <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(session-surflet-name <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_248"></a>
+<div align=left><tt>(session-session-id <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>session-id</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_250"></a>
+<blockquote>
+These procedures inspect values of a session.
+<tt>session-surflet-name</tt> returns the name of the SUrflet for which
+the session was created.  <tt>session-session-id</tt> returns the
+session ID of the session. 
+</blockquote><p>
+For each session, the SUrflet handler has a counter running.  She
+resets the counter each time she receives a request for the session.
+When the counter reaches a particular number of seconds, the
+<a name="node_idx_252"></a>lifetime of the session, the SUrflet handler deletes the
+session and removes it from its session table.  She will answer all
+future requests for the session with the timeout text.  The following
+procedures deal with the lifetime of a session.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(session-lifetime <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>integer</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_254"></a>
+<div align=left><tt>(set-session-lifetime! <i>session new-lifetime</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_256"></a>
+<blockquote>
+<tt>session-lifetime</tt> returns the number of seconds the SUrflet handler will initially wait before she automatically finishes the
+session.  <tt>set-session-lifetime!</tt> changes the initial lifetime of
+the <i>session</i> to <i>new-lifetime</i> and also resets the counter
+for that session.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(session-adjust-timeout! <i>session [lifetime]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_258"></a>
+<div align=left><tt>(adjust-timeout! <i>[lifetime]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_260"></a>
+<blockquote>
+These reset the counter for the lifetime of either the given
+<i>session</i> (<tt>session-adjust-timeout!</tt>) or the current session
+(<tt>adjust-timeout!</tt>).  Both procedures give the session a lifetime
+of either <i>lifetime</i> seconds or of the lifetime seconds stored
+for the according <i>session</i>.
+</blockquote><p>
+In order to allow easy web programming, the SUrflet handler
+automatically saves and reifies continuations of a session.  This is
+totally transparent to the web programmer.  For adminstration
+purposes, the SUrflet handler offers access to the continuation table
+of a session via the following procedures.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(session-continuation-table <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>table</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_262"></a>
+<div align=left><tt>(session-continuation-table-lock <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>lock</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_264"></a>
+<div align=left><tt>(session-continuation-counter <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>thread-safe-counter</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_266"></a>
+<blockquote>
+These functions return the continuation table, the lock for the
+continuation table and the counter for the continuations,
+respectively.  The continuation <i>table</i> is a hash table with the
+continuation ID as key and the continuation as value, based on the
+<tt>tables</tt> structure of Scheme48.  The <i>lock</i> is based on the
+<tt>locks</tt> structure of Scheme48.  The <i>thread-safe-counter</i> is
+based on the <tt>thread-safe-counter</tt> structure that is part of the
+SUrflets.<p>
+The access to these functions is currently unrestricted but may be
+restricted in future versions of the SUrflet server.
+</p>
+</blockquote><p>
+The <a name="node_idx_268"></a><tt>surflets/continuations</tt> structure also offers procedures to
+access the continuations.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-continuations <i>session</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_270"></a>
+<blockquote>
+Returns a list of all continuations of the <i>session</i>.  The list
+elements are pairs with the <tt>car</tt> being the session and the
+<tt>cdr</tt> being the continuation.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(delete-continuation! <i>session-continuation</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_272"></a>
+<blockquote>
+Removes the specified continuation from the continuation table.
+<i>session-continuation</i> is a pair as returned from
+<tt>get-continuations</tt>.  It is no error if the session or the
+continuation does not exist anymore.<p>
+The access to this functions is currently unrestricted but may be
+restricted in future versions of the SUrflet server.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(continuation-id <i>session-continuation</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_274"></a>
+<blockquote>
+Returns the continuation ID of the continuation specified by
+<i>session-continuation</i> which is a pair as returned by
+<tt>get-continuations</tt>. 
+</blockquote><p>
+The <a name="node_idx_276"></a><tt>surflets/ids</tt> structure provides procedures to determine the
+session and continuation IDs of the current session.  See also the
+entry for <tt>resume-url-ids</tt> somewhere else in this document.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(my-session-id <i>surlfet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_278"></a>
+<div align=left><tt>(my-continuation-id <i>surlfet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_280"></a>
+<div align=left><tt>(my-ids <i>surlfet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_282"></a>
+<blockquote>
+These return the session and continuation ID that where used to
+access the current session.  The procedures work for every
+<i>surflet-request</i> except for the inital one that <tt>main</tt>
+gets.  The values returned by <tt>my-ids</tt> are the session and the
+continuation ID in this order.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(surflet-file-name <i>surlfet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_284"></a>
+<blockquote>
+This returns the name of the SUrflet of the current session.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.6.2"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.6.2">6.2.6.2&nbsp;&nbsp;Session data</a></h4>
+<p>The SUrflet handler distinguishes three kinds of <a name="node_idx_286"></a>session
+data: session data that is local to a session of a SUrflet and not
+mutated, session data that is local to a session of a SUrflet and
+mutated and session data that is global to all sessions of a SUrflet.
+Every variable value that is never mutated is automatically local to
+the session of the SUrflet.  Variable values that are mutated are
+automatically global to all sessions of the SUrflet.  Values that
+have to be mutated but should be local to a session of the SUrflet must be stored in a special place, the session data field of the
+SUrflet handler.<a name="call_footnote_Temp_13"></a><a href="#footnote_Temp_13"><sup><small>8</small></sup></a></p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-session-data<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>object</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_288"></a>
+<div align=left><tt>(set-session-data! <i>new-value</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_290"></a>
+<blockquote>
+These procedures allow read/write access to the session data field
+of the SUrflet handler.  The SUrflet handler installs a session
+data field for each session she creates.  <tt>get-session-data</tt>
+reads the contents of this field, which is initially <tt>#f</tt>.
+<tt>set-session-data!</tt> sets the contents of the field to
+<i>new-value</i>.  Mutations to the values, no matter when they
+occur, are local to the session from which the procedures are
+called, <em>i.e.</em>the changes are only visible within a particular session
+of the SUrflet.  The procedures are exported by the
+<a name="node_idx_292"></a><tt>surflet-handler/session-data</tt> structure.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.7"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.7">6.2.7&nbsp;&nbsp;Basic I/O</a></h3>
+<p>The SUrflet communicates with the web client basically with the
+following <tt>send</tt> primitives.  They are exported by the
+<a name="node_idx_294"></a><tt>surflet-handler/primitives</tt> structure along with the procedures
+from <tt>surflet-handler/requests</tt>, <tt>surflet-handler/responses</tt> and
+the <tt>status-code</tt> syntax.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(send <i>surflet-response</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_296"></a>
+<blockquote>
+This procedure sends the data of the <i>surflet-response</i> to the
+client and does not return.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(send/finish <i>surflet-response</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_298"></a>
+<blockquote>
+This procedure does the same as <tt>send</tt>, but it also finishes the
+session of the SUrflet.  Future requests to the SUrflet will be
+answered with the timeout text (see above).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(send/suspend <i>surflet-response-maker</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>surflet-request</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_300"></a>
+<blockquote>
+This procedure suspends the current computation of the SUrflet and
+calls <i>surflet-response-maker</i> with the continuation-URL of the
+current session to create the actual <tt>surflet-response</tt>.  When a
+client requests the continuation-URL, the computation of the
+SUrflet will resume with <tt>send/suspend</tt> returning that request
+of the client.  See <a href="#node_sec_6.2.9">6.2.9</a> for details on
+continuation-URLs.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(send-error <i>status-code surflet-request [messages]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_302"></a>
+<blockquote>
+This sends an error response to the client.  <i>status-code</i> is
+the status code of the error, see section <a href="man-Z-H-4.html#node_sec_2.3">2.3</a> for
+details.  <i>surflet-request</i> is the last <tt>surflet-request</tt> the
+SUrflet received; if unknown this argument may be <tt>#f</tt>.
+<i>messages</i> may contain some further information about the cause
+of the error.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.8"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.8">6.2.8&nbsp;&nbsp;Web I/O</a></h3>
+<p>Most of the time, a SUrflet won't send arbitrary data but HTML to the
+client.  For this purpose, the SUrflets provide extensive support.
+First of all, they provide procedures specially designed for
+submitting HTML.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(send-html <i>sxml</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_304"></a>
+<div align=left><tt>(send-html/finish <i>sxml</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_306"></a>
+<div align=left><tt>(send-html/suspend <i>sxml-maker</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>surflet-request</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_308"></a>
+<blockquote>
+These are the equivalent procedures to the <tt>send</tt> primitives.
+<tt>send-html</tt> and <tt>send-html/finish</tt> accept an SXML object (more
+on that below), translate it into HTML and send it to the client,
+the latter finishing the session.  <tt>send-html/suspend</tt> suspends
+the current computation, calls <i>sxml-maker</i> with the
+continuation-URL, translates the resulting SXML into HTML and sends
+it to the client.  When the client requests the continuation-URL,
+the computation is resumed and <tt>send-html/suspend</tt> returns with
+the <tt>surflet-request</tt>.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.8.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.8.1">6.2.8.1&nbsp;&nbsp;SXML</a></h4>
+<p>For easy creation of HTML output, the <tt>send-html</tt> procedures
+mentioned above represent the HTML in SXML.  SXML is a creation of
+Oleg Kiselyov.  Basically, SXML is a list whose <tt>car</tt> is an SXML
+tag, a symbol representing the HTML tag, and the <tt>cdr</tt> are other
+SXML elements that will be enclosed by the HTML tag.  For example,</p>
+<p>
+</p>
+<blockquote><tt>'(h2 &quot;Result&quot;)</tt></blockquote>represents the tag <tt>h2</tt>, that encloses the text &quot;Result&quot;.  The
+represented HTML is
+<blockquote><tt>&lt;h2&gt;Result&lt;/h2&gt;.</tt></blockquote><p>
+As in HTML, elements may be nested:
+</p>
+<blockquote><tt>'(body (h2 &quot;Result&quot;) (p &quot;Example&quot;))</tt></blockquote>represents
+<blockquote><tt>&lt;body&gt;&lt;h2&gt;Result&lt;/h2&gt;&lt;p&gt;Example&lt;/p&gt;.</tt></blockquote><p>
+The @ symbol marks HTML attributes.  The attributes follow the @
+symbol in two element lists, the first element being the name of the
+attribute and the last its value.  For example, this is a link:
+</p>
+<blockquote><tt>'(a (@ (href &quot;add-surflet.scm&quot;) (name &quot;linklist&quot;)) &quot;Make new calculation.&quot;)</tt></blockquote>representing the following HTML
+<blockquote><tt>&lt;a href=&quot;add-surflet.scm&quot; 
+name=&quot;linklist&quot;&gt;Make new calculation.&lt;/a&gt;.</tt></blockquote>The
+attributes form will only be recognized as such if it is the second
+element of a list, right after the SXML tag.  <p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(sxml-attribute? <i>object</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_310"></a>
+<div align=left><tt>(sxml-attribute-attributes <i>sxml-attribute</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_312"></a>
+<blockquote>
+These are procedures on SXML attribute forms.  <tt>sxml-attribute?</tt>
+is  a predicate for SXML attribute forms.  It checks if <i>object</i>
+is a list whose first element is the symbol <tt>@</tt>.
+<tt>sxml-attribute-attributes</tt> returns the list of name-value-lists
+of the attributes form.  Both procedures are exported by the
+<a name="node_idx_314"></a><tt>surflets/sxml</tt> structure.
+</blockquote><p>
+The translator translates list elements which are numbers and symbols
+to their string representation (except for the first element, of
+course).  She scans strings for the special characters <code class=verbatim>&amp;</code>,
+<code class=verbatim>&quot;</code>, <code class=verbatim>&gt;</code> and <code class=verbatim>&lt;</code> and replaces them by their HTML
+equivalents, and she ignores <tt>#f</tt> and the emtpy list.  See below
+the special SXML tag <tt>plain-html</tt> to see how to insert HTML code
+untranslated.  Furthermore, the translator accepts <tt>input-fields</tt>
+as list elements, which are translated to their HTML representation.
+See below for details on input fields.</p>
+<p>
+Using lists to represent HTML allows the programmer to define
+operations on it.  Most programmers construct their lists dynamically,
+often by using <tt>quasiquote</tt> (the symbol <tt>`</tt>) and <tt>unquote</tt>
+(the symbol <tt>,</tt>).  <em>E.g.</em></p>
+<p>
+</p>
+<pre class=verbatim> `(html (title ,my-title) 
+        (body (p &quot;Hello, &quot; ,(get-user-full-name))))
+</pre><p></p>
+<p>
+See below for how to create your own SXML.</p>
+<p>
+</p>
+<a name="node_sec_6.2.8.2"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.8.2">6.2.8.2&nbsp;&nbsp;Special SXML tags</a></h4>
+<p>The SXML to HTML translator accepts some special SXML tags that don't
+directly translate to an HTML tag.</p>
+<p>
+
+</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p><tt>(url<i> URL [text]</i>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-tag</tt><a name="node_idx_316"></a>
+</p>
+<blockquote>
+Inserts a link to <i>URL</i>, named with <i>text</i>.  <i>text</i>
+defaults to <i>URL</i>.  Takes at least one argument.  <em>E.g.</em><p>
+</p>
+<pre class=verbatim>  (url &quot;/&quot; &quot;Main menu&quot;) ===&gt; &lt;a href=&quot;/&quot;&gt;Main menu&lt;/a&gt;
+  (url &quot;go.html&quot;)       ===&gt; &lt;a href=&quot;go.html&quot;&gt;go.html&lt;/a&gt;
+  </pre><p>  </p>
+<p>
+</p>
+<blockquote><i>Oops: </i> <tt>url</tt> does not accept extra attributes for the `<tt>A</tt>' tag of
+HTML.  This should be fixed in a future version.</blockquote> 
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><tt>(nbsp<i></i>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-tag</tt><a name="node_idx_318"></a>
+</p>
+<blockquote>
+Inserts the HTML sequence <tt>&quot;&amp;nbsp;&quot;</tt>.  Takes no arguments.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><tt>(plain-html<i> html <tt>...</tt></i>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-tag</tt><a name="node_idx_320"></a>
+</p>
+<blockquote>
+Inserts <i>html</i> without any changes, thus it works like a quote.
+Takes any number of arguments.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><tt>(*COMMENT*<i> comment <tt>...</tt></i>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-tag</tt><a name="node_idx_322"></a>
+</p>
+<blockquote>
+Inserts a comment, <em>i.e.</em><i>comment</i> enclosed between <code class=verbatim>&lt;!--</code>
+and <code class=verbatim>--&gt;</code>.  Takes any number of arguments.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><tt>(surflet-form<i> k-url [method] [attributes] [SXML <tt>...</tt>]</i>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-tag</tt><a name="node_idx_324"></a>
+</p>
+<blockquote>
+Inserts HTML code for a web form.  See below for details.
+<i>k-url</i> usually is a continuation-URL.  <i>method</i> is the
+method to be used by the client to transfer the webform data.
+Possible values are the symbols <tt>GET</tt>, <tt>get</tt>, <tt>POST</tt>,
+<tt>post</tt>, the first two specifying the GET method, the last two the
+POST method.  <i>method</i> defaults to the GET method.
+<tt>attributes</tt> are attributes for the created web form, <em>e.g.</em><tt>(@
+(enc-type &quot;text/plain&quot;))</tt>.  The remaining arguments are taken as
+SXML and translated as usually.  Takes at least one argument.  Note
+that the attributes form may come at position three.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.8.3"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.8.3">6.2.8.3&nbsp;&nbsp;Do it yourself: your own SXML</a></h4>
+<p>The <tt>send-html</tt> procedures use a standard set of translation rules
+to translate from SXML to HTML.  However, you may define your own set
+of translation rules or extend the given ones as you see fit.  For
+this, a short introduction to the translation process.</p>
+<p>
+The translation process takes place in two steps.  Step one translates
+the given SXML to low level SXML, essentially a rough form of HTML in
+list notation.  Step two takes this low level SXML and prints it to a
+port.  Step one is performed by <tt>sxml-&gt;low-level-sxml</tt>, step two by
+<tt>display-low-level-sxml</tt>.  All procedures and rules presented in
+this subsection are exported from <a name="node_idx_326"></a><tt>surflets/sxml</tt>.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(sxml-&gt;low-level-sxml <i>sxml rules</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>low-level-sxml</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_328"></a>
+<blockquote>
+Takes an SXML object (which is essentially a list) and a list of
+SXML rules (more on this below) and translates it to low level SXML.
+This procedure is an alias to the <tt>pre-post-order</tt> procedure of
+Oleg Kiselyov's SSAX module.  It is an error if no rule triggers
+(see below for when a rule triggers).  However, it is no error if
+multiple rules trigger; the first rule in the <i>rules</i> list wins.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(display-low-level-sxml <i>low-level-sxml port</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_330"></a>
+<blockquote>
+Takes low level SXML and <tt>display</tt>s it to a port.  She traverses
+the list <i>low-level-sxml</i> depth-first, ignores the empty list
+and <tt>#f</tt>, executes thunks and <tt>display</tt>s all other elements,
+usually strings and characters, to <i>port</i>.  Returns <tt>#t</tt> if
+she wrote anything, <tt>#f</tt> otherwise.  This function is basically
+the <tt>SRV:send-reply</tt> procedure of Oleg Kiselyov's SSAX module.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(sxml-&gt;string <i>sxml rules</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_332"></a>
+<blockquote>
+Combines step one and two of the translation process and returns the
+resulting string, <em>i.e.</em>it calls <tt>display-low-level-sxml</tt> with the
+result of a call to <tt>sxml-&gt;low-level-sxml</tt> and a string port,
+returning the content of the string port.
+</blockquote><p>
+</p>
+<p>
+An <a name="node_idx_334"></a>SXML-rule consists of a <i>trigger</i>, which is a
+symbol, and the <i>handler</i>, which is a translation procedure.</p>
+<p>
+There are three types of rules, each of which is a dotted list:
+</p>
+<dl><dt></dt><dd>
+</dd><dt><b><tt>(<i>&lt;.trigger.&gt;</i> *preorder* . <i>&lt;.handler.&gt;</i>)</tt></b></dt><dd> <br>
+When <tt>sxml-&gt;low-level-sxml</tt> sees the <i>&lt;.trigger.&gt;</i> as the
+first element of a list, she calls <i>&lt;.handler.&gt;</i> with the
+<em>whole</em> list as arguments and replaces the list with the result
+of that call (which must be a single value).  Note that the arity of
+the handler determines how many elements the list with the trigger may
+or must contain.<p>
+</p>
+</dd><dt><b><tt>(<i>&lt;.trigger.&gt;</i> . <i>&lt;.handler.&gt;</i>)</tt></b></dt><dd> <br>
+When <tt>sxml-&gt;low-level-sxml</tt> sees the <i>&lt;.trigger.&gt;</i> as the first
+element of a list, she calls herself on the remaining elements of the
+list and then calls the <i>&lt;.handler.&gt;</i> with the trigger and the
+results of those calls as arguments.<p>
+</p>
+</dd><dt><b><tt>(<i>&lt;.trigger.&gt;</i> <i>&lt;.new-rules.&gt;</i> . <i>&lt;.handler.&gt;</i>)</tt></b></dt><dd>  <br>
+When <tt>sxml-&gt;low-level-sxml</tt> sees the <i>&lt;.trigger.&gt;</i> as the first
+element of a list, she temporarily prepends <i>&lt;.new-rules.&gt;</i> to the
+current rule set while calling herself on the remaining elements of
+the list.  She then calls the <i>&lt;.handler.&gt;</i> with the trigger and
+the results of those calls as arguments.  As the new rules are
+prepended, this rule allows the temporary override of some rules.
+</dd></dl><p></p>
+<p>
+There are two special triggers, who may trigger for all elements of
+the SXML, not only the first element of a list:
+</p>
+<ul>
+<li><p><tt>*text*</tt> triggers for atoms in the SXML list, <em>i.e.</em>usually
+strings and characters.  The handler is called with the symbol
+<tt>*text*</tt> and the atom as arguments.</p>
+<p>
+</p>
+<li><p><tt>*default*</tt> triggers whenever no rule triggered, including
+<tt>*text*</tt>.  If called for a list whose first element did not trigger
+a rule, the handler is called with the whole list.  If called for an
+atom, the handler is called with the symbol <tt>*text*</tt> and the atom
+as arguments.
+</p>
+</ul><p></p>
+<p>
+The <a name="node_idx_336"></a><tt>surflets/sxml</tt> structure defines some basic rules:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_338"></a></p>
+<div align=left><tt>default-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<a name="node_idx_340"></a><div align=left><tt>text-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<a name="node_idx_342"></a><div align=left><tt>attribute-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<blockquote>
+These are the three basic rules exported by the <tt>surflets/sxml</tt>
+structure.  <tt>default-rule</tt> creates the leading and trailing HTML
+tag and encloses the attributes.  <tt>text-rule</tt> just inserts the
+given text with the special HTML characters <code class=verbatim>&amp;</code>, <code class=verbatim>&quot;</code>,
+<code class=verbatim>&gt;</code> and <code class=verbatim>&lt;</code> escaped.  <tt>attribute-rule</tt> triggers for the
+attributes form and creates attributes like <tt>selected</tt> or
+<tt>color=&quot;red&quot;</tt>.
+</blockquote><p>
+The <a name="node_idx_344"></a><tt>surflets/surflet-sxml</tt> add the rules for the special SXML
+tags to this list:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_346"></a></p>
+<div align=left><tt>url-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<a name="node_idx_348"></a><div align=left><tt>nbsp-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<a name="node_idx_350"></a><div align=left><tt>plain-html-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<a name="node_idx_352"></a><div align=left><tt>comment-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<a name="node_idx_354"></a><div align=left><tt>surflet-form-rule</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SXML-rule&nbsp;</div>
+
+<blockquote>
+These are the rules for the special SXML tags mentioned above,
+namely <tt>url</tt>, <tt>nbsp</tt>, <tt>plain-html</tt>, <tt>*COMMENT*</tt> and
+<tt>surflet-form</tt>. 
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_356"></a></p>
+<div align=left><tt>default-rules</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;</div>
+
+<a name="node_idx_358"></a><div align=left><tt>surflet-sxml-rules</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;</div>
+
+<blockquote>
+These are rule sets.  <tt>default-rule</tt> contains the rulese
+<tt>default-rule</tt>, <tt>attribute-rule</tt>, <tt>text-rule</tt>,
+<tt>comment-rule</tt>, <tt>url-rule</tt>, <tt>plain-html-rule</tt> and
+<tt>nbsp-rule</tt>.  <tt>surflet-sxml-rules</tt> extends this list by
+<tt>surflet-form-rule</tt> and a rule for input fields.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(surflet-sxml-&gt;low-level-sxml <i>sxml</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>low-level-sxml</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_360"></a>
+<blockquote>
+This uses the <tt>surflet-sxml-rules</tt> to translate <i>sxml</i> to low
+level SXML, performin step one of the translation process.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.9"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.9">6.2.9&nbsp;&nbsp;Continuation-URL</a></h3>
+<p></p>
+<p>
+The <a name="node_idx_362"></a>continuation-URL represents the point in the computation
+of a session of a SUrflet where the computation was halted by the
+SUrflet handler.  When a browser requests a continuation-URL, the
+SUrflet handler looks up the continuation in its tables and reifies
+it, allowing the session of the SUrflet to resume its computation.</p>
+<p>
+The procedures to access the continuation-URL are the following.  They
+are exported by the <a name="node_idx_364"></a><tt>surflet-handler/resume-url</tt> structure.  Sorry
+for the double naming <tt>resume-url</tt> and continuation-URL.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(resume-url? <i>string</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_366"></a>
+<div align=left><tt>(resume-url-ids <i>resume-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>session-id continuation-id</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_368"></a>
+<div align=left><tt>(resume-url-session-id <i>resume-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>session-id</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_370"></a>
+<div align=left><tt>(resume-url-continuation-id <i>resume-url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>continuation-id</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_372"></a>
+<blockquote>
+These inspect values of a resume url.  <tt>resume-url?</tt> is a
+predicate for resume urls (the same as continuation urls).  Note
+that it only operates on strings.  <tt>resume-url-ids</tt> returns the
+session- and the continuation-id that is stored in the
+<i>resume-url</i>.  <tt>resume-url-session-id</tt> and
+<tt>resume-url-continuation-id</tt> return only the session- or the
+continuation-id, respectively.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.10"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.10">6.2.10&nbsp;&nbsp;Input fields</a></h3>
+<p>The SUrflets support all input fields defined for HTML&nbsp;2.0 and allow
+the creation of own input fields.  <tt>input-field</tt>s are first order
+values, that represent the actual input field of the web page in the
+SUrflet.  For that, this documentation distinguishes the
+<em>browser</em> value from the <em>Scheme</em> value of an input field.
+The browser value is the string representation of the input field
+data the browser sends.  The Scheme value is the value in the
+SUrflet the input field reports as its value, which may be of any
+type, not only strings.</p>
+<p>
+Here is a short overview on how to use input fields.  See also the
+howto for more informations.  First, you create the <tt>input-field</tt>
+that represents the input field you want to use.  Then you put this
+<tt>input-field</tt> into the SXML of the web page at the place the
+input field shall appear.  After <tt>send-html/suspend</tt> has returned
+with the next <tt>surflet-request</tt>, you call <tt>get-bindings</tt> with
+that <tt>surlfet-request</tt> and collect the resulting bindings.  Last,
+you call <tt>input-field-value</tt> (or <tt>raw-input-field-value</tt>) with
+your <tt>input-field</tt> and the collected bindings to get the Scheme
+representation of the value the user has entered.  Here is a small
+example:</p>
+<p>
+</p>
+<pre class=verbatim>(define-structure surflets surflet-interface
+  (open scheme-with-scsh
+        surflets)
+  (begin
+    
+    (define (main req)
+      (let* ((text-input (make-text-field))
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html
+                       (body
+                        (surflet-form
+                         ,k-url
+                         (p &quot;Enter some asd  text: &quot; ,text-input)
+                         ,(make-submit-button)))))))
+             (bindings (get-bindings req))
+             (text (input-field-value text-input bindings)))
+        (send-html/finish 
+         `(html
+           (body
+            (p &quot;You've entered `&quot; ,text &quot;'.&quot;))))))
+))
+</pre><p></p>
+<p>
+</p>
+<a name="node_sec_Temp_14"></a>
+<h5><a href="man-Z-H-1.html#node_toc_node_sec_Temp_14">Getting the bindings</a></h5>
+<p>The <a name="node_idx_374"></a><tt>surflets/bindings</tt> structures exports the necessary functions
+to create bindings and extract values from them:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-bindings <i>surflet-request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>bindings</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_376"></a>
+<blockquote>
+This returns an association list representing the data the browser
+has sent, usually the content of a webform.  The name of the input
+fields are the keys, their browser values the values.  The values
+are already unescaped.  <tt>get-bindings</tt> can (currently) only
+handle <tt>application/x-www-form-urlencoded</tt> data.  You can call
+<tt>get-bindings</tt> on both <tt>GET</tt> and <tt>POST</tt> requests, even
+multiple times (even on <tt>POST</tt> requests).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(extract-bindings <i>key bindings</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_378"></a>
+<div align=left><tt>(extract-single-binding <i>key bindings</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_380"></a>
+<blockquote>
+These extract values from the <i>bindings</i> as returned by
+<tt>get-bindings</tt>.  <i>key</i> may be a string or a symbol which will
+be translated to a string before use.  <tt>extract-bindings</tt> returns
+a list of all values from <i>bindings</i> whose key is <i>key</i>.
+<tt>extract-single-binding</tt> returns the value from the binding whose
+key is <i>key</i> and raises an error if there is more than one such
+binding.  The two procedures are the same as in PLT's webserver.
+</blockquote><p>
+<tt>get-bindings</tt> must acces the &quot;Content-length&quot; header field to
+handle <tt>POST</tt> requests.  <tt>surflets/bindings</tt> also exports the
+procedure that does that job:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(get-content-length <i>headers</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_382"></a>
+<blockquote>
+Returns the value of the &quot;Content-length&quot; header as a number, as
+present in <i>headers</i>, <em>e.g.</em>from <tt>surflet-request-headers</tt>.
+Will raise an error if there is no &quot;Content-length&quot; header or the
+header is illformed, <em>e.g.</em>contains no number.
+</blockquote><p>
+</p>
+<a name="node_sec_Temp_15"></a>
+<h5><a href="man-Z-H-1.html#node_toc_node_sec_Temp_15">Retrieving the Scheme values</a></h5>
+<p>The <a name="node_idx_384"></a><tt>surflets/input-field-value</tt> structure provides the functions
+necessary to retrieve the Scheme value of input fields.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(raw-input-field-value <i>input-field bindings</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_386"></a>
+<div align=left><tt>(input-field-value <i>input-field bindings [error-value]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_388"></a>
+<blockquote>
+These extract the Scheme value of an <i>input-field</i>, given the
+<i>bindings</i> of the last request.  Asking for a Scheme value may
+raise an error.  Some error conditions are: the input field was not
+present in the bindings, the transformer could not generate a Scheme
+value for the browser value, or some other error occured in a maybe
+malfunctioning transformer.  In any case, <tt>raw-input-field-value</tt>
+won't catch that error, while <tt>input-field-value</tt> will catch it
+and provide <i>error-value</i> as the <i>input-field</i>'s Scheme
+value, which defaults to <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(input-field-binding <i>input-field bindings</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>binding</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_390"></a>
+<blockquote>
+This returns the first binding in <i>bindings</i> that belongs to the
+given <i>input-field</i> (<em>i.e.</em>has <i>input-field</i>'s name as key).
+</blockquote><p>
+</p>
+<a name="node_sec_Temp_16"></a>
+<h5><a href="man-Z-H-1.html#node_toc_node_sec_Temp_16">Creating and using input fields</a></h5>
+<p>The procedures for the creation of the input fields mentioned in
+HTML&nbsp;2.0 are the following.  They are exported by the
+<a name="node_idx_392"></a><tt>surflets/surflet-input-fields</tt>.  Note that most of the time,
+you may omit any of the optional arguments, <em>e.g.</em>you may only specify
+some further attributes to <tt>make-text-field</tt> without specifying a
+default value.  Keep in mind that <tt>input-field-value</tt> catches the
+error that may occur if an <tt>input-field</tt> is asked for its Scheme
+value and may return any (previously chosen) value instead.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-text-field <i>[default] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_394"></a>
+<div align=left><tt>(make-number-field <i>[value] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_396"></a>
+<div align=left><tt>(make-password-field <i>[default] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_398"></a>
+<div align=left><tt>(make-textarea <i>[default] [rows] [columns] [readonly?] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_400"></a>
+<blockquote>
+These create various input field where the user types something in.
+<i>default</i> is the text or the number that the browser initially
+displays in the input field.  <i>attributes</i> are some further
+attributes for the input field in SXML notation.
+<tt>make-text-field</tt> creates a regular text input field.  Its Scheme
+value is a string.  <tt>make-number-field</tt> creates a regular text
+input field, whose Scheme value is a number.  It is an error if the
+input field does not contain a number.  <tt>make-password-field</tt>
+creates a text input field that will display stars instead of the
+typed text.  Its Scheme value is a string.  <tt>make-textarea</tt>
+creates a possibly multi line text input field.  <i>rows</i>
+specifies how many rows of the text the browser will display at once
+and defaults to 5.  <i>columns</i> specifies how many columns the
+browser will display at once and defaults to 20.  Note that if you
+only supply one number, it will be interpreted as the <i>rows</i>
+argument.  <i>readonly?</i> is a boolean that tells the browser
+whether to disallow changes of the displayed text.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-hidden-input-field <i>[default] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_402"></a>
+<blockquote>
+Creates a hidden input field, <em>i.e.</em>a input field that the browser
+won't display but whose value the browser will send.  This input
+field is provided for completeness; you usually won't need it, as
+all values in your SUrflet will survive the emission of a web page.
+<i>default</i> is this value the browser will send.  Note that
+although the argument is marked as optional you usually want to
+provide it.  <i>attributes</i> are some further attributes for the
+input field in SXML notation.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(set-text-field-value! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_404"></a>
+<div align=left><tt>(set-number-field-value! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_406"></a>
+<div align=left><tt>(set-hidden-field-value! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_408"></a>
+<div align=left><tt>(set-password-field-value! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_410"></a>
+<div align=left><tt>(set-textarea-value! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_412"></a>
+<blockquote>
+These set the default value of the according input field after it
+has been created.  Although the procedure may not complain, it is an
+error, if <i>input-field</i> is not the expected type of
+<tt>input-field</tt>, <em>e.g.</em>if the argument to <tt>set-text-field-value</tt>
+was not created by <tt>make-text-field</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-submit-button <i>[caption] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_414"></a>
+<div align=left><tt>(make-reset-button <i>[caption] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_416"></a>
+<div align=left><tt>(make-image-button <i>image-source [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_418"></a>
+<blockquote>
+These create buttons on the web page which the user can click on.
+<i>caption</i> is the text that is displayed on the button.  If not
+specified, the browser will choose a text, usually depending on the
+local language setting on the browser side.  <i>attributes</i> are
+some further attributes for the input field in SXML notation.
+<tt>make-submit-button</tt> creates the regular button to submit the web
+form data.  As HTML&nbsp;2.0 specifies that the value of a submit button
+is its caption, its Scheme value is its caption, too.
+<tt>make-reset-button</tt> creates the button to reset all input fields
+of the web form to their default values.  As the browser does not
+send data for reset buttons, it does not have a Scheme value, <em>i.e.</em>asking for a value will raise an error.  <tt>make-image-button</tt>
+creates a picture button.  Its Scheme value is a pair indicating the
+x- and y-coordinates of the picture where the user has clicked to.
+The argument <i>image-source</i> is not optional and is the string
+URL of the displayed picture.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-checkbox <i>[checked?] [attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_420"></a>
+<div align=left><tt>(make-annotated-checkbox <i>value [checked?]
+[attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_422"></a>
+<blockquote>
+These create checkboxes.  <i>checked?</i> says whether the browser
+should initially mark the checkbox as checked.  <i>attributes</i> are
+some further attributes for the input field in SXML notation.  If it
+was checked the Scheme value of a checkbox made by
+<tt>make-checkbox</tt> is <tt>#t</tt>.  If it was checked, the Scheme value
+of a checkbox made by <tt>make-annotated-checkbox</tt> is its
+<i>value</i> provided during its creation where <i>value</i> may be
+chosen arbitrarily.  Note that HTML&nbsp;2.0 specifies that browsers
+should not send data for unmarked checkboxes, thus asking for the
+Scheme value of an unmarked checkbox will raise an error.  It is
+recommended to use <tt>input-field-value</tt> to ask for the Scheme
+value of a checkbox.  This will catch the error and will instead
+return <tt>#f</tt>by default.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(check-checkbox! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_424"></a>
+<div align=left><tt>(uncheck-checkbox! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_426"></a>
+<div align=left><tt>(set-checkbox-checked?! <i>input-field checked?</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_428"></a>
+<blockquote>
+These change the <tt>checked?</tt> field of a checkbox that tells the
+browser whether it should initially mark the checkbox as checked.
+<tt>check-checkbox!</tt> tells the browser to do so,
+<tt>uncheck-checkbox!</tt> does not tell the browser to do so, and
+<tt>set-checkbox-checked?!</tt> does so depending on <i>checked?</i>.  It
+is an error if <i>input-field</i> was not created by
+<tt>make-checkbox</tt> or <tt>make-annotated-checkbox</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-radio-group<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_430"></a>
+<div align=left><tt>(make-annotated-radio-group<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_432"></a>
+<blockquote>
+These return generators for radio buttons.  Radio buttons usually
+are part of a group of radio buttons of which only one may be
+selected at any time.  The procedures return a procedure that
+creates radio button <tt>input-field</tt>s that belong to the same
+group.  <p>
+The returned procedures accept a <i>value</i> argument, an optional
+<i>checked?</i> argument and an optional <i>attributes</i> argument.
+They return an <tt>input-field</tt>, the actual radio button.  For
+<tt>make-radio-group</tt>, <i>value</i> must be a string, for
+<tt>make-annotated-radio-group</tt>, <i>value</i> may be any Scheme
+value.  The Scheme value of any member of the group of radio buttons
+is the <i>value</i> of the marked radio button that was provided
+during its creation.  <i>checked?</i> determines whether the browser
+will initially mark the radio button.  Note that you are able to
+tell the browser to initially mark more than one radio button, but
+in which case the browser's behavior is undefined.  <i>attributes</i>
+are some further attributes for the input field in SXML notation.</p>
+<p>
+</p>
+<p>
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(check-radio! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_434"></a>
+<div align=left><tt>(uncheck-radio! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_436"></a>
+<div align=left><tt>(set-radio-checked?! <i>input-field <i>checked?</i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_438"></a>
+<blockquote>
+These change the <tt>checked?</tt> field of a radio button that tells
+the browser whether it should initially mark the radio button as
+checked.  <tt>check-radio!</tt> tells the browser to do so,
+<tt>uncheck-radio!</tt> does not tell the browser to do so, and
+<tt>set-radio-checked?!</tt> does so depending on <i>checked?</i>.  It is
+an error if <i>input-field</i> was not created by the procedures
+returned by <tt>make-radio-group</tt> or
+<tt>make-annotated-radio-group</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-select <i>select-options [multiple?]
+[attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_440"></a>
+<blockquote>
+This creates a select boxes.  Other names are ``drop down menu'' or
+simply ``list''.  <i>select-options</i> is either a list of
+<tt>select-options</tt> created with the procedures presented below or a
+list of strings.  In the latter case the strings are automatically
+translated into <tt>select-options</tt>.  <i>multiple?</i>  allows
+multiple selections in the select box.  <i>attributes</i> are some
+further attributes for the input field in SXML notation.  Note that
+you will only get multiple Scheme values for a select box that
+allows multiple selections, if you specify the <i>multiple?</i>
+argument; providing the according attribute in <i>attributes</i>
+won't work (you will get the value of the first selection only).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-simple-select-option <i>tag [selected?]
+[attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>select-option</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_442"></a>
+<div align=left><tt>(make-annotated-select-option <i>tag value [selected?]
+[attributes]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>select-option</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_444"></a>
+<blockquote>
+These create the options for a select box, to be used as arguments
+to <tt>make-select</tt>.  <i>tag</i> is a string that will be displayed
+as an option of a select box.  <i>value</i> is an arbitrary Scheme
+value that will be the Scheme value of the select input field 
+that contains the option.  For simple select options this is the same as
+<i>tag</i>.  <i>selected?</i> determines whether the browser should
+preselect the option.  <i>attributes</i> are some further attributes
+for the input field in SXML notation.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(select-option? <i>object</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_446"></a>
+<blockquote>
+This is a predicate for <tt>select-option</tt>s.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(select-select-option! <i>tag input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_448"></a>
+<div align=left><tt>(unselect-select-option! <i>tag input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_450"></a>
+<div align=left><tt>(set-select-option-selected?! <i>tag input-field
+selected?</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_452"></a>
+<blockquote>
+These change the <tt>selected?</tt> field of a select option that tells
+the browser to preselect it.  <tt>select-select-option!</tt> tells the
+browser to preselect it, <tt>unselect-select-option!</tt> does not tell
+it to do so and <tt>set-select-option-selected!</tt> does so depending
+on <i>selected?</i>.  Note that you access the select option by
+providing the <i>tag</i> and the select <i>input-field</i> in which
+the select option is saved.  <i>tag</i> is either the tag of the
+select option or an index with 0 being the first select option of
+that select input field.  However, the change will affect all select
+input fields that use the same select option.  If there are
+different select options with the same tag in a select input field,
+the procedures will only touch one of them.<p>
+</p>
+<blockquote><i>Oops: </i> Unfortunetaly, the order of the arguments (index, object) is the
+opposite of what is usual in Scheme (object, index).  This should be
+fixed in a future version.</blockquote>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(add-select-option! <i>input-field select-option</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_454"></a>
+<div align=left><tt>(delete-select-option! <i>input-field select-option</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_456"></a>
+<blockquote>
+These add or remove <i>select-option</i> to or from the select
+<i>input-field</i>, respectively.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.10.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.10.1">6.2.10.1&nbsp;&nbsp;Do it yourself: your own input fields</a></h4>
+<p>The SUrflets library allows the creation of arbitrary own input
+fields.  The relevant procedures are exported by the
+<a name="node_idx_458"></a><tt>surflets/my-input-fields</tt> structure.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-input-field <i>name type transformer attributes
+html-tree-maker</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_460"></a>
+<div align=left><tt>(make-multi-input-field <i>name type transformer attributes
+html-tree-maker</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>input-field</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_462"></a> 
+<blockquote>
+These are the two constructors for <tt>input-field</tt>s.  <p>
+<i>name</i> is the name of the input field as used in the HTML.  You
+have to make sure that this name is unique across your web page, <em>e.g.</em>by using <tt>generate-input-field-name</tt> presented below.  </p>
+<p>
+<i>type</i> is the type of the input field and mainly meant as a
+label for debugging.  You may choose an arbitrary value for it.</p>
+<p>
+<i>transformer</i> is a procedure that accepts the created
+<tt>input-field</tt> and some other value as arguments and returns the
+(single) Scheme value of the input field.  For
+<tt>make-input-field</tt>, the other value is the string representation
+of the value the user has entered in the represented input field, as
+sent by the browser.  For <tt>make-multi-input-field</tt>, the other
+value is an association list of all data the browser has sent, the
+names being the key and the entered data being the value.  This is
+the very same list as returned by <tt>get-bindings</tt>, see above.
+When the <i>transformer</i> cannot create a Scheme value for the
+<tt>input-field</tt>, she should raise an error.</p>
+<p>
+<i>attributes</i> takes some extra information you want to store
+along with the <tt>input-field</tt>.  You may choose an arbitrary value
+for it. </p>
+<p>
+<i>html-tree-maker</i> is a procedure that takes the created
+<tt>input-field</tt> as argument and returns its representation in SXML.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(generate-input-field-name <i>prefix</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_464"></a>
+<blockquote>
+This generates a pseudo unique name based on prefix.  Subsequent
+calls with the same prefix are guaranteed to never return the same
+string.<a name="call_footnote_Temp_17"></a><a href="#footnote_Temp_17"><sup><small>9</small></sup></a> 
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(input-field-name <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_466"></a>
+<div align=left><tt>(input-field-type <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_468"></a>
+<div align=left><tt>(input-field-transformer <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_470"></a>
+<div align=left><tt>(input-field-attributes  <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_472"></a>
+<div align=left><tt>(input-field-html-tree-maker <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_474"></a>
+<div align=left><tt>(input-field-html-tree <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>sxml</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_476"></a>
+<div align=left><tt>(input-field-multi? <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_478"></a>
+<blockquote>
+These inspect input field values.  <tt>input-field-name</tt> returns the
+name of the input field as used in its HTML representation.
+<tt>input-field-type</tt> returns a string indicating the type of the
+input field, <em>e.g.</em>&quot;<tt>radio</tt>&quot; or &quot;<tt>text</tt>&quot;.  For individual input
+fields it may return a value of any type.
+<tt>input-field-transformer</tt> returns the transformer procedure that
+is used the transform the browser value of the input field to a
+Scheme value.  <tt>input-field-attributes</tt> returns the attributes
+that were stored along with the input field.
+<tt>input-field-html-tree-maker</tt> returns the procedure that creates
+the SXML representation of the input field.
+<tt>input-field-html-tree</tt> returns the SXML representation of the
+input field.  <tt>input-field-multi?</tt> returns <tt>#t</tt>if the input
+field was created with <tt>make-multi-input-field</tt>, <tt>#f</tt>otherwise.  The transformer of an multi-<tt>input-field</tt> gets the
+browser bindings as second argument while the transformer of a
+normal (non-multi) <tt>input-field</tt> gets the string representation
+of the entered data as second argument.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(set-input-field-attributes! <i>input-field
+new-attributes</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_480"></a>
+<blockquote>
+This allows the mutation of the attributes of the <i>input-field</i>
+to <i>new-attributes</i>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(touch-input-field! <i>input-field</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_482"></a>
+<blockquote>
+This forces the recalculation of the SXML representation of the
+<i>input-field</i> using its html-tree-maker procedure.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.11"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.11">6.2.11&nbsp;&nbsp;Web addresses</a></h3>
+<p>The SUrflets library allow you to determine which link or button a
+user used to leave a page.  The links are called evaluatable web
+addresses.  The <a name="node_idx_484"></a><tt>surflets/returned-via</tt> structure provides
+procedures and syntax for this.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(returned-via <i>return-object bindings</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any value</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_486"></a>
+<div align=left><tt>(returned-via? <i>return-object bindings</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any value</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_488"></a>
+<blockquote>
+Determines, whether the user left the web page using
+<i>return-object</i>.  <i>bindings</i> are the bindings as returned by
+<tt>get-bindings</tt>.  If <i>return-object</i> is an <tt>input-field</tt>,
+<tt>returned-via</tt> returns its Scheme value as reported by
+<tt>input-field-value</tt>.  The input field usually can only be a
+submit or an image button.  If <i>return-object</i> is not an
+<tt>input-field</tt>, <tt>returned-via</tt> assumes it is an evaluatable web
+address.  If the user did not use the evaluatable web address to
+leave the web page, <tt>returned-via</tt> returns <tt>#f</tt>.  Otherwise,
+when the evaluatable web address is annotated, <tt>returned-via</tt>
+returns its annotation, otherwise just <tt>#t</tt>.  <tt>returned-via?</tt>
+is an alias for <tt>returned-via</tt>.  The type of the return value
+depends on the type of <i>return-object</i>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_490"></a>
+(case-returned-via <tt><i>&lt;.key.&gt;</i> <i>&lt;.clause.&gt;</i> <tt>...</tt>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;syntax
+</p>
+<blockquote>
+This works like <tt>case</tt> with some flavor of <tt>cond</tt>.  Instead of
+<tt>eq?</tt>  it uses <tt>returned-via</tt> to determine which
+<i>&lt;.clause.&gt;</i> applies.  <i>&lt;.key.&gt;</i> is the <i>bindings</i>
+argument to <tt>returned-via</tt> (see above for the arguments of
+<tt>returned-via</tt>).  <p>
+A clause is of the form
+</p>
+<blockquote><tt>((<i>&lt;.datum.&gt;</i> <tt>...</tt>) <i>&lt;.expression.&gt;</i> <tt>...</tt>)</tt></blockquote>where each <i>&lt;.datum.&gt;</i> is the <i>return-object</i> argument of
+<tt>returned-via</tt>.   If for any of the <i>&lt;.datum.&gt;</i>
+<tt>returned-via</tt> returns a true value, the <i>&lt;.expression.&gt;</i>s are
+evaluated.  <p>
+Alternatively, a clause may be of the form
+</p>
+<blockquote><tt>((<i>&lt;.datum.&gt;</i> <tt>...</tt>) =&gt; <i>&lt;.procedure.&gt;</i> <tt>...</tt>)</tt></blockquote>If for any of the <i>&lt;.datum.&gt;</i> <tt>returned-via</tt> returns a true
+value, <i>&lt;.proc.&gt;</i> is called with that value.  <p>
+The last possible clause is an &quot;else&quot; clause of the form
+</p>
+<blockquote><tt>(else <i>&lt;.expression.&gt;</i> <tt>...</tt>)</tt></blockquote>which applies when the previous clauses don't apply.<p>
+<tt>case-returned-via</tt> returns the value(s) of the
+<i>&lt;.expression.&gt;</i> that was evaluated last.
+</p>
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.11.1"></a>
+<h4><a href="man-Z-H-1.html#node_toc_node_sec_6.2.11.1">6.2.11.1&nbsp;&nbsp;Evaluatable web addresses</a></h4>
+<p>The <a name="node_idx_492"></a><tt>surflets/addresses</tt> structure provides procedures to create
+evaluatable web addresses.  Evaluatable web addresses are used just
+like web addresses with the difference that <tt>returned-via</tt> can
+tell whether the user used this web address to leave the web page.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-address<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>address-procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_494"></a>
+<blockquote>
+This creates an evaluatable web address.  <i>address-procedure</i> is
+a procedure that accepts messages.  If the message is a string,
+<i>address-procedure</i> will assume it is a continuation URL and
+will return a web address that can be used as a link.  If the
+message is the symbol <tt>address</tt>, <i>address-procedure</i> will
+return the real <tt>address</tt> object.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-annotated-address<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>address-procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_496"></a>
+<blockquote>
+This creates an annotated evaluatable wewb address.
+<i>address-procedure</i> is a procedure that accepts messages.  The
+procedure accepts either a string and an optional annotation which
+may be any Scheme value, or it accepts only the symbol <tt>address</tt>.
+In the first case, it will assume the string is a continuation URL
+and will return a web address that can be used as a link.  In the
+latter case, it will return the real <tt>address</tt> object.
+</blockquote><p>
+</p>
+<blockquote><i>Oops: </i> Evaluatable web address cannot be used as the action URL of web
+forms.</blockquote> <p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(address-name <i>address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_498"></a>
+<div align=left><tt>(address-annotated? <i>address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_500"></a>
+<div align=left><tt>(address-annotation <i>address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_502"></a>
+<blockquote>
+These inspect real <tt>address</tt> objects as returned by the
+evaluatable web addresses when given the symbol <tt>address</tt>.
+<tt>address-name</tt> returns the name of the <i>address</i> as used in
+the browser data.  <tt>address-annotated?</tt> indicates whether
+<i>address</i> is annotated.  <tt>address-annotation</tt> returns the
+annotation of <i>address</i>.  If <i>address</i> is not annotated, it
+returns <tt>#f</tt>.
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.12"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.12">6.2.12&nbsp;&nbsp;Callbacks</a></h3>
+<p>The SUrflets library allows to add a callback to a link.  When the
+user of a web page clicks on the link, the callback will be
+executed. <tt>send-html/suspend</tt> (usually) won't return in that
+case.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-callback <i>callback-procedure</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>continuation-URL</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_504"></a>
+<blockquote>
+This creates a callback.  When a user clicks on a link to the
+continuation URL <tt>make-callback</tt> has returned,
+<i>callback-procedure</i> will be called with the according
+<tt>surflet-request</tt>.  <i>callback-procedure</i> should not return.<p>
+<tt>make-callback</tt> works with continuations.  Therefore, it is not
+sensible to create callbacks on toplevel, nor is it sensible to
+reuse callbacks.  Instead, create your callback every time and right
+before you need it.</p>
+<p>
+If <i>callback-procedure</i> returns, <tt>make-callback</tt> will return
+<em>again</em>, this time with the value returned by
+<i>callback-procedure</i>.  Note that in this case the continuation
+that was active at the time of the call to <tt>make-callback</tt> is
+restored.  Or, in short, don't let <i>callback-procedure</i> return
+if you want to avoid headaches.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-annotated-callback <i>callback-procedure</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>procedure</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_506"></a>
+<blockquote>
+This creates a callback generator.  The returned procedure accepts
+any number of arguments <i>args</i> and returns a continuation URL.
+When the user clicks on a link to the continuation URL,
+<i>callback-procedure</i> will be called with the arguments
+<i>args</i> previously provided.  <p>
+It is an error, if <i>callback-procedure</i> returns.  You should
+create a fresh annotated callback every time and right before you
+need it, as the continuation that was active at the time of the call
+to <tt>make-annotated-callback</tt> is restored.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_508"></a></p>
+<div align=left><tt>callback-function</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;procedure&nbsp;</div>
+
+<blockquote>
+Use this procedure as the <i>callback-procedure</i> argument to
+<tt>make-annotated-callback</tt> to call arbitrary procedures with
+arbitrary arguments.
+</blockquote><p>
+Here are some examples.  The first example shows how you can use an
+annotated callback.  Note that it does not need to use
+<tt>send-html/suspend</tt>.</p>
+<p>
+</p>
+<pre class=verbatim>(define-structure surflet surflet-interface
+  (open surflets
+        surflets/callbacks
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (let ((language (make-annotated-callback result-page)))
+        (send-html
+         `(html 
+           (head (title &quot;Multi-lingual&quot;))
+           (body 
+            (h2 &quot;Select your language:&quot;)
+            (ul
+             (li (url ,(language &quot;Hello, how are you?&quot;) 
+                      &quot;English&quot;)
+             (li (url ,(language &quot;Hallo, wie geht es Ihnen?&quot;)
+                      &quot;Deutsch&quot;)))))))))
+
+    (define (result-page req text)
+      (send-html/finish
+       `(html 
+         (head (title &quot;Greeting&quot;))
+         (body
+          (h2 ,text)))))
+                        
+    ))
+</pre><p></p>
+<p>
+Replacing the <tt>main</tt> procedure with the following definition will
+have the same result:</p>
+<p>
+</p>
+<pre class=verbatim>    (define (main req)
+      (let ((language (make-annotated-callback  callback-function)))
+        (send-html
+         `(html 
+           (head (title &quot;Multi-lingual&quot;))
+           (body 
+            (h2 &quot;Select your language:&quot;)
+            (ul
+             (li (url ,(language result-page &quot;Hello, how are you?&quot;) 
+                      &quot;English&quot;)
+             (li (url ,(language result-page &quot;Hallo, wie geht es Ihnen?&quot;)
+                      &quot;Deutsch&quot;)))))))))
+</pre><p></p>
+<p>
+</p>
+<a name="node_sec_6.2.13"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.13">6.2.13&nbsp;&nbsp;Outdater</a></h3>
+<p>The SUrflets library allows the user to navigate through the web
+pages back and forth as she sees fit.  However, sometimes you want
+to make sure, that a submission is done only once.  For this, the
+SUrflets provide <tt>outdater</tt> objects that take care of this.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-outdater<i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>outdater</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_510"></a>
+<blockquote>
+Creates an outdater object.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_512"></a>
+(if-outdated <tt><i>&lt;.outdater.&gt;</i> <i>&lt;.consequence.&gt;</i>
+<i>&lt;.alternative.&gt;</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;syntax
+</p>
+<blockquote>
+Using the <i>&lt;.outdater.&gt;</i>, this makes sure, the
+<i>&lt;.alternative.&gt;</i> is executed at most once, <em>i.e.</em>the first time
+the <i>&lt;.outdater.&gt;</i> is used in such a form, the
+<i>&lt;.alternative.&gt;</i> is evaluated.  Every subsequent evaluation of
+the <tt>if-outdated</tt> form with the <i>&lt;.outdater.&gt;</i> will evaluate
+the <i>&lt;.consequence.&gt;</i>, usually something similar to what
+<tt>show-outdated</tt> does.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(show-outdated <i>url</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_514"></a>
+<blockquote>
+Emits a regular web page to the client informing the user (in
+English) that ``the page or action you requested relies on outdated
+data''.  It offers a ``reload'' link that points to <i>url</i> to get
+current data.  Usually, <i>url</i> is a callback URL the calls the
+according procedure.  See the admin SUrflets for examples, <em>e.g.</em><tt>scheme/web-server/root/surlfets/admin-surflet.scm</tt>. 
+</blockquote><p>
+</p>
+<a name="node_sec_6.2.14"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_6.2.14">6.2.14&nbsp;&nbsp;Simple SUrflets</a></h3>
+<p>PLT offers an API to create simple servlets (which are their analogues
+to our SUrflets).  The <a name="node_idx_516"></a><tt>simple-surflet-api</tt> structure offers
+the procedures with the same name as in the PLT API.  With that,
+SUrflets can look as simple as this
+(<tt>scheme/web-server/root/surlfets/add-simple.scm, see also
+<tt>simple-surflet.scm</tt> in the same directory for a larger example</tt>:</p>
+<p>
+</p>
+<pre class=verbatim>(define-structure surflet surflet-interface
+  (open scheme-with-scsh
+        surflets
+        simple-surflet-api
+        )
+  (begin
+
+    (define (main req)
+      (let* ((number-1 (single-query (make-number &quot;First number:&quot;)))
+             (number-2 (single-query (make-number &quot;Second number:&quot;))))
+        (inform (format #f &quot;~a + ~a = ~a&quot;
+                        number-1
+                        number-2
+                        (+ number-1 number-2))))
+      (final-page &quot;Session finished.&quot;))
+
+))
+</pre><p></p>
+<p>
+The procedures are the following.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(single-query <i>query</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_518"></a>
+<blockquote>
+Asks the user one single questions based on <i>query</i> and returns
+her answer.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(queries <i>queries</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_520"></a>
+<blockquote>
+Asks the user multiple questions based on the list of <i>queries</i>
+and returns her answers in a list.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(form-query <i>named-queries</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_522"></a>
+<blockquote>
+Asks the user multiple queries based on the list of
+<i>named-queries</i> and returns her answers in a pseudo association
+list.  <i>named-queries</i> is a list of two element lists.  The
+first element of those lists is a symbol identifying the query, the
+second is the query.  The resulting pseudo association list contains
+two element lists, where the first element is the symbol and the
+second element the user's answer to the query.  The result can be
+read using the <tt>extract/single</tt> and <tt>extract</tt> procedures.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(inform <i>title [text <tt>...</tt>]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>surflet-request</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_524"></a>
+<blockquote>
+Sends a web page title <i>title</i> with the <i>text</i> to the user
+as an information.  The returned <tt>surflet-request</tt> is usually
+discarded.  Takes at least one argument.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(final-page <i>title [text <tt>...</tt>]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_526"></a>
+<blockquote>
+This sends the last page of the session to the user, titled
+<i>title</i> and containing <i>text</i>.  This is the analog to
+<tt>send/finish</tt>.  Takes at least one argument.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-text <i>invitation</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>query</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_528"></a>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-number <i>invitation</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>query</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_530"></a>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-password <i>text</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>query</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_532"></a>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-boolean <i>invitation</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>query</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_534"></a>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-radio <i>invitation choices</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>query</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_536"></a>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-yes-no <i>invitation yes-text no-text</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>query</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_538"></a>
+<blockquote>
+These create the various queries.  <i>invitation</i> is a text
+displayed in front of the input field, <em>e.g.</em>``Please enter your
+password:''.  <tt>make-text</tt> creates a text input field,
+<tt>make-number</tt> creates a number input field (<em>i.e.</em>a text input field
+that only accepts numbers as inputs), <tt>make-password</tt> creates a
+password input field, <tt>make-boolean</tt> creates a checkbox,
+<tt>make-radio</tt> creates a group of radio buttons of which only one
+can be selected and <tt>make-yes-no</tt> creates a radio group that
+allows the choices <i>yes-text</i> and <i>no-text</i>. <p>
+The value of <tt>make-text</tt>, <tt>make-number</tt> and <tt>make-password</tt>
+is the text or number entered into the input field.  The value of
+<tt>make-boolean</tt> is <tt>#t</tt>or <tt>#f</tt>.  The value of
+<tt>make-radio</tt> and <tt>make-yes-no</tt> is the selected choice, a
+string.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(extract/single <i>symbol table</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any value</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_540"></a>
+<div align=left><tt>(extract <i>symbol table</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_542"></a>
+<blockquote>
+Return the answer of a user to a query.  <i>table</i> is the result
+of <tt>form-query</tt>, <i>symbol</i> the symbol used to identify the
+query of interest.  For <tt>extract/single</tt>, it is an error if there
+is more than one query in <i>table</i> that is identified by
+<i>symbol</i>.
+</blockquote><p>
+
+
+</p>
+<div class=footnoterule><hr></div><p></p>
+<div class=footnote><p><a name="footnote_Temp_10"></a><a href="#call_footnote_Temp_10"><sup><small>5</small></sup></a> If you know about scsh modules, you probably also know
+that there is a <tt>file</tt> clause that you could use to place the
+code in a file instead or along with the <tt>begin</tt> clause.</p>
+<p><a name="footnote_Temp_11"></a><a href="#call_footnote_Temp_11"><sup><small>6</small></sup></a> In the API this URL is called the <em>continuation
+URL</em>.</p>
+<p><a name="footnote_Temp_12"></a><a href="#call_footnote_Temp_12"><sup><small>7</small></sup></a> If you want to change a
+variable via side effects but you don't want to interfere with other
+sessions, you can use <tt>set-session-data!</tt> and
+<tt>get-session-data</tt>.  See the API documentation in section
+<a href="#node_sec_6.2">6.2</a> for further information.</p>
+<p><a name="footnote_Temp_13"></a><a href="#call_footnote_Temp_13"><sup><small>8</small></sup></a> The reason for this distinction is the fact
+that the SUrflet handler saves and reifies the continuation of a
+SUrflet to realize the easy programming of web applications.
+Mutations of values remain visible after reifying the continuation.</p>
+<p><a name="footnote_Temp_17"></a><a href="#call_footnote_Temp_17"><sup><small>9</small></sup></a> Well, never say never:  if the structure is
+reloaded, the counter is reset and <tt>generate-input-field-name</tt>
+will return the same names again.</p>
+</div>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-7.html">previous</a></span><span>, <a href="man-Z-H-9.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

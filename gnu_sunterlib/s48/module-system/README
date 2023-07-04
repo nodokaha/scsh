@@ -1,0 +1,105 @@
+This library provides two structures that slightly extend Scheme 48's module system:
+
+* OVERLAPPING-IMPORTS adds checking for duplicate imports.
+
+* RT-MODULES provides run-time access to the module system.
+
+================================================================================
+
+After installation, use the switch
+
+-lel module-system/load.scm
+
+to load this library.
+
+================================================================================
+
+The structure OVERLAPPING-IMPORTS extends the module system with a
+facility to check for duplicates entries within the imported names of
+a module. After loading the package you can add the form
+
+(optimize overlapping-imports?)
+
+to the definition of the structure you want to monitor, e.g.
+
+config> (define-structure foo (export f)
+		(open scheme srfi-1) 
+		(begin (define f 23)) 
+		(optimize overlapping-imports?))
+; no values returned
+config> ,load-package foo
+
+Warning: Structure has undefined exports
+         #{Structure 153 srfi-1}
+         (for-each)
+
+Warning: package has overlapping imports
+         #{Package 181 foo}
+         (assoc (srfi-1 scheme))
+         (for-each (srfi-1 scheme))
+         (member (srfi-1 scheme))
+         (map (srfi-1 scheme))
+
+
+
+The structure RT-MODULES provides run-time access to the Scheme 48
+module system.
+
+
+(load-config-file file-name) --> unspecific
+
+Loads config file containing structure definition. This is the same as
+
+,config ,load file-name
+
+in the REPL.
+
+
+(reify-structure structure-name) --> rt-structure
+
+Creates a rt-structure object representing the structure which name
+STRUCTURE-NAME (a symbol).
+
+
+
+(load-structure rt-structure) --> unspecific
+
+Ensures that the definition of the underlying structure has been
+loaded. This is the same as
+
+,load-package structure
+
+in the REPL.
+
+
+
+(rt-structure-binding rt-structure name) --> value
+
+Gets the binding for NAME (a symbol) from a rt-structure.
+
+
+(lambda-interface interface-name body ...) --> value of body     SYNTAX
+
+A variation of lambda which uses the exported names from interface
+INTERFACE-NAME as the names of the parameters.
+
+
+(with-names-from-rt-structure rt-structure interface body ...) --> value of body    SYNTAX
+
+Evaluate body with the names from INTERFACE bound to the bindings
+provided by RT-STRUCTURE.
+
+
+(rt-structure->environment rt-structure) --> environment
+
+Turns RT-STRUCTURE into an object suitable as second argument to EVAL.
+
+
+
+
+
+
+
+
+
+

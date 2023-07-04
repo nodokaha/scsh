@@ -1,0 +1,3 @@
+PROCEDURE-HASH defines PROCEDURE-HASH, which takes a procedure and
+returns its hash value.  PROCEDURE-TABLES defines MAKE-PROCEDURE-TABLE,
+which returns a table whose keys are procedures.

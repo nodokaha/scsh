@@ -1,0 +1,61 @@
+\chapter{Parsing Netrc Files}\label{cha:netrc}
+%
+The \ex{netrc} structures provides procedures to parse authentication
+information contained in \ex{~/.netrc}.
+
+On Unix systems the netrc file may contain information allowing
+automatic login to remote hosts.  The format of the file is defined in
+the \ex{ftp(1)} manual page.  Example lines are
+%
+\begin{verbatim}
+machine ondine.cict.fr login marsden password secret
+default login anonymous password user@site
+\end{verbatim}
+%
+The netrc file should be protected by appropriate permissions, and
+(like \ex{/usr/bin/ftp}) this library will refuse to read the file if it is
+badly protected.  (unlike \ex{ftp} this library will always refuse
+to read the file----\ex{ftp} refuses it only if the password is
+given for a non-default account).  Appropriate permissions are set if
+only the user has permissions on the file.
+
+\defun{netrc-machine-entry}{host accept-default? [file-name]}{netrc-entry-or-\sharpf}
+\begin{desc}
+  This procedure looks for the entry related to given host in the
+  user's netrc file.  The host is specified in \var{host}.
+  \var{Accept-default?} specifies whether \ex{netrc-machine-entry}
+  should fall back to the default entry if there is no macht for
+  \var{host} in the netrc file.  If specified, \var{file-name}
+  specifies an alternate file name for the netrc data.  It defaults to
+  \ex{.netrc} in the current user's home directory.
+
+  \ex{Netrc-machine-entry} returns a netrc entry (see below) if it was
+  able to find the requested information; if not, it returns \sharpf.
+
+  If the netrc file had inappropriate permissions, \ex{netrc-machine-entry}
+  raises an error.
+\end{desc}
+
+\defun{netrc-entry?}{thing}{boolean}
+\defunx{netrc-entry-machine}{netrc-entry}{string}
+\defunx{netrc-entry-login}{netrc-entry}{string-or-\sharpf}
+\defunx{netrc-entry-password}{netrc-entry}{string-or-\sharpf}
+\defunx{netrc-entry-account}{netrc-entry}{string-or-\sharpf}
+\begin{desc}
+  \ex{Netrc-entry?} is the predicate for netrc entries.  The other
+  procedures are selectors for netrc entries as returned by
+  \ex{netrc-machine-entry}.  They return \sharpf{} if the netrc file
+  didn't contain a binding for the corresponding field.
+\end{desc}
+
+\defun{netrc-macro-definitions}{[file-name]}{alist}
+\begin{desc}
+  This returns the macro definitions from the netrc files, represented
+  as an alist mapping macro names---represented as strings---to
+  definitions---represented as lists of strings.
+\end{desc}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

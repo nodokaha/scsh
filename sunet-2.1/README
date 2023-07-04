@@ -1,0 +1,118 @@
+This is the Scheme Untergrund Networking Package.
+
+The Scheme Untergrund Networking Package (SUnet, for short) is a
+collection of applications and libraries for Internet hacking in
+Scheme.  It contains over 15000 lines of high-quality Scheme code that
+runs under Scsh, the Scheme shell.  SUnet makes extensive use of
+Scsh's facilities for multi-threaded systems programming on Unix.
+
+SUnet includes the following components:
+
+* The SUnet Web server
+    This is a highly configurable HTTP 1.0 server in Scheme.
+    The server is accompanied some libraries which may also
+    be used separately:
+
+    * URI and URL parsers and unparsers
+    * a library for writing CGI scripts in Scheme
+    * server extensions for interfacing to CGI scripts
+    * server extensions for uploading Scheme code
+    * simple structured HTML output library
+
+    The server also ships with a sophisticated interface for writing
+    server-side Web applications called "SUrflets".
+
+* The SUnet ftp server
+    This is a complete anonymous ftp server in Scheme.
+
+* ftp client library
+    This library allows you to access ftp servers programmatically.
+
+* Netrc library
+    This library parses authentication information contained in ~/.netrc.
+
+* SMTP client library
+    This library allows you to forge mail from the comfort of your own
+    Scheme process.
+
+* POP3 client library
+    This library allows you to access your POP3 mailbox from inside Scsh.
+
+* RFC822 header library
+    This library parses email-style headers.
+
+* Daytime and Time protocol client libraries
+    These libraries lets you find out what time it is without paying for a
+    Rolex.
+
+* DNS client library
+    This is a complete, multithreaded DNS library.
+
+* An ls clone
+    This library displays Unix-style directory listings without running ls.
+
+Download
+========
+
+The SUnet code is available from
+
+http://www.scsh.net/sunet/
+
+To run the code, you need version 0.6.4 or later of Scsh, available from
+
+http://www.scsh.net/
+
+Installation
+============
+
+Starting with version 2.1 SUnet conforms to the packaging proposal for
+scsh by Michel Schinz and needs Michel's installation library to
+install properly. For more information, please see:
+
+<http://lamp.epfl.ch/~schinz/scsh_packages/>
+
+In short, this means that you can install SUnet by unpacking the SUnet
+tarball and issuing the following command in the created directory:
+
+scsh-install-pkg --prefix /path/to/your/package/root
+
+See the file INSTALL for the generic installation instructions for
+scsh packages.  
+
+You need to install version 4.9 of the SSAX package to use SUnet. SSAX
+is available from <http://lamp.epfl.ch/~schinz/scsh_packages/>.
+
+Sample Web Server
+=================
+
+The installation procedure also installs three scripts to run the
+SUnet httpd in the directory
+
+/path/to/your/package/root/0.6/sunet/web-server/
+
+The three scripts are:
+
+start-web-server for running a simple web server on port 8080
+start-extended-web-server for running a web server with rman and info gateway
+start-surflet-server for running a web server with SUrflets enabled
+
+Pass the --help option to learn how to configure the scripts.
+
+These scripts should provide a pretty good starting point to set up
+your own server or serve your own SUrfelts.
+
+Support
+=======
+
+Please direct questions, comments, answers about SUnet to the regular
+scsh mailing list at
+
+scsh-users@scsh.net
+
+Relax, hack, and enjoy!
+
+Dr. S.
+Dr. S.
+Martin Gasbichler
+Eric Marsden
+Andreas Bernauer

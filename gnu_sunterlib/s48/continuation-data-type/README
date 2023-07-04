@@ -1,0 +1,31 @@
+The structure CONTINUATION-DATA-TYPE encapsulates continuations into a
+data type as proposed by Marc Feeley on the Scheme Workshop 2001.
+
+================================================================================
+
+After installation, use the switch
+
+-lel continuation-data-type/load.scm
+
+to load this library.
+
+================================================================================
+
+
+(continuation-capture receiver) -> continuation
+
+Captures the current continuation of the expression and applies
+RECEIVER to it. Unlike CALL-WITH-CURRENT-CONTINUATION applying the
+continuation will immediately replace the current continuation.
+
+
+(continuation-graft cont thunk) -> value of thunk
+
+Makes the continuation CONT the current continuation and calls THUNK
+afterwards.
+
+
+(continuation-return cont . returned-values) -> returned-values
+
+Makes the continuation CONT the current continuation and returns
+RETURNED-VALUES afterwards.

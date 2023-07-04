@@ -1,0 +1,21 @@
+Scheme Untergrund Library
+
+The Scheme Untergrund Library hosts contributed code for Scheme48 and
+Scsh.
+
+Sunterlib is hosted at Savannah:
+  http://savannah.nongnu.org/projects/sunterlib/
+
+INSTALLATION AND USE
+
+As of version 0.6, sunterlib follows Michel Schinz's scsh package
+proposal for installation and use. Please see INSTALL for details.
+
+BUGS
+
+Please use the bug tracking system to report bugs:
+  http://savannah.nongnu.org/bugs/?group=sunterlib
+
+TODO
+
+It should be possible to install an individual library.

@@ -1,0 +1,24 @@
+\chapter{Writing CGI Scripts in Scheme}\label{cha:cgi-scripts}
+%
+The \ex{cgi-scripts} structure provides functionality useful for
+writing CGI scripts in Scheme.
+
+\defun{cgi-form-query}{}{data-alist}
+\begin{desc}
+ CGI scripts receive their parameters in various ways, depending on
+ how they were called (e.g.\ by \ex{GET} method).
+ 
+ This procedure translates the delivered form data into an alist of
+ decoded strings, using the environment variables set by the server
+ (\ex{REQUEST\_METHOD}, \ex{QUERY\_STRING} (for a \ex{GET} request),
+ \ex{CONTENT\_LENGTH} (for a \ex{POST} request)).  So a query string
+ like \codex{button=on\&\ob{}reply=Oh,\ob{}\%20yes} becomes an alist
+ \codex{(("button" . "on") ("reply" . "Oh, yes"))}
+ 
+ \ex{Cgi-form-query} only works for \ex{GET} and \ex{POST} methods.
+\end{desc}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

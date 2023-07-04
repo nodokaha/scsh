@@ -1,0 +1,482 @@
+\chapter{DNS Client Library}\label{cha:dns}
+%
+\begin{description}
+\item[Used files:] dns.scm
+\item[Name of the package:] dns
+\end{description}
+%
+\section{Overview}
+The \ex{dns} structure contains a library for querying DNS servers.
+The library contains sophisticated replacements for scsh's interface
+to the \ex{gethostbyname} and \ex{gethostbyaddr} and many extensions
+to these functions.
+
+The main features of the libraray include:
+\begin{itemize}
+\item Complete implementation of the DNS protocol
+\item Concurrent contacting of multiple DNS servers without blocking
+  the scsh process
+\item Internal caching of DNS responses
+\item Parsing of \texttt{resolv.conf}, including \texttt{search}
+  entries to generate FQDNs from unqualified host names
+\item Rich condition hierarchie
+\end{itemize}
+
+\section{Conditions}
+
+The library defines a set of conditions raised by the procedures of
+the library. The supertype of these conditions is \exi{dns-error}.
+\defun{dns-error?}{thing}{\boolean}
+\begin{desc}
+  The predicate for \ex{dns-error} conditions.
+\end{desc}
+\defun{dns-error->string} {dns-error-condition} {\str}
+\begin{desc}
+  Returns a string with the description of the condition.
+\end{desc}
+
+\defvar{parse-error}{condition}
+\defvarx{unexpected-eof-from-server}{condition}
+\defvarx{bad-address}{condition}
+\defvarx{no-nameservers}{condition}
+\defvarx{bad-nameserver}{condition}
+\defvarx{not-a-hostname}{condition}
+\defvarx{not-a-ip} {condition}
+
+  \begin{desc}
+    
+  \end{desc}
+\defvar {dns-format-error} {condition}
+\defvarx {dns-server-failure} {condition}
+\defvarx {dns-name-error} {condition}
+\defvarx {dns-not-implemented} {condition}
+\defvarx {dns-refused} {condition}
+\begin{desc}
+  These conditons correspond to errors returned by the DNS server.
+  They are all subtypes of the \exi{dns-server-error} condition which
+  in turn is a subtype of \ex{dns-error}.
+\end{desc}
+\defun{dns-server-error?}{thing}{\boolean}
+\begin{desc}
+  The predicate for \ex{dns-server-error} conditions.
+\end{desc}
+
+\defun{parse-error?}{thing} {\boolean}
+\defunx{unexpected-eof-from-server?}{thing} {\boolean}
+\defunx{bad-address?}{thing} {\boolean}
+\defunx{no-nameservers?}{thing} {\boolean}
+\defunx{bad-nameserver?}{thing} {\boolean}
+\defunx{not-a-hostname?}{thing} {\boolean}
+\defunx{not-a-ip?}{thing} {\boolean}
+\defunx{dns-format-error?} {thing} {\boolean}
+\defunx{dns-server-failure?} {thing} {\boolean}
+\defunx{dns-name-error?} {thing} {\boolean}
+\defunx{dns-not-implemented?} {thing} {\boolean}
+\defunx{dns-refused?} {thing} {\boolean}
+\begin{desc}
+  The type predicates for the conditions above.
+\end{desc}
+
+\section{High-level Interface}
+\def\ipaddr{IP-address\xspace}
+\def\ipstring{IP-string\xspace}
+\def\fqdn{FQDN\xspace}
+
+The library uses an internal store to cache data obtained from DNS
+servers. All procedures take a boolean flag \var{use-cache?} that
+indicates whether the cache should be used or not. \var{use-cache?}
+defaults to true.
+
+\defun{dns-clear-cache!}{}{\undefined}
+\begin{desc}
+  This procedure erases all information stored in the internal cache.
+\end{desc}
+
+The library is further capable of parsing the contents of
+\texttt{/etc/resolv.conf} (see Section~\ref{sec:dns-rc}). The
+nameservers listed there are the default value for the optional
+argument \var{nameserver list} which many procedures of the library
+accept. \var{Nameserver} is either a \ipaddr or a dotted IP string.
+
+\defun{dns-lookup-name}{\fqdn [nameserver list][use-cache?]}{\ipaddr}
+\begin{desc}
+  Given the FQDN of a host, \ex{dns-lookup-ip} returns the IP address.
+  The optional argument specifes the name servers to query, it defaults
+  to the ones found in \texttt{/etc/resolv.conf}. 
+\end{desc}
+
+\defun{dns-lookup-ip}{\ipstring/\ipaddr [nameserver list][use-cache?]}{\fqdn}
+\begin{desc}
+  Looks up the FQDN for the given IP address. The optional argument
+  specifes the name servers to query, it defaults to the ones found in
+  \texttt{/etc/resolv.conf}.
+\end{desc}
+
+\defun{dns-lookup-nameserver}{\ipstring/\ipaddr [nameserver list][use-cache?]}{\ipaddr list}
+\begin{desc}
+  Looks up an authoritative name server for a hostname, returns a list
+  of name servers.
+\end{desc}
+
+\defun{dns-lookup-mail-exchanger}{\ipstring/\ipaddr [nameserver list][use-cache?]}{\fqdn list}
+\begin{desc}
+  Looks up mail-exchangers for a hostname und returns them in a list
+  sorted by preference.
+\end{desc}
+\defun{socket-address->fqdn}{socket-address [nameserver list][use-cache?]}{\fqdn}
+\begin{desc}
+  Returns the FQDN for of the address bound to argument. The argument
+  \var{cache?}  indicates whether the internal cache may be queried to
+  obtain the information.
+\end{desc}
+
+\defun{maybe-dns-lookup-name}{\fqdn [nameserver list][use-cache?]}{\ipaddr or \sharpf}
+\defunx{maybe-dns-lookup-ip}{\ipstring/\ipaddr [nameserver list][use-cache?]}{\fqdn{} or \sharpf}
+\begin{desc}
+  These procedures provide the same functionality as
+  \ex{dns-lookup-name} and \ex{dns-lookup-ip} but return \sharpf{} in
+  case of an \ex{dns-error}.
+\end{desc}
+
+\defun{host-fqdn} {name/socket-address [nameserver list][use-cache?]}{\fqdn}
+\defunx{system-fqdn}{[nameserver list][use-cache?]}{\fqdn}
+\begin{desc}
+  \ex{host-fqdn} returns the fully qualified domain name (FQDN) for
+  its argument which can be either a unqualified host name or a socket
+  address.  The procedure \ex{system-fqdn} returns the FQDN of the
+  local host. These procedures use a list of domain names obtained
+  from \texttt{/etc/resolv.conf} to the generate FQDNs and try to
+  resolve these FQDNs.
+\end{desc}
+
+\defun{dns-check-nameservers} {[nameserver list]} {\undefined}
+\begin{desc}
+  \ex{dns-check-namservers} checks if the given nameservers are reachable.
+  If no argument is given, the nameservers in \texttt{/etc/resolv.conf}
+  are checked. Information about the status of the nameservers is printed
+  to the current output port.
+\end{desc}
+
+\section{Low-level Interface}
+
+This section describes a set of data structures and procedures which
+directly correspond to the data flow of the DNS protocol. The central
+entity is a \var{message}, the abstraction of the packet sent to the
+server or received from the server (The DNS protocol uses the same
+data format for both directions). A \var{dns-message} encapsulates the
+query message sent to the server, the response message received from
+the server, and some additional information the library gathered while
+generating the \var{dns-message}.
+
+\defunx{dns-get-information}{message protocol answer-okay? [nameserver
+  list][use-cache?]}{dns-message}
+\begin{desc}
+  Most general way to submit a DNS query. The message is sent to the
+  name servers via \var{protocol} which can be either
+  \ex{(network-procotcol tcp)} or {(network-protocol udp)}, both
+  members of of the enumerated type \ex{network-protocol}. After
+  receiving the reply, \ex{dns-get-information} applies the predicate
+  \var{answer-okay?} to the message. If it returns \sharpf{} and the
+  answer is not authoritative additional name servers sent with the
+  reply are checked until an authoritative answer is found. If the
+  predicate returns \sharpf{} but the answer is authoritative a
+  \var{bad-address} condition is signalled.
+\end{desc}
+
+\dfn{network-protocol}{protocol-name}{network-protocol}{syntax}
+\defunx{network-protocol?}{thing}{\boolean}
+\begin{desc}
+  Constructor and predicate for the enumerated type
+  \ex{network-protocol} with the possible protocol names \ex{tcp} and
+  \ex{udp}.
+\end{desc}
+\defun{dns-lookup}{\ipstring/\ipaddr type [nameserver list][use-cache?]}{dns-message}
+\begin{desc}
+  Convenient shortcut to submit a DNS query. The return value
+  is a \ex{dns-message} structure:
+\end{desc}
+
+\defun{dns-message?}{thing}{\boolean}
+\defunx{dns-message-query}{dns-message}{message}
+\defunx{dns-message-reply}{dns-message}{message}
+\defunx{dns-message-cache?}{dns-message}{\boolean}
+\defunx{dns-message-protocol}{dns-message}{protocol}
+\defunx{dns-message-tried-nameservers}{dns-message}{}
+\begin{desc}
+  A \var{dns-message} records the query sent to the server and the
+  reply from the server. It also contains information whether the
+  library took the reply from the cache, which protocol was used and
+  to which nameservers the query was sent.
+\end{desc}
+
+\defun{pretty-print-dns-message}{dns-message [output-port]}{\undefined}
+\begin{desc}
+  Pretty prints a DNS message to \var{out-port} which defaults to the
+  current output port.
+\end{desc}
+
+\defun{message?}{thing}{\boolean}{}
+\defunx{message-header}{message}{header}
+\defunx{message-questions}{message}{question list}
+\defunx{message-answers}{message}{resource-record list}
+\defunx{message-nameservers}{message}{resource-record list}
+\defunx{message-additionals}{message}{resource-record list}
+\defunx{message-source}{message}{char list}
+\begin{desc}
+  A \ex{message} represents the data sent to the DNS server or
+  received from the DNS server. The DNS protocol uses the same message
+  format for queries and replies. In queries only the header and the
+  questions is present, a reply may contain answers, name servers and
+  and additional informations as resource records. \ex{Message-source}
+  returns the actual data sent over the network.
+\end{desc}
+
+\defun{make-query-message header}{header question [questions]}{message}
+\begin{desc}
+  The procedure generates a message the supplied questions,
+  \var{header}, and the standard message values for queries.
+\end{desc}
+\defun{make-simple-query-message}{name type class}{message}
+\begin{desc}
+  This simplified constructor generates a message with one question
+  which is built from the parameters, and the standard header flags
+  for queries and the standard message values for queries.
+\end{desc}
+
+\defun{header?}{thing}{\boolean}
+\defunx{header-id}{header}{number}
+\defunx{header-flags}{header}{flags}
+\defunx{header-question-count}{header}{number}
+\defunx{header-answer-count}{header}{number}
+\defunx{header-nameserver-count}{header}{number}
+\defunx{header-additional-count}{header}{number}
+\begin{desc}
+  Every DNS message contains a header which stores information about
+  the data present in the message and contains flags for the query.
+\end{desc}
+
+\defun{flags?}{thing}{\boolean}
+\defunx{flags-query-type}{flags}{'query or 'response}
+\defunx{flags-opcode}{flags}{number}
+\defunx{flags-authoritative?}{flags}{\boolean}
+\defunx{flags-truncated?}{flags}{\boolean}
+\defunx{flags-recursion-desired?}{flags}{\boolean}
+\defunx{flags-recursion-available?}{flags}{\boolean}
+\defunx{flags-zero}{flags}{0}
+\defunx{flags-response-code}{flags}{number}
+\begin{desc}
+  Flags occur within the header of a DNS message. The boolean value
+  returned from \ex{flags-authoritative} indicates whether the message
+  was sent from a authoritative server, \ex{flags-truncated?} should
+  always be \sharpf as the library automatically uses the TCP protocol
+  is the UDP message size is not sufficied.
+\end{desc}
+
+\defun{question?}{thing}{\boolean}
+\defunx{question-name}{question}{\str}
+\defunx{question-type}{question}{message-type}
+\defunx{question-class}{question}{message-class}
+\begin{desc}
+  A question sent to the DNS server.
+\end{desc}
+The type and class of the question and answer are elements of
+enumerated types:
+\dfn{message-class}{class-name}{message-class}{syntax}
+\defunx{message-class?}{thing}{\boolean}
+\defunx{message-class-name}{message-class}{symbol}
+\defunx{message-class-number}{message-class}{number}
+\begin{desc}
+  \ex{message-class} constructs a member of the enumerated type,
+  \ex{message-class?} is the type predicate, \ex{message-class-name}
+  returns the symbol and \ex{message-class-number} the number used for
+  the class in the DNS protocol.
+\end{desc}
+The possible names for the classes are:
+\begin{description}
+\item[\ex{in}] The Internet
+\item[\ex{cs}] obsolete
+\item[\ex{ch}] the CHAOS class
+\item[\ex{hs}] Hesoid
+\end{description}
+
+\dfn{message-type}{type-name}{message-type}{syntax}
+\defunx{message-type?}{thing}{\boolean}
+\defunx{message-type-name}{message-type}{symbol}
+\defunx{message-type-number}{message-type}{number}
+\begin{desc}
+  \ex{message-type} constructs a member of the enumeration from name
+  \synvar{type-name} listed in Table~\ref{tab:message-types}.
+  \ex{message-type?} is the type predicate, \ex{message-type-name}
+  returns the name, and \ex{message-type-number} the number used for
+  the class the DNS protocol.
+  
+\end{desc}
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{|l|l|}
+    \hline
+    \ex{a}& a host address\\\hline
+    \ex{ns}&an authoritative name server\\\hline
+    \ex{md}&(obsolete)\\\hline
+    \ex{mf}&(obsolete)\\\hline
+    \ex{cname}&the canonical name for an alias\\\hline
+    \ex{soa}& marks the start of a zone of authority\\\hline
+    \ex{mb}&(experimental)\\\hline
+    \ex{mg}&(experimental)\\\hline
+    \ex{mr}&(experimental)\\\hline
+    \ex{null}& (experimental)\\\hline
+    \ex{wks}& a well known service description\\\hline
+    \ex{ptr}& a domain name pointer\\\hline
+    \ex{hinfo}& host information\\\hline
+    \ex{minfo}& (experimental)\\\hline
+    \ex{mx}& mail exchange\\\hline
+    \ex{txt}& text strings\\\hline
+  \end{tabular}
+  \caption{Message types}
+  \label{tab:message-types}
+\end{table}
+
+\defun{resource-record?}{thing}{\boolean}
+\defunx{resource-record-name}{resource-record}{\str}
+\defunx{resource-record-type}{resource-record}{message-type}
+\defunx{resource-record-class}{resource-record}{message-class}
+\defunx{resource-record-ttl}{resource-record}{number}
+\defunx{resource-record-data}{resource-record}{resource-record-data-\dots}
+\begin{desc}
+  A resource record as returned from the DNS server. The actual data
+  of the record is stored in the \texttt{resource-record-data} field.
+  It is one of the record types for resource record data described
+  below.
+\end{desc}
+
+\defun{resource-record-data-a?}{thing}{\boolean}
+\defunx{resource-record-data-a-ip}{resource-record-data-a}{\ipaddr}
+\begin{desc}
+  An address resource record which holds an internet address.
+\end{desc}
+
+\defun{resource-record-data-ns?}{thing}{\boolean}
+\defunx{resource-record-data-ns-name}{resource-record-data-ns}{\fqdn}
+\begin{desc}
+  A name server resource record containing the FQDN of the name server.
+\end{desc}
+
+\defun{resource-record-data-cname?}{thing}{\boolean}
+\defunx{resource-record-data-cname-name}{resource-record-data-cname}{\fqdn}
+\begin{desc}
+  A canonical name resource record which contains the canonical or
+  primary name of the owner.
+\end{desc}
+
+\defun{resource-record-data-mx?}{thing}{\boolean}
+\defunx{resource-record-data-mx-preference}{resource-record-data-mx}{number}
+\defunx{resource-record-data-mx-exchanger}{resource-record-data-mx}{\fqdn}
+\begin{desc}
+  A mail exchange resource record with the preference and the FQDN of
+  a host willing to act as a mail exchange.
+\end{desc}
+
+\defun{resource-record-data-ptr?}{thing}{\boolean}
+\defunx{resource-record-data-ptr-name}{resource-record-data-ptr}{\str}
+\begin{desc}
+  A pointer resource record which points to some other domain name.
+\end{desc}
+
+\defun{resource-record-data-soa?}{thing}{\boolean}
+\defunx{resource-record-data-soa-mname}{resource-record-data-soa}{\fqdn}
+\defunx{resource-record-data-soa-rname}{resource-record-data-soa}{\fqdn}
+\defunx{resource-record-data-soa-serial}{resource-record-data-soa}{number}
+\defunx{resource-record-data-soa-refresh}{resource-record-data-soa}{number}
+\defunx{resource-record-data-soa-retry}{resource-record-data-soa}{number}
+\defunx{resource-record-data-soa-expire}{resource-record-data-soa}{number}
+\defunx{resource-record-data-soa-minimum}{resource-record-data-soa}{number}
+\begin{desc}
+  A start of a zone of authority resource record. 
+\end{desc}
+The protocol specifies other possible values for the \texttt{resource-record-data}
+field but we where no able to find test cases for them.
+
+
+\defun{cache?}{thing}{\boolean}
+\defunx{cache-answer}{cache}{dns-message}
+\defunx{cache-ttl}{cache}{number}
+\defunx{cache-time}{cache}{number}
+\begin{desc}
+  A cache data structure corresponds to a saved answer to a previous
+  query. \ex{cache-answer} returns the saved message, \ex{cache-ttl}
+  returns the time when the cache entry expires and \ex{cache-time}
+  returns the time the entry was created.
+\end{desc}
+
+\section{Parsing \texttt{/etc/resolv.conf}}
+\label{sec:dns-rc}
+
+\defvar{resolv.conf-parse-error} {condition}
+\defun{resolv.conf-parse-error?}{thing}{\boolean}
+\begin{desc}
+  The code signals the condition \var{resolv.conf-parse-error} if a
+  parse error occurs while scanning \texttt{/etc/resolv.conf}. It is a
+  subtype of the \var{dns-error} condition.
+  \ex{resolv.conf-parse-error?} is the type predicate for this
+  condition.
+\end{desc}
+
+\defun{resolv.conf}{}{{symbol$\rightarrow$string} alist}
+\begin{desc}
+  Returns the contents of \texttt{/etc/resolv.conv} as an alist with
+  the possible keys \texttt{nameserver}, \texttt{domain},
+  \texttt{search}, \texttt{sortlist} and \texttt{options}.
+  
+  Note that the library caches the contents of
+  \texttt{/etc/resolv.conv} and \ex{resolv.conf} only really opens the
+  file if its modification time is more recent than the modification
+  time of the cache.
+\end{desc}
+\defun{parse-resolv.conf!}{}{\undefined}
+\begin{desc}
+  Parses the contents of \texttt{/etc/resolv.conv} and updates the
+  internal cache of the library.
+\end{desc}
+\defun{dns-find-nameserver-list}{}{\fqdn list}
+\begin{desc}
+  Returns a list of name servers from \texttt{/etc/resolv.conf}
+\end{desc}
+\defun{dns-find-nameserver}{}{\fqdn}
+\begin{desc}
+  Returns the first name servers found in \texttt{/etc/resolv.conf}.
+  \ex{dns-find-nameserver} raises \ex{no-nameservers} if
+  \texttt{/etc/resolv.conf} does not contain a \texttt{nameserver}
+  entry.
+\end{desc}
+\defun{domains-for-search}{}{\str{} list}
+\begin{desc}
+  Parses \texttt{/etc/resolv.conf} and extracts the domains specified
+  by the \texttt{search} keyword.
+\end{desc}
+
+
+\section{IP Addresses as Dotted Strings}
+%
+\begin{description}
+\item[Used files:] ip.scm
+\item[Name of the package:] ips
+\end{description}
+%
+
+The structure \ex{ips} provides a small set of procedures for turning
+the human-readable form of IP addresses (``dotted strings'') into 32
+bits numbers.
+
+\defun{address32->ip-string}{\ipaddr}{ip-string}
+
+\defun{ip-string->address32}{ip-string}{\ipaddr}
+
+\defun{ip-string?}{string}{\boolean}
+\begin{desc}
+  Tests whether \var{string} is a valid dotted string for an IP
+  address.
+\end{desc}
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

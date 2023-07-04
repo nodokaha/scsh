@@ -1038,10 +1038,6 @@
         (subset srfi-13 (string-join)))
   (files configure))
 
-(define-structure config config-interface
-  (open scheme)
-  (files config))
-
 (define-structures ((lib-dirs lib-dirs-interface)
                     (lib-dirs-internal lib-dirs-internal-interface))
   (open scsh-level-0

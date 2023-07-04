@@ -15,7 +15,8 @@
                    "scheme/install-lib-module.scm")
                  'scheme)
   (write-to-load-script
-   `((load ,(absolute-file-name "install-lib-module.scm"
+   `((config)
+     (load ,(absolute-file-name "install-lib-module.scm"
                                 (get-directory 'scheme #f)))
      (user)))
 

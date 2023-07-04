@@ -1,0 +1,1672 @@
+\section{API description}
+\label{sec:surflet-api}
+
+The \surflet server comes with an extensive set of modules.  This
+section describes the modules and the programming interfaces.  See the
+howto section \ref{sec:surflethowto} for a practical guide.  Note that
+most of the procedures mentioned here are meant to be called from
+within a \surflet.
+
+
+\subsection{The \surflet server}
+
+The \surflet server provides basic procedures to send web content to a
+client.  To enable the SUnet webserver to serve \surflets, you have to
+add the \surflet handler to it, which resides in the
+\exi{surflet-handler} structure.  \Eg:
+
+\begin{alltt}
+(httpd 
+  (make-httpd-options
+   \dots \\
+   with-request-handler 
+   (alist-path-dispatcher
+    (list
+     (cons "surflet" (surflet-handler (with-surflet-path 
+                                       "web-server/root/surflets"))))
+     (rooted-file-or-directory-handler "web-server/root/htdocs"))))
+\end{alltt}
+
+This will set up the \surflet handler to handle requests directed to
+the directory \ex{/surflet/}.  The \surflet handler can only handle
+requests directed to \surflets.  Here's the interface description:
+
+\defun{surflet-handler}{options}{request-handler}
+\begin{desc}
+  This procedures sets up the \surflet handler and returns the
+  according request handler for the SUnet webserver.  The options
+  argument is similar to the one passed to \ex{httpd} and is exlpained
+  below.
+
+  The \surflet handler accepts requests (solely) to \surflets whose
+  file name must have the extension \ex{.scm}.  The structure of
+  \surflets is explained below.  The \surflet handler receives the
+  \ex{request} from \ex{httpd}, translates it to a
+  \ex{surflet-request} and passes it to the requested \surflet.  The
+  \surflet in turn is expected to return a \ex{surflet-response},
+  which the \surflet handler translates to a \ex{repsonse} for
+  \ex{httpd}.  Thus, the \surflet deals only with \ex{surflet-request}
+  and \ex{surflet-response} objects.  The structure of these objects
+  and how they are passed around is explained below.
+
+  A \surflet may also return a \ex{redirect} \ex{response}, which the
+  \surflet handler passes to the \ex{httpd} untouched.  See
+  \ref{sec:http-responses} for details.
+
+  The \surflet handler calls the \surflet wrapped into an error
+  handler that catches any error the \surflet may yield.  In this
+  case, it terminates the \surflets session (see below for more on
+  sessions) and returns an \ex{error} \ex{response} to \ex{httpd} with
+  the error code 500 "Internal Server Error" and a description of
+  the error.
+\end{desc}
+
+The \var{options} argument can be constructed in a similar way to the
+options argument of \ex{httpd}.  The procedures' names are of the form
+\ex{with-\ldots} and they all either create a new option or add a
+new parameter to a given option.  The new parameter is always the
+first argument while the (old) option the optional second one.  The
+following procedures reside in the  \exi{surflet-handler/options}
+structure.
+
+\defun{with-surflet-path}{surflet-path [options]}{options}
+\begin{desc}
+  This specifies the path in which the \surflet handler looks for
+  \surflets.  The \var{surflet-path} is a string.  This option must be
+  given for the handler to work.
+\end{desc}
+
+\defun{with-session-lifetime}{seconds [options]}{options}
+\begin{desc}
+  This specifies the initial lifetime of a session.  The lifetime of a
+  session is the number of seconds the \surflet handler waits for a
+  response from a client for that session, before she automatically
+  finishes it.  See below for details on sessions.  Defaults to 600,
+  \ie 10 minutes.
+\end{desc}
+
+\defun{with-cache-surflets?}{cache-surflets? [options]}{options}
+\begin{desc}
+  This specifices whether the \surflet handler caches \surflets.  The
+  caching of \surflets is a prerequisite for \surflet wide global
+  variables.  See below for details on the scope of variables in
+  \surflets.  Defaults to \sharpt.
+\end{desc}
+
+\defun{with-make-session-timeout-text}{timeout-text-procedure
+  [options]}{options}
+\begin{desc}
+  This specifies a procedure that generates the timeout text.  The
+  \surflet handler displays the timeout text when she receives a
+  request for a \surflet session that does not exist, either because
+  the \surflet finished its session, the session has timed out, or the
+  URL is illformed.  The default is an English text with an
+  explanation of the possible reasons and a link to a new session of
+  the requested \surflet.  \var{timeout-text-procedure} accepts the
+  string path to the \surflet that was requested and returns a string.
+\end{desc}
+
+Similar to the \ex{httpd} options there exists a procedure to avoid
+parenthisis:
+
+\defun{make-surflet-options} {transformer value \ldots}{options}
+\begin{desc}
+  This constructs an options value from an argument list of parameter
+  transformers and parameter values.  The arguments come in pairs,
+  each an option transformer from the list above, and a value for that
+  parameter. \ex{make-surflet-options} returns the resulting options
+  value.
+\end{desc}
+
+For example,
+
+\begin{alltt}
+(surflet-handler 
+  (make-surflet-options
+   with-surflet-path "root/surflets"
+   with-session-timeout 3600))
+\end{alltt}
+
+defines the \surflet handler to serve \surflets from the directory
+\ex{root/surflets} and to timeout unused sessions after one hour.
+
+The \surflet handler allows runtime read and write access to her
+options:
+
+\defun{options-surflet-path}{options}{string}
+\defunx{options-session-lifetime}{options}{integer}
+\defunx{options-cache-surflets?}{options}{boolean}
+\defunx{options-make-session-timeout-text}{options}{procedure}
+\begin{desc}
+  These procedures return the stored value for the respective option.
+  See above for the description of the options.
+\end{desc}
+
+\defun{set-options-surflet-path!}{options surflet-path}{\undefined}
+\defunx{set-options-session-lifetime!}{options seconds}{\undefined}
+\defunx{set-options-cache-surflets?!}{options cache-surflets?}{\undefined}
+\defunx{set-options-make-session-timeout-text!}
+       {options timeout-text-procedure} {\undefined}
+\begin{desc}
+  These procedures change the respective option value.  See above for
+  the description of the arguments.  Note that changing the
+  \var{surflet-path} within a \surflet may result in the \surflets
+  being unreachable.  Turning the cache off will not empty the
+  \surflet cache.
+\end{desc}
+
+
+\subsection{\surflets}
+
+Technically, \surflets are Scheme48 structures, that have the name
+\ex{surflet} and export a \ex{main} procedure.  The file in which their
+definition reside must have the extension \ex{.scm}.  The \ex{main}
+procedure must accept the initial \ex{surflet-request} as an argument.
+She may or may not return, but if she does, she must return either a
+\ex{surflet response} or a \ex{redirect response}.  For example, this
+is a valid \surflet definition:
+
+\begin{alltt}
+(define-structure surflet surflet-interface
+  (open scheme-with-scsh
+        surflets)
+  (begin
+    (define (main req)
+       (send-html/finish
+         '(html (body (p "Hello world!")))))
+))
+\end{alltt}
+
+\ex{surflet-interface} is a predefined interface description that
+exports the \ex{main} procedure.  It is recommended to use this
+interface.  \exi{surflets} is a structure that combines the most
+commonly used structures to write \surflets.  \ex{send-html/finish} is
+one of the procedures that sends HTML to the client.  More on this
+below.
+
+As \surflets are Scheme48 structures, you can use all capabilities of
+the Scheme48 module language.  See the documentation of Scheme48 for
+details.
+
+\surflets should not use the \ex{shift-reset} structure, as this might
+confuse the \surflet handler.  The use of threads within a surflet is
+currently discouraged, as some procedures might not work, especially
+procedures dealing with session IDs.
+
+\subsection{\surflet management}
+
+Upon an initial client request, the \surflet handler looks for the
+requested \surflet, loads it dynamically, installs an error handler
+and calls the \ex{main} function of the \surflet with the initial
+\ex{surflet-request}.   To minimize the time of loading a \surflet,
+the \surflet handler caches the structure of the \surflet in a cache,
+the \surflet cache.  As the \surflet is cached, its global values will
+remain unchanged even through times when there are no active sessions
+of the \surflet.  Changing global \surflet values is a possibility to
+exchange data between different sessions of the same \surflet.  Note
+that you have to take care to serialize the access to commonly shared,
+mutated data.
+
+The \surflet handler allows access to its cache via the following
+procedures.  The access to these procedures is currently
+unrestricted but may be restricted in future versions of the
+\surflet server.
+
+\defun{get-loaded-surflets}{}{list}
+\begin{desc}
+  This returns a list of the file names of the loaded \surflets. 
+\end{desc}
+
+\defun{unload-surflet}{surflet}{undefined}
+\begin{desc}
+  This removes the \var{surflet} from the \surflet cache.  The
+  \var{surflet} is identified by its file name, as returned from
+  \ex{get-loaded-surflets}.
+\end{desc}
+
+\defun{reset-surflet-cache!}{}{undefined}
+\begin{desc}
+  This empties the \surflet cache.
+\end{desc}
+
+Of course, when a \surflet is removed from the cache, the values in
+its sessions remain untouched.  However, if the \surflet is newly
+loaded into the \surflet cache, the \surflet handler treats it like a
+new \surflet, \ie the sessions of the "old" and the "new" \surflet
+(though physically the same) do \emph{not} share their global data in
+any way.
+
+\subsection{Surflet Request}
+
+\surflets get their input from \ex{surflet-request} objects.   The
+relevant procedures are the following.  They are all exported by the
+\exi{surflet-handler/requests} alias \exi{surflet-requests} structure.
+
+\defun{surflet-request?}{object}{boolean}
+\defunx{surflet-request-method}{surflet-request}{string}
+\defunx{surflet-request-input-port}{surflet-request}{input-port/undefined}
+\defunx{surflet-request-uri}{surflet-request}{string}
+\defunx{surflet-request-url}{surflet-request}{url}
+\defunx{surflet-request-version}{surflet-request}{pair}
+\defunx{surflet-request-headers}{surflet-request}{alist}
+\begin{desc}
+  The procedures inspect \ex{surflet-request} values.  Most of them
+  return the values of the underlying \ex{request} object from
+  \ex{httpd}.  \ex{surflet-request?} is a predicate for \ex{surflet
+  request}s.  \ex{surflet-request-method} extracts the method of the
+  HTTP request; it's a string and either \ex{"GET"} or \ex{"POST"}.
+  \surflets won't receive requests with other methods.
+  \ex{surflet-request-input-port} returns an input-port that contains
+  data from the client on \ex{POST} requests and that the \surflet can
+  safely read.  If the request is no \ex{POST} request, its value is
+  undefined.  \ex{surflet-request-uri} returns the escaped URI string
+  as read from the request line.  \ex{surflet-request-url} returns the
+  respective HTTP URL value (see the description of the \ex{url}
+  structure in chapter \ref{cha:url}).  \ex{surflet-request-version}
+  returns a \verb|(major . minor)| integer pair representing the
+  version specified in the HTTP request.  \ex{surflet-request-headers}
+  returns an association lists of header field names and their values,
+  each represented by a list of strings, one for each line.
+\end{desc}
+
+For some unknown weird cases, there are also these two procedures:
+
+\defun{surflet-request-socket}{surflet-request}{socket}
+\defunx{surflet-request-request}{surflet-request}{request}
+\begin{desc}
+  \ex{surflet-request-socket} returns the socket connected to the
+  client.  As with \ex{request}s, \surflets should not perform I/O on
+  this socket.  See section \ref{httpd:requests} for reasoning.
+  \ex{surflet-request-requst} allows access to the underlying
+  \ex{request} object from \ex{httpd}.  Both procedures should not be
+  necessary in normal operation and their usage is discouraged.
+\end{desc}
+
+
+\subsection{Surflet Response}
+
+\surflets answer to a request by sending a \ex{surflet-response} to
+the \surflet handler.  The next section deals with how the surflet
+responses are sent to the \surflet handler.  The relevant procedures
+for \ex{surflet-response} are the following.  They are all exported by
+the \exi{surflet-handler/responses} alias \exi{surflet-response}
+structure.
+
+\defun{make-surflet-response}{status content-type headers
+  data}{surflet-response}
+\begin{desc}
+  This creates a \ex{surflet-response}.  \var{status} is the status
+  code of the response.  See section \ref{sec:http-responses} for
+  details on this.  \var{content-type} is the MIME type of the data,
+  \eg \ex{"text/html"}.  \var{headers} is an association list of
+  headers to be added to the response, each of which consists of a
+  symbol representing the field name and a string representing the
+  field value.  \var{data} is the actual data.  It must be either a
+  string or a list of values that will be \ex{display}ed.
+\end{desc}
+
+\defun{valid-surflet-response-data?}{object}{boolean}
+\begin{desc}
+  This is a predicate on objects that may be surflet data, \ie a
+  string or a list (of objects that will be \ex{display}ed).
+\end{desc}
+
+\defun{surflet-response?}{object}{boolean}
+\defunx{surflet-response-status}{surflet-response}{status-code}
+\defunx{surflet-response-content-type}{surflet-response}{string}
+\defunx{surflet-response-headers}{surflet-response}{alist}
+\defunx{surflet-response-data}{surflet-response}{surflet-data}
+\begin{desc}
+  The procedures return \ex{surflet-response} values.
+  \ex{surflet-response?} is a predicate for \ex{surflet-response}s.
+  \ex{surflet-response-status} returns the status code of the
+  response.  See section \ref{sec:http-responses} for details on the
+  status code.  \ex{surflet-response-content-type} returns the MIME
+  type of the response.  \ex{surflet-response-headers} returns the
+  association list of header field names and their values, each
+  represented by a list of strings, one for each line.
+  \ex{surflet-response-data} returns the data of the
+  \ex{surflet-response}, the actual answer of the \surflet.
+\end{desc}
+
+\subsection{Sessions}
+
+A \keyword{session} is a set of web pages that logically belong
+together, \eg a user surfing through her webmail.  A session starts
+with the initial request for a \surflet and ends either explicitly by
+the \surflet, or implicitly after a timeout.  A third, not so common
+case is its deletion from the session table.
+
+The procedures presented in this subsection are all accessible via the
+\exi{surflets/sessions} structure.
+
+\subsubsection{Session management}
+
+The \surflet handler automatically manages the sessions for each
+\surflet, thus the \surflet does not have to deal with sessions or
+state control (as it is the case with most other programming
+interfaces for web applications).  In particular, a \surflet does not
+have to take care of saving the contents of variables before emitting
+a web page and restoring the values later upon the next request, or
+determining how far the user has proceeded in the application.  The
+only thing a \surflet may want to do is to tell the \surflet handler
+when a session finished by calling \ex{send/finish} or an equivalent
+procedure (see below).
+
+Although a \surflet does not have to deal with the management of the
+sessions, the \surflet handler allows access to its management
+structures.
+
+\defun{instance-session-id}{}{session-id}
+\begin{desc}
+  This returns the session ID for the current session.  The current
+  session is the session from which the function is called.  The
+  \surflet handler guarantees that there won't be two sessions with
+  the same ID for any given point in time.  However, session IDs may
+  be reused.
+\end{desc}
+
+\defun{get-session}{session-id}{session}
+\begin{desc}
+  This returns the session for the given session ID.
+\end{desc}
+
+\defun{get-sessions}{}{alist}
+\begin{desc}
+  This returns the complete list of all active session of the \surflet
+  handler.  The list is an association list with the session-id as key
+  and the session as value.
+
+  The access to this procedure is currently unrestricted but may be
+  restricted in future versions of the \surflet server.
+\end{desc}
+
+\defun{delete-session!}{session}{undefined}
+\begin{desc}
+  This deletes the specified session from the session table.  Future
+  requests to the session are answered with the timeout text.
+\end{desc}
+
+\defun{session-alive?}{session}{boolean}
+\begin{desc}
+  This returns \sharpt, if the specified session is alive, \ie
+  requests to it will be answered by the appropriate \surflet.
+  Otherwise, she returns \sharpf.
+\end{desc}
+
+\defun{session-surflet-name}{session}{string}
+\defunx{session-session-id}{session}{session-id}
+\begin{desc}
+  These procedures inspect values of a session.
+  \ex{session-surflet-name} returns the name of the \surflet for which
+  the session was created.  \ex{session-session-id} returns the
+  session ID of the session. 
+\end{desc}
+
+For each session, the \surflet handler has a counter running.  She
+resets the counter each time she receives a request for the session.
+When the counter reaches a particular number of seconds, the
+\keyword{lifetime} of the session, the \surflet handler deletes the
+session and removes it from its session table.  She will answer all
+future requests for the session with the timeout text.  The following
+procedures deal with the lifetime of a session.
+
+\defun{session-lifetime}{session}{integer}
+\defunx{set-session-lifetime!}{session new-lifetime}{undefined}
+\begin{desc}
+  \ex{session-lifetime} returns the number of seconds the \surflet
+  handler will initially wait before she automatically finishes the
+  session.  \ex{set-session-lifetime!} changes the initial lifetime of
+  the \var{session} to \var{new-lifetime} and also resets the counter
+  for that session.
+\end{desc}
+
+\defun{session-adjust-timeout!}{session [lifetime]}{undefined}
+\defunx{adjust-timeout!}{[lifetime]}{undefined}
+\begin{desc}
+  These reset the counter for the lifetime of either the given
+  \var{session} (\ex{session-adjust-timeout!}) or the current session
+  (\ex{adjust-timeout!}).  Both procedures give the session a lifetime
+  of either \var{lifetime} seconds or of the lifetime seconds stored
+  for the according \var{session}.
+\end{desc}
+
+In order to allow easy web programming, the \surflet handler
+automatically saves and reifies continuations of a session.  This is
+totally transparent to the web programmer.  For adminstration
+purposes, the \surflet handler offers access to the continuation table
+of a session via the following procedures.
+
+\defun{session-continuation-table}{session}{table}
+\defunx{session-continuation-table-lock}{session}{lock}
+\defunx{session-continuation-counter}{session}{thread-safe-counter}
+\begin{desc}
+  These functions return the continuation table, the lock for the
+  continuation table and the counter for the continuations,
+  respectively.  The continuation \var{table} is a hash table with the
+  continuation ID as key and the continuation as value, based on the
+  \ex{tables} structure of Scheme48.  The \var{lock} is based on the
+  \ex{locks} structure of Scheme48.  The \var{thread-safe-counter} is
+  based on the \ex{thread-safe-counter} structure that is part of the
+  \surflets.
+
+  The access to these functions is currently unrestricted but may be
+  restricted in future versions of the \surflet server.
+\end{desc}
+
+The \exi{surflets/continuations} structure also offers procedures to
+access the continuations.
+
+\defun{get-continuations}{session}{list}
+\begin{desc}
+  Returns a list of all continuations of the \var{session}.  The list
+  elements are pairs with the \ex{car} being the session and the
+  \ex{cdr} being the continuation.
+\end{desc}
+
+\defun{delete-continuation!}{session-continuation}{undefined}
+\begin{desc}
+  Removes the specified continuation from the continuation table.
+  \var{session-continuation} is a pair as returned from
+  \ex{get-continuations}.  It is no error if the session or the
+  continuation does not exist anymore.
+
+  The access to this functions is currently unrestricted but may be
+  restricted in future versions of the \surflet server.
+\end{desc}
+
+\defun{continuation-id}{session-continuation}{number}
+\begin{desc}
+  Returns the continuation ID of the continuation specified by
+  \var{session-continuation} which is a pair as returned by
+  \ex{get-continuations}. 
+\end{desc}
+
+The \exi{surflets/ids} structure provides procedures to determine the
+  session and continuation IDs of the current session.  See also the
+  entry for \ex{resume-url-ids} somewhere else in this document.
+
+\defun{my-session-id}{surlfet-request}{number}
+\defunx{my-continuation-id}{surlfet-request}{number}
+\defunx{my-ids}{surlfet-request}{number number}
+\begin{desc}
+  These return the session and continuation ID that where used to
+  access the current session.  The procedures work for every
+  \var{surflet-request} except for the inital one that \ex{main}
+  gets.  The values returned by \ex{my-ids} are the session and the
+  continuation ID in this order.
+\end{desc}
+
+\defun{surflet-file-name}{surlfet-request}{string}
+\begin{desc}
+  This returns the name of the \surflet of the current session.
+\end{desc}
+
+
+\subsubsection{Session data}
+The \surflet handler distinguishes three kinds of \keyword{session
+data}: session data that is local to a session of a \surflet and not
+mutated, session data that is local to a session of a \surflet and
+mutated and session data that is global to all sessions of a \surflet.
+Every variable value that is never mutated is automatically local to
+the session of the \surflet.  Variable values that are mutated are
+automatically global to all sessions of the \surflet.  Values that
+have to be mutated but should be local to a session of the \surflet
+must be stored in a special place, the session data field of the
+\surflet handler.\footnote{The reason for this distinction is the fact
+  that the \surflet handler saves and reifies the continuation of a
+  \surflet to realize the easy programming of web applications.
+  Mutations of values remain visible after reifying the continuation.}
+
+\defun{get-session-data}{}{object}
+\defunx{set-session-data!}{new-value}{undefined}
+\begin{desc}
+  These procedures allow read/write access to the session data field
+  of the \surflet handler.  The \surflet handler installs a session
+  data field for each session she creates.  \ex{get-session-data}
+  reads the contents of this field, which is initially \sharpf.
+  \ex{set-session-data!} sets the contents of the field to
+  \var{new-value}.  Mutations to the values, no matter when they
+  occur, are local to the session from which the procedures are
+  called, \ie the changes are only visible within a particular session
+  of the \surflet.  The procedures are exported by the
+  \exi{surflet-handler/session-data} structure.
+\end{desc}
+
+
+\subsection{Basic I/O}
+
+The \surflet communicates with the web client basically with the
+following \ex{send} primitives.  They are exported by the
+\exi{surflet-handler/primitives} structure along with the procedures
+from \ex{surflet-handler/requests}, \ex{surflet-handler/responses} and
+the \ex{status-code} syntax.
+
+\defun{send}{surflet-response}{\noreturn}
+\begin{desc}
+  This procedure sends the data of the \var{surflet-response} to the
+  client and does not return.
+\end{desc}
+
+\defun{send/finish}{surflet-response}{\noreturn}
+\begin{desc}
+  This procedure does the same as \ex{send}, but it also finishes the
+  session of the \surflet.  Future requests to the \surflet will be
+  answered with the timeout text (see above).
+\end{desc}
+
+\defun{send/suspend}{surflet-response-maker}{surflet-request}
+\begin{desc}
+  This procedure suspends the current computation of the \surflet and
+  calls \var{surflet-response-maker} with the continuation-URL of the
+  current session to create the actual \ex{surflet-response}.  When a
+  client requests the continuation-URL, the computation of the
+  \surflet will resume with \ex{send/suspend} returning that request
+  of the client.  See \ref{sec:continuation-url} for details on
+  continuation-URLs.
+\end{desc}
+
+\defun{send-error}{status-code surflet-request [messages]}{\noreturn}
+\begin{desc}
+  This sends an error response to the client.  \var{status-code} is
+  the status code of the error, see section \ref{sec:http-responses} for
+  details.  \var{surflet-request} is the last \ex{surflet-request} the
+  \surflet received; if unknown this argument may be \sharpf.
+  \var{messages} may contain some further information about the cause
+  of the error.
+\end{desc}
+
+
+\subsection{Web I/O}
+
+Most of the time, a \surflet won't send arbitrary data but HTML to the
+client.  For this purpose, the \surflets provide extensive support.
+First of all, they provide procedures specially designed for
+submitting HTML.
+
+\defun{send-html}{sxml}{\noreturn}
+\defunx{send-html/finish}{sxml}{\noreturn}
+\defunx{send-html/suspend}{sxml-maker}{surflet-request}
+\begin{desc}
+  These are the equivalent procedures to the \ex{send} primitives.
+  \ex{send-html} and \ex{send-html/finish} accept an SXML object (more
+  on that below), translate it into HTML and send it to the client,
+  the latter finishing the session.  \ex{send-html/suspend} suspends
+  the current computation, calls \var{sxml-maker} with the
+  continuation-URL, translates the resulting SXML into HTML and sends
+  it to the client.  When the client requests the continuation-URL,
+  the computation is resumed and \ex{send-html/suspend} returns with
+  the \ex{surflet-request}.
+\end{desc}
+
+
+\subsubsection{SXML}
+
+For easy creation of HTML output, the \ex{send-html} procedures
+mentioned above represent the HTML in SXML.  SXML is a creation of
+Oleg Kiselyov.  Basically, SXML is a list whose \ex{car} is an SXML
+tag, a symbol representing the HTML tag, and the \ex{cdr} are other
+SXML elements that will be enclosed by the HTML tag.  For example,
+
+\codex{'(h2 "Result")}
+represents the tag \ex{h2}, that encloses the text "Result".  The
+represented HTML is
+\codex{<h2>Result</h2>\textnormal{.}}
+
+As in HTML, elements may be nested:
+\codex{'(body (h2 "Result") (p "Example"))}
+represents
+\codex{<body><h2>Result</h2><p>Example</p>\textnormal{.}}
+
+The @ symbol marks HTML attributes.  The attributes follow the @
+symbol in two element lists, the first element being the name of the
+attribute and the last its value.  For example, this is a link:
+\codex{'(a (@ (href "add-surflet.scm") (name "linklist")) "Make new calculation.")}
+representing the following HTML
+\codex{<a href="add-surflet.scm" 
+name="linklist">Make new calculation.</a>\textnormal{.}}  The
+attributes form will only be recognized as such if it is the second
+element of a list, right after the SXML tag.  
+
+\defun{sxml-attribute?}{object}{boolean}
+\defunx{sxml-attribute-attributes}{sxml-attribute}{list}
+\begin{desc}
+  These are procedures on SXML attribute forms.  \ex{sxml-attribute?}
+  is  a predicate for SXML attribute forms.  It checks if \var{object}
+  is a list whose first element is the symbol \ex{@}.
+  \ex{sxml-attribute-attributes} returns the list of name-value-lists
+  of the attributes form.  Both procedures are exported by the
+  \exi{surflets/sxml} structure.
+\end{desc}
+
+The translator translates list elements which are numbers and symbols
+to their string representation (except for the first element, of
+course).  She scans strings for the special characters \verb'&',
+\verb'"', \verb'>' and \verb'<' and replaces them by their HTML
+equivalents, and she ignores \sharpf\ and the emtpy list.  See below
+the special SXML tag \ex{plain-html} to see how to insert HTML code
+untranslated.  Furthermore, the translator accepts \ex{input-fields}
+as list elements, which are translated to their HTML representation.
+See below for details on input fields.
+
+Using lists to represent HTML allows the programmer to define
+operations on it.  Most programmers construct their lists dynamically,
+often by using \ex{quasiquote} (the symbol \ex{`}) and \ex{unquote}
+(the symbol \ex{,}).  \Eg
+
+\begin{alltt}
+ `(html (title ,my-title) 
+        (body (p "Hello, " ,(get-user-full-name))))
+\end{alltt}
+
+See below for how to create your own SXML.
+
+\subsubsection{Special SXML tags}
+
+The SXML to HTML translator accepts some special SXML tags that don't
+directly translate to an HTML tag.
+
+\newcommand{\defsxmltag}     {\par\medskip\defsxmltagx}
+\newcommand{\defsxmltagx}[2]%
+{\hbox to \linewidth{\ttchars%
+     {\ttt(#1\testvoid{#2}{}{\ }{\sem{#2}}\testvoid{#2}{}{\/})
+%\hskip 1em minus 0.5em$\longrightarrow$\hskip 1em minus 0.5em
+%{\sem{#3}}
+\hfill\quad\textnormal{SXML-tag}}}\index{#1}}
+
+
+\defsxmltag{url}{ URL [text]}
+\begin{desc}
+  Inserts a link to \var{URL}, named with \var{text}.  \var{text}
+  defaults to \var{URL}.  Takes at least one argument.  \Eg
+  
+  \begin{alltt}
+  (url "/" "Main menu") \ensuremath{\Longrightarrow} <a href="/">Main menu</a>
+  (url "go.html")       \ensuremath{\Longrightarrow} <a href="go.html">go.html</a>
+  \end{alltt}  
+
+\oops{\ex{url} does not accept extra attributes for the `\ex{A}' tag of
+  HTML.  This should be fixed in a future version.} 
+\end{desc}
+
+\defsxmltag{nbsp}{}
+\begin{desc}
+  Inserts the HTML sequence \ex{"\&nbsp;"}.  Takes no arguments.
+\end{desc}
+
+\defsxmltag{plain-html}{ html \ldots}
+\begin{desc}
+  Inserts \var{html} without any changes, thus it works like a quote.
+  Takes any number of arguments.
+\end{desc}
+
+\defsxmltag{*COMMENT*}{ comment \ldots}
+\begin{desc}
+  Inserts a comment, \ie \var{comment} enclosed between \verb|<!--|
+  and \verb|-->|.  Takes any number of arguments.
+\end{desc}
+
+\defsxmltag{surflet-form}{ k-url [method] [attributes] [SXML \ldots]}
+\begin{desc}
+  Inserts HTML code for a web form.  See below for details.
+  \var{k-url} usually is a continuation-URL.  \var{method} is the
+  method to be used by the client to transfer the webform data.
+  Possible values are the symbols \ex{GET}, \ex{get}, \ex{POST},
+  \ex{post}, the first two specifying the GET method, the last two the
+  POST method.  \var{method} defaults to the GET method.
+  \ex{attributes} are attributes for the created web form, \eg \ex{(@
+  (enc-type "text/plain"))}.  The remaining arguments are taken as
+  SXML and translated as usually.  Takes at least one argument.  Note
+  that the attributes form may come at position three.
+\end{desc}
+
+\subsubsection{Do it yourself: your own SXML}
+
+The \ex{send-html} procedures use a standard set of translation rules
+to translate from SXML to HTML.  However, you may define your own set
+of translation rules or extend the given ones as you see fit.  For
+this, a short introduction to the translation process.
+
+The translation process takes place in two steps.  Step one translates
+the given SXML to low level SXML, essentially a rough form of HTML in
+list notation.  Step two takes this low level SXML and prints it to a
+port.  Step one is performed by \ex{sxml->low-level-sxml}, step two by
+\ex{display-low-level-sxml}.  All procedures and rules presented in
+this subsection are exported from \exi{surflets/sxml}.
+
+\defun{sxml->low-level-sxml}{sxml rules}{low-level-sxml}
+\begin{desc}
+  Takes an SXML object (which is essentially a list) and a list of
+  SXML rules (more on this below) and translates it to low level SXML.
+  This procedure is an alias to the \ex{pre-post-order} procedure of
+  Oleg Kiselyov's SSAX module.  It is an error if no rule triggers
+  (see below for when a rule triggers).  However, it is no error if
+  multiple rules trigger; the first rule in the \var{rules} list wins.
+\end{desc}
+
+\defun{display-low-level-sxml}{low-level-sxml port}{boolean}
+\begin{desc}
+  Takes low level SXML and \ex{display}s it to a port.  She traverses
+  the list \var{low-level-sxml} depth-first, ignores the empty list
+  and \sharpf, executes thunks and \ex{display}s all other elements,
+  usually strings and characters, to \var{port}.  Returns \sharpt\ if
+  she wrote anything, \sharpf\ otherwise.  This function is basically
+  the \ex{SRV:send-reply} procedure of Oleg Kiselyov's SSAX module.
+\end{desc}
+
+\defun{sxml->string}{sxml rules}{string}
+\begin{desc}
+  Combines step one and two of the translation process and returns the
+  resulting string, \ie it calls \ex{display-low-level-sxml} with the
+  result of a call to \ex{sxml->low-level-sxml} and a string port,
+  returning the content of the string port.
+\end{desc}
+
+%\defun{sxml->string/internal}{sxml rules}{list}
+%\begin{desc}
+%  I forgot what this function was good for.  I probably used it
+%  internally in one of the \surflet rules.
+%\end{desc}
+
+An \keyword{SXML-rule} consists of a \textit{trigger}, which is a
+symbol, and the \textit{handler}, which is a translation procedure.
+
+There are three types of rules, each of which is a dotted list:
+\begin{description}
+\item[\ex{(\synvar{trigger} *preorder* . \synvar{handler})}] \mbox{}\\
+When \ex{sxml->low-level-sxml} sees the \synvar{trigger} as the
+first element of a list, she calls \synvar{handler} with the
+\emph{whole} list as arguments and replaces the list with the result
+of that call (which must be a single value).  Note that the arity of
+the handler determines how many elements the list with the trigger may
+or must contain.
+
+\item[\ex{(\synvar{trigger} . \synvar{handler})}] \mbox{}\\
+When \ex{sxml->low-level-sxml} sees the \synvar{trigger} as the first
+element of a list, she calls herself on the remaining elements of the
+list and then calls the \synvar{handler} with the trigger and the
+results of those calls as arguments.
+
+\item[\ex{(\synvar{trigger} \synvar{new-rules} . \synvar{handler})}] \mbox{} \\
+When \ex{sxml->low-level-sxml} sees the \synvar{trigger} as the first
+element of a list, she temporarily prepends \synvar{new-rules} to the
+current rule set while calling herself on the remaining elements of
+the list.  She then calls the \synvar{handler} with the trigger and
+the results of those calls as arguments.  As the new rules are
+prepended, this rule allows the temporary override of some rules.
+\end{description}
+
+There are two special triggers, who may trigger for all elements of
+the SXML, not only the first element of a list:
+\begin{itemize}
+\item  \ex{*text*} triggers for atoms in the SXML list, \ie usually
+strings and characters.  The handler is called with the symbol
+\ex{*text*} and the atom as arguments.
+
+\item \ex{*default*} triggers whenever no rule triggered, including
+\ex{*text*}.  If called for a list whose first element did not trigger
+a rule, the handler is called with the whole list.  If called for an
+atom, the handler is called with the symbol \ex{*text*} and the atom
+as arguments.
+\end{itemize}
+
+The \exi{surflets/sxml} structure defines some basic rules:
+
+\defvar{default-rule}{SXML-rule}
+\defvarx{text-rule}{SXML-rule}
+\defvarx{attribute-rule}{SXML-rule}
+\begin{desc}
+  These are the three basic rules exported by the \ex{surflets/sxml}
+  structure.  \ex{default-rule} creates the leading and trailing HTML
+  tag and encloses the attributes.  \ex{text-rule} just inserts the
+  given text with the special HTML characters \verb'&', \verb'"',
+  \verb'>' and \verb'<' escaped.  \ex{attribute-rule} triggers for the
+  attributes form and creates attributes like \ex{selected} or
+  \ex{color="red"}.
+\end{desc}
+
+The \exi{surflets/surflet-sxml} add the rules for the special SXML
+tags to this list:
+
+\defvar{url-rule}{SXML-rule}
+\defvarx{nbsp-rule}{SXML-rule}
+\defvarx{plain-html-rule}{SXML-rule}
+\defvarx{comment-rule}{SXML-rule}
+\defvarx{surflet-form-rule}{SXML-rule}
+\begin{desc}
+  These are the rules for the special SXML tags mentioned above,
+  namely \ex{url}, \ex{nbsp}, \ex{plain-html}, \ex{*COMMENT*} and
+  \ex{surflet-form}. 
+\end{desc}
+
+\defvar{default-rules}{list}
+\defvarx{surflet-sxml-rules}{list}
+\begin{desc}
+  These are rule sets.  \ex{default-rule} contains the rulese
+  \ex{default-rule}, \ex{attribute-rule}, \ex{text-rule},
+  \ex{comment-rule}, \ex{url-rule}, \ex{plain-html-rule} and
+  \ex{nbsp-rule}.  \ex{surflet-sxml-rules} extends this list by
+  \ex{surflet-form-rule} and a rule for input fields.
+\end{desc}
+
+\defun{surflet-sxml->low-level-sxml}{sxml}{low-level-sxml}
+\begin{desc}
+  This uses the \ex{surflet-sxml-rules} to translate \var{sxml} to low
+  level SXML, performin step one of the translation process.
+\end{desc}
+
+
+\subsection{Continuation-URL}
+\label{sec:continuation-url}
+
+The \keyword{continuation-URL} represents the point in the computation
+of a session of a \surflet where the computation was halted by the
+\surflet handler.  When a browser requests a continuation-URL, the
+\surflet handler looks up the continuation in its tables and reifies
+it, allowing the session of the \surflet to resume its computation.
+
+The procedures to access the continuation-URL are the following.  They
+are exported by the \exi{surflet-handler/resume-url} structure.  Sorry
+for the double naming \ex{resume-url} and continuation-URL.
+
+\defun{resume-url?}{string}{boolean}
+\defunx{resume-url-ids}{resume-url}{session-id continuation-id}
+\defunx{resume-url-session-id}{resume-url}{session-id}
+\defunx{resume-url-continuation-id}{resume-url}{continuation-id}
+\begin{desc}
+  These inspect values of a resume url.  \ex{resume-url?} is a
+  predicate for resume urls (the same as continuation urls).  Note
+  that it only operates on strings.  \ex{resume-url-ids} returns the
+  session- and the continuation-id that is stored in the
+  \var{resume-url}.  \ex{resume-url-session-id} and
+  \ex{resume-url-continuation-id} return only the session- or the
+  continuation-id, respectively.
+\end{desc}
+
+
+
+\subsection{Input fields}
+
+The \surflets support all input fields defined for HTML~2.0 and allow
+  the creation of own input fields.  \ex{input-field}s are first order
+  values, that represent the actual input field of the web page in the
+  \surflet.  For that, this documentation distinguishes the
+  \emph{browser} value from the \emph{Scheme} value of an input field.
+  The browser value is the string representation of the input field
+  data the browser sends.  The Scheme value is the value in the
+  \surflet the input field reports as its value, which may be of any
+  type, not only strings.
+
+  Here is a short overview on how to use input fields.  See also the
+  howto for more informations.  First, you create the \ex{input-field}
+  that represents the input field you want to use.  Then you put this
+  \ex{input-field} into the SXML of the web page at the place the
+  input field shall appear.  After \ex{send-html/suspend} has returned
+  with the next \ex{surflet-request}, you call \ex{get-bindings} with
+  that \ex{surlfet-request} and collect the resulting bindings.  Last,
+  you call \ex{input-field-value} (or \ex{raw-input-field-value}) with
+  your \ex{input-field} and the collected bindings to get the Scheme
+  representation of the value the user has entered.  Here is a small
+  example:
+
+\begin{alltt}
+(define-structure surflets surflet-interface
+  (open scheme-with-scsh
+        surflets)
+  (begin
+    
+    (define (main req)
+      (let* ((text-input (make-text-field))
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html
+                       (body
+                        (surflet-form
+                         ,k-url
+                         (p "Enter some asd  text: " ,text-input)
+                         ,(make-submit-button)))))))
+             (bindings (get-bindings req))
+             (text (input-field-value text-input bindings)))
+        (send-html/finish 
+         `(html
+           (body
+            (p "You've entered `" ,text "'."))))))
+))
+\end{alltt}
+
+\paragraph{Getting the bindings}
+
+The \exi{surflets/bindings} structures exports the necessary functions
+  to create bindings and extract values from them:
+
+\defun{get-bindings}{surflet-request}{bindings}
+\begin{desc}
+  This returns an association list representing the data the browser
+  has sent, usually the content of a webform.  The name of the input
+  fields are the keys, their browser values the values.  The values
+  are already unescaped.  \ex{get-bindings} can (currently) only
+  handle \ex{application/x-www-form-urlencoded} data.  You can call
+  \ex{get-bindings} on both \ex{GET} and \ex{POST} requests, even
+  multiple times (even on \ex{POST} requests).
+\end{desc}
+
+\defun{extract-bindings}{key bindings}{list}
+\defunx{extract-single-binding}{key bindings}{string}
+\begin{desc}
+  These extract values from the \var{bindings} as returned by
+  \ex{get-bindings}.  \var{key} may be a string or a symbol which will
+  be translated to a string before use.  \ex{extract-bindings} returns
+  a list of all values from \var{bindings} whose key is \var{key}.
+  \ex{extract-single-binding} returns the value from the binding whose
+  key is \var{key} and raises an error if there is more than one such
+  binding.  The two procedures are the same as in PLT's webserver.
+\end{desc}
+
+\ex{get-bindings} must acces the "Content-length" header field to
+  handle \ex{POST} requests.  \ex{surflets/bindings} also exports the
+  procedure that does that job:
+
+\defun{get-content-length}{headers}{number}
+\begin{desc}
+  Returns the value of the "Content-length" header as a number, as
+  present in \var{headers}, \eg from \ex{surflet-request-headers}.
+  Will raise an error if there is no "Content-length" header or the
+  header is illformed, \eg contains no number.
+\end{desc}
+
+\paragraph{Retrieving the Scheme values}
+
+The \exi{surflets/input-field-value} structure provides the functions
+  necessary to retrieve the Scheme value of input fields.
+
+\defun{raw-input-field-value}{input-field bindings}{any type}
+\defunx{input-field-value}{input-field bindings [error-value]}{any type}
+\begin{desc}
+  These extract the Scheme value of an \var{input-field}, given the
+  \var{bindings} of the last request.  Asking for a Scheme value may
+  raise an error.  Some error conditions are: the input field was not
+  present in the bindings, the transformer could not generate a Scheme
+  value for the browser value, or some other error occured in a maybe
+  malfunctioning transformer.  In any case, \ex{raw-input-field-value}
+  won't catch that error, while \ex{input-field-value} will catch it
+  and provide \var{error-value} as the \var{input-field}'s Scheme
+  value, which defaults to \sharpf.
+\end{desc}
+
+\defun{input-field-binding}{input-field bindings}{binding}
+\begin{desc}
+  This returns the first binding in \var{bindings} that belongs to the
+  given \var{input-field} (\ie has \var{input-field}'s name as key).
+\end{desc}
+
+\paragraph{Creating and using input fields}
+
+The procedures for the creation of the input fields mentioned in
+  HTML~2.0 are the following.  They are exported by the
+  \exi{surflets/surflet-input-fields}.  Note that most of the time,
+  you may omit any of the optional arguments, \eg you may only specify
+  some further attributes to \ex{make-text-field} without specifying a
+  default value.  Keep in mind that \ex{input-field-value} catches the
+  error that may occur if an \ex{input-field} is asked for its Scheme
+  value and may return any (previously chosen) value instead.
+
+\defun{make-text-field}{[default] [attributes]}{input-field}
+\defunx{make-number-field}{[value] [attributes]}{input-field}
+\defunx{make-password-field}{[default] [attributes]}{input-field}
+\defunx{make-textarea}{[default] [rows] [columns] [readonly?] [attributes]}{input-field}
+\begin{desc}
+  These create various input field where the user types something in.
+  \var{default} is the text or the number that the browser initially
+  displays in the input field.  \var{attributes} are some further
+  attributes for the input field in SXML notation.
+  \ex{make-text-field} creates a regular text input field.  Its Scheme
+  value is a string.  \ex{make-number-field} creates a regular text
+  input field, whose Scheme value is a number.  It is an error if the
+  input field does not contain a number.  \ex{make-password-field}
+  creates a text input field that will display stars instead of the
+  typed text.  Its Scheme value is a string.  \ex{make-textarea}
+  creates a possibly multi line text input field.  \var{rows}
+  specifies how many rows of the text the browser will display at once
+  and defaults to 5.  \var{columns} specifies how many columns the
+  browser will display at once and defaults to 20.  Note that if you
+  only supply one number, it will be interpreted as the \var{rows}
+  argument.  \var{readonly?} is a boolean that tells the browser
+  whether to disallow changes of the displayed text.
+\end{desc}
+
+
+\defun{make-hidden-input-field}{[default] [attributes]}{input-field}
+\begin{desc}
+  Creates a hidden input field, \ie a input field that the browser
+  won't display but whose value the browser will send.  This input
+  field is provided for completeness; you usually won't need it, as
+  all values in your \surflet will survive the emission of a web page.
+  \var{default} is this value the browser will send.  Note that
+  although the argument is marked as optional you usually want to
+  provide it.  \var{attributes} are some further attributes for the
+  input field in SXML notation.
+\end{desc}
+
+\defun{set-text-field-value!}{input-field}{undefined}
+\defunx{set-number-field-value!}{input-field}{undefined}
+\defunx{set-hidden-field-value!}{input-field}{undefined}
+\defunx{set-password-field-value!}{input-field}{undefined}
+\defunx{set-textarea-value!}{input-field}{undefined}
+\begin{desc}
+  These set the default value of the according input field after it
+  has been created.  Although the procedure may not complain, it is an
+  error, if \var{input-field} is not the expected type of
+  \ex{input-field}, \eg if the argument to \ex{set-text-field-value}
+  was not created by \ex{make-text-field}.
+\end{desc}
+
+\defun{make-submit-button}{[caption] [attributes]}{input-field}
+\defunx{make-reset-button}{[caption] [attributes]}{input-field}
+\defunx{make-image-button}{image-source [attributes]}{input-field}
+\begin{desc}
+  These create buttons on the web page which the user can click on.
+  \var{caption} is the text that is displayed on the button.  If not
+  specified, the browser will choose a text, usually depending on the
+  local language setting on the browser side.  \var{attributes} are
+  some further attributes for the input field in SXML notation.
+  \ex{make-submit-button} creates the regular button to submit the web
+  form data.  As HTML~2.0 specifies that the value of a submit button
+  is its caption, its Scheme value is its caption, too.
+  \ex{make-reset-button} creates the button to reset all input fields
+  of the web form to their default values.  As the browser does not
+  send data for reset buttons, it does not have a Scheme value, \ie
+  asking for a value will raise an error.  \ex{make-image-button}
+  creates a picture button.  Its Scheme value is a pair indicating the
+  x- and y-coordinates of the picture where the user has clicked to.
+  The argument \var{image-source} is not optional and is the string
+  URL of the displayed picture.
+\end{desc}
+
+\defun{make-checkbox}{[checked?] [attributes]}{input-field}
+\defunx{make-annotated-checkbox}{value [checked?]
+  [attributes]}{input-field}
+\begin{desc}
+  These create checkboxes.  \var{checked?} says whether the browser
+  should initially mark the checkbox as checked.  \var{attributes} are
+  some further attributes for the input field in SXML notation.  If it
+  was checked the Scheme value of a checkbox made by
+  \ex{make-checkbox} is \sharpt.  If it was checked, the Scheme value
+  of a checkbox made by \ex{make-annotated-checkbox} is its
+  \var{value} provided during its creation where \var{value} may be
+  chosen arbitrarily.  Note that HTML~2.0 specifies that browsers
+  should not send data for unmarked checkboxes, thus asking for the
+  Scheme value of an unmarked checkbox will raise an error.  It is
+  recommended to use \ex{input-field-value} to ask for the Scheme
+  value of a checkbox.  This will catch the error and will instead
+  return \sharpf by default.
+\end{desc}
+
+\defun{check-checkbox!}{input-field}{undefined}
+\defunx{uncheck-checkbox!}{input-field}{undefined}
+\defunx{set-checkbox-checked?!}{input-field checked?}{undefined}
+\begin{desc}
+  These change the \ex{checked?} field of a checkbox that tells the
+  browser whether it should initially mark the checkbox as checked.
+  \ex{check-checkbox!} tells the browser to do so,
+  \ex{uncheck-checkbox!} does not tell the browser to do so, and
+  \ex{set-checkbox-checked?!} does so depending on \var{checked?}.  It
+  is an error if \var{input-field} was not created by
+  \ex{make-checkbox} or \ex{make-annotated-checkbox}.
+\end{desc}
+
+\defun{make-radio-group}{}{procedure}
+\defunx{make-annotated-radio-group}{}{procedure}
+\begin{desc}
+  These return generators for radio buttons.  Radio buttons usually
+  are part of a group of radio buttons of which only one may be
+  selected at any time.  The procedures return a procedure that
+  creates radio button \ex{input-field}s that belong to the same
+  group.  
+
+  The returned procedures accept a \var{value} argument, an optional
+  \var{checked?} argument and an optional \var{attributes} argument.
+  They return an \ex{input-field}, the actual radio button.  For
+  \ex{make-radio-group}, \var{value} must be a string, for
+  \ex{make-annotated-radio-group}, \var{value} may be any Scheme
+  value.  The Scheme value of any member of the group of radio buttons
+  is the \var{value} of the marked radio button that was provided
+  during its creation.  \var{checked?} determines whether the browser
+  will initially mark the radio button.  Note that you are able to
+  tell the browser to initially mark more than one radio button, but
+  in which case the browser's behavior is undefined.  \var{attributes}
+  are some further attributes for the input field in SXML notation.
+
+%The procedure returned by \ex{make-radio-group} is of the
+%  form of \ex{\textit{radio-generator}} explained below, the one
+%  returned by \ex{make-annotated-radio-group} is of the form of
+%  \ex{\textit{annotated-radio-generator}}.
+
+%\defun{\textit{radio-generator}}{text [checked?]
+%  [attributes]}{input-field}
+%\defunx{\textit{annotated-radio-generator}}{value [checked?]
+%  [attributes]}{input-field} 
+%\begin{desc}
+%  A further description.
+%\end{desc}
+\end{desc}
+
+\defun{check-radio!}{input-field}{undefined}
+\defunx{uncheck-radio!}{input-field}{undefined}
+\defunx{set-radio-checked?!}{input-field \var{checked?}}{undefined}
+\begin{desc}
+  These change the \ex{checked?} field of a radio button that tells
+  the browser whether it should initially mark the radio button as
+  checked.  \ex{check-radio!} tells the browser to do so,
+  \ex{uncheck-radio!} does not tell the browser to do so, and
+  \ex{set-radio-checked?!} does so depending on \var{checked?}.  It is
+  an error if \var{input-field} was not created by the procedures
+  returned by \ex{make-radio-group} or
+  \ex{make-annotated-radio-group}.
+\end{desc}
+
+\defun{make-select}{select-options [multiple?]
+  [attributes]}{input-field}
+\begin{desc}
+  This creates a select boxes.  Other names are ``drop down menu'' or
+  simply ``list''.  \var{select-options} is either a list of
+  \ex{select-options} created with the procedures presented below or a
+  list of strings.  In the latter case the strings are automatically
+  translated into \ex{select-options}.  \var{multiple?}  allows
+  multiple selections in the select box.  \var{attributes} are some
+  further attributes for the input field in SXML notation.  Note that
+  you will only get multiple Scheme values for a select box that
+  allows multiple selections, if you specify the \var{multiple?}
+  argument; providing the according attribute in \var{attributes}
+  won't work (you will get the value of the first selection only).
+\end{desc}
+
+\defun{make-simple-select-option}{tag [selected?]
+  [attributes]}{select-option}
+\defunx{make-annotated-select-option}{tag value [selected?]
+  [attributes]}{select-option}
+\begin{desc}
+  These create the options for a select box, to be used as arguments
+  to \ex{make-select}.  \var{tag} is a string that will be displayed
+  as an option of a select box.  \var{value} is an arbitrary Scheme
+  value that will be the Scheme value of the select input field 
+  that contains the option.  For simple select options this is the same as
+  \var{tag}.  \var{selected?} determines whether the browser should
+  preselect the option.  \var{attributes} are some further attributes
+  for the input field in SXML notation.
+\end{desc}
+
+\defun{select-option?}{object}{boolean}
+\begin{desc}
+  This is a predicate for \ex{select-option}s.
+\end{desc}
+
+\defun{select-select-option!}{tag input-field}{undefined}
+\defunx{unselect-select-option!}{tag input-field}{undefined}
+\defunx{set-select-option-selected?!}{tag input-field
+  selected?}{undefined}
+\begin{desc}
+  These change the \ex{selected?} field of a select option that tells
+  the browser to preselect it.  \ex{select-select-option!} tells the
+  browser to preselect it, \ex{unselect-select-option!} does not tell
+  it to do so and \ex{set-select-option-selected!} does so depending
+  on \var{selected?}.  Note that you access the select option by
+  providing the \var{tag} and the select \var{input-field} in which
+  the select option is saved.  \var{tag} is either the tag of the
+  select option or an index with 0 being the first select option of
+  that select input field.  However, the change will affect all select
+  input fields that use the same select option.  If there are
+  different select options with the same tag in a select input field,
+  the procedures will only touch one of them.
+
+\oops{Unfortunetaly, the order of the arguments (index, object) is the
+  opposite of what is usual in Scheme (object, index).  This should be
+  fixed in a future version.}
+\end{desc}
+
+\defun{add-select-option!}{input-field select-option}{undefined}
+\defunx{delete-select-option!}{input-field select-option}{undefined}
+\begin{desc}
+  These add or remove \var{select-option} to or from the select
+  \var{input-field}, respectively.
+\end{desc}
+	   
+
+\subsubsection{Do it yourself: your own input fields}
+
+The \surflets library allows the creation of arbitrary own input
+  fields.  The relevant procedures are exported by the
+  \exi{surflets/my-input-fields} structure.
+
+\defun{make-input-field}{name type transformer attributes
+  html-tree-maker}{input-field}
+\defunx{make-multi-input-field}{name type transformer attributes
+  html-tree-maker}{input-field} 
+\begin{desc}
+  These are the two constructors for \ex{input-field}s.  
+
+  \var{name} is the name of the input field as used in the HTML.  You
+  have to make sure that this name is unique across your web page, \eg
+  by using \ex{generate-input-field-name} presented below.  
+
+  \var{type} is the type of the input field and mainly meant as a
+  label for debugging.  You may choose an arbitrary value for it.
+  
+  \var{transformer} is a procedure that accepts the created
+  \ex{input-field} and some other value as arguments and returns the
+  (single) Scheme value of the input field.  For
+  \ex{make-input-field}, the other value is the string representation
+  of the value the user has entered in the represented input field, as
+  sent by the browser.  For \ex{make-multi-input-field}, the other
+  value is an association list of all data the browser has sent, the
+  names being the key and the entered data being the value.  This is
+  the very same list as returned by \ex{get-bindings}, see above.
+  When the \var{transformer} cannot create a Scheme value for the
+  \ex{input-field}, she should raise an error.
+
+  \var{attributes} takes some extra information you want to store
+  along with the \ex{input-field}.  You may choose an arbitrary value
+  for it. 
+
+  \var{html-tree-maker} is a procedure that takes the created
+  \ex{input-field} as argument and returns its representation in SXML.
+\end{desc}
+
+\defun{generate-input-field-name}{prefix}{string}
+\begin{desc}
+  This generates a pseudo unique name based on prefix.  Subsequent
+  calls with the same prefix are guaranteed to never return the same
+  string.\footnote{Well, never say never:  if the structure is
+  reloaded, the counter is reset and \ex{generate-input-field-name}
+  will return the same names again.} 
+\end{desc}
+
+
+\defun{input-field-name}{input-field}{string}
+\defunx{input-field-type}{input-field}{any type}
+\defunx{input-field-transformer}{input-field}{procedure}
+\defunx{input-field-attributes }{input-field}{any type}
+\defunx{input-field-html-tree-maker}{input-field}{procedure}
+\defunx{input-field-html-tree}{input-field}{sxml}
+\defunx{input-field-multi?}{input-field}{boolean}
+\begin{desc}
+  These inspect input field values.  \ex{input-field-name} returns the
+  name of the input field as used in its HTML representation.
+  \ex{input-field-type} returns a string indicating the type of the
+  input field, \eg "\ex{radio}" or "\ex{text}".  For individual input
+  fields it may return a value of any type.
+  \ex{input-field-transformer} returns the transformer procedure that
+  is used the transform the browser value of the input field to a
+  Scheme value.  \ex{input-field-attributes} returns the attributes
+  that were stored along with the input field.
+  \ex{input-field-html-tree-maker} returns the procedure that creates
+  the SXML representation of the input field.
+  \ex{input-field-html-tree} returns the SXML representation of the
+  input field.  \ex{input-field-multi?} returns \sharpt if the input
+  field was created with \ex{make-multi-input-field}, \sharpf
+  otherwise.  The transformer of an multi-\ex{input-field} gets the
+  browser bindings as second argument while the transformer of a
+  normal (non-multi) \ex{input-field} gets the string representation
+  of the entered data as second argument.
+\end{desc}
+
+
+\defun{set-input-field-attributes!}{input-field
+  new-attributes}{undefined}
+\begin{desc}
+  This allows the mutation of the attributes of the \var{input-field}
+  to \var{new-attributes}.
+\end{desc}
+
+\defun{touch-input-field!}{input-field}{undefined}
+\begin{desc}
+  This forces the recalculation of the SXML representation of the
+  \var{input-field} using its html-tree-maker procedure.
+\end{desc}
+
+
+\subsection{Web addresses}
+
+The \surflets library allow you to determine which link or button a
+  user used to leave a page.  The links are called evaluatable web
+  addresses.  The \exi{surflets/returned-via} structure provides
+  procedures and syntax for this.
+
+\defun{returned-via}{return-object bindings}{any value}
+\defunx{returned-via?}{return-object bindings}{any value}
+\begin{desc}
+  Determines, whether the user left the web page using
+  \var{return-object}.  \var{bindings} are the bindings as returned by
+  \ex{get-bindings}.  If \var{return-object} is an \ex{input-field},
+  \ex{returned-via} returns its Scheme value as reported by
+  \ex{input-field-value}.  The input field usually can only be a
+  submit or an image button.  If \var{return-object} is not an
+  \ex{input-field}, \ex{returned-via} assumes it is an evaluatable web
+  address.  If the user did not use the evaluatable web address to
+  leave the web page, \ex{returned-via} returns \sharpf.  Otherwise,
+  when the evaluatable web address is annotated, \ex{returned-via}
+  returns its annotation, otherwise just \sharpt.  \ex{returned-via?}
+  is an alias for \ex{returned-via}.  The type of the return value
+  depends on the type of \var{return-object}.
+\end{desc}
+
+% There is \defsyn or \defsyntax command yet, so I hack it on my own.
+\defsyn{case-returned-via}{\synvar{key} \synvar{clause} \ldots}
+% This said:
+% (case-returned-via \synvar{key} \synvar{clause} \ldots)      syntax
+%\defvar{(case-returned-via \synvar{key} \synvar{clause} \ldots)}{syntax}
+\begin{desc}
+  This works like \ex{case} with some flavor of \ex{cond}.  Instead of
+  \ex{eq?}  it uses \ex{returned-via} to determine which
+  \synvar{clause} applies.  \synvar{key} is the \var{bindings}
+  argument to \ex{returned-via} (see above for the arguments of
+  \ex{returned-via}).  
+
+  A clause is of the form
+\codex{((\synvar{datum} \ldots) \synvar{expression} \ldots)}
+  where each \synvar{datum} is the \var{return-object} argument of
+  \ex{returned-via}.   If for any of the \synvar{datum}
+  \ex{returned-via} returns a true value, the \synvar{expression}s are
+  evaluated.  
+
+  Alternatively, a clause may be of the form
+\codex{((\synvar{datum} \ldots) => \synvar{procedure} \ldots)}
+  If for any of the \synvar{datum} \ex{returned-via} returns a true
+  value, \synvar{proc} is called with that value.  
+
+  The last possible clause is an "else" clause of the form
+\codex{(else \synvar{expression} \ldots)}
+  which applies when the previous clauses don't apply.
+
+  \ex{case-returned-via} returns the value(s) of the
+  \synvar{expression} that was evaluated last.
+\end{desc}
+
+\subsubsection{Evaluatable web addresses}
+
+The \exi{surflets/addresses} structure provides procedures to create
+  evaluatable web addresses.  Evaluatable web addresses are used just
+  like web addresses with the difference that \ex{returned-via} can
+  tell whether the user used this web address to leave the web page.
+
+\defun{make-address}{}{address-procedure}
+\begin{desc}
+  This creates an evaluatable web address.  \var{address-procedure} is
+  a procedure that accepts messages.  If the message is a string,
+  \var{address-procedure} will assume it is a continuation URL and
+  will return a web address that can be used as a link.  If the
+  message is the symbol \ex{address}, \var{address-procedure} will
+  return the real \ex{address} object.
+\end{desc}
+
+\defun{make-annotated-address}{}{address-procedure}
+\begin{desc}
+  This creates an annotated evaluatable wewb address.
+  \var{address-procedure} is a procedure that accepts messages.  The
+  procedure accepts either a string and an optional annotation which
+  may be any Scheme value, or it accepts only the symbol \ex{address}.
+  In the first case, it will assume the string is a continuation URL
+  and will return a web address that can be used as a link.  In the
+  latter case, it will return the real \ex{address} object.
+\end{desc}
+
+\oops{Evaluatable web address cannot be used as the action URL of web
+  forms.} 
+
+\defun{address-name}{address}{string}
+\defunx{address-annotated?}{address}{boolean}
+\defunx{address-annotation}{address}{any type}
+\begin{desc}
+  These inspect real \ex{address} objects as returned by the
+  evaluatable web addresses when given the symbol \ex{address}.
+  \ex{address-name} returns the name of the \var{address} as used in
+  the browser data.  \ex{address-annotated?} indicates whether
+  \var{address} is annotated.  \ex{address-annotation} returns the
+  annotation of \var{address}.  If \var{address} is not annotated, it
+  returns \sharpf.
+\end{desc}
+
+\subsection{Callbacks}
+
+The \surflets library allows to add a callback to a link.  When the
+  user of a web page clicks on the link, the callback will be
+  executed. \ex{send-html/suspend} (usually) won't return in that
+  case.
+
+
+\defun{make-callback}{callback-procedure}{continuation-URL}
+\begin{desc}
+  This creates a callback.  When a user clicks on a link to the
+  continuation URL \ex{make-callback} has returned,
+  \var{callback-procedure} will be called with the according
+  \ex{surflet-request}.  \var{callback-procedure} should not return.
+
+  \ex{make-callback} works with continuations.  Therefore, it is not
+  sensible to create callbacks on toplevel, nor is it sensible to
+  reuse callbacks.  Instead, create your callback every time and right
+  before you need it.
+
+  If \var{callback-procedure} returns, \ex{make-callback} will return
+  \emph{again}, this time with the value returned by
+  \var{callback-procedure}.  Note that in this case the continuation
+  that was active at the time of the call to \ex{make-callback} is
+  restored.  Or, in short, don't let \var{callback-procedure} return
+  if you want to avoid headaches.
+\end{desc}
+
+\defun{make-annotated-callback}{callback-procedure}{procedure}
+\begin{desc}
+  This creates a callback generator.  The returned procedure accepts
+  any number of arguments \var{args} and returns a continuation URL.
+  When the user clicks on a link to the continuation URL,
+  \var{callback-procedure} will be called with the arguments
+  \var{args} previously provided.  
+
+  It is an error, if \var{callback-procedure} returns.  You should
+  create a fresh annotated callback every time and right before you
+  need it, as the continuation that was active at the time of the call
+  to \ex{make-annotated-callback} is restored.
+\end{desc}
+
+\defvar{callback-function}{procedure}
+\begin{desc}
+  Use this procedure as the \var{callback-procedure} argument to
+  \ex{make-annotated-callback} to call arbitrary procedures with
+  arbitrary arguments.
+\end{desc}
+
+Here are some examples.  The first example shows how you can use an
+  annotated callback.  Note that it does not need to use
+  \ex{send-html/suspend}.
+
+\begin{alltt}
+(define-structure surflet surflet-interface
+  (open surflets
+        surflets/callbacks
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (let ((language (make-annotated-callback result-page)))
+        (send-html
+         `(html 
+           (head (title "Multi-lingual"))
+           (body 
+            (h2 "Select your language:")
+            (ul
+             (li (url ,(language "Hello, how are you?") 
+                      "English")
+             (li (url ,(language "Hallo, wie geht es Ihnen?")
+                      "Deutsch")))))))))
+
+    (define (result-page req text)
+      (send-html/finish
+       `(html 
+         (head (title "Greeting"))
+         (body
+          (h2 ,text)))))
+                        
+    ))
+\end{alltt}
+
+
+Replacing the \ex{main} procedure with the following definition will
+  have the same result:
+
+\begin{alltt}
+    (define (main req)
+      (let ((language (make-annotated-callback  callback-function)))
+        (send-html
+         `(html 
+           (head (title "Multi-lingual"))
+           (body 
+            (h2 "Select your language:")
+            (ul
+             (li (url ,(language result-page "Hello, how are you?") 
+                      "English")
+             (li (url ,(language result-page "Hallo, wie geht es Ihnen?")
+                      "Deutsch")))))))))
+\end{alltt}
+
+
+\subsection{Outdater}
+
+The \surflets library allows the user to navigate through the web
+  pages back and forth as she sees fit.  However, sometimes you want
+  to make sure, that a submission is done only once.  For this, the
+  \surflets provide \ex{outdater} objects that take care of this.
+
+\defun{make-outdater}{}{outdater}
+\begin{desc}
+  Creates an outdater object.
+\end{desc}
+
+\defsyn{if-outdated}{\synvar{outdater} \synvar{consequence}
+  \synvar{alternative}}
+\begin{desc}
+  Using the \synvar{outdater}, this makes sure, the
+  \synvar{alternative} is executed at most once, \ie the first time
+  the \synvar{outdater} is used in such a form, the
+  \synvar{alternative} is evaluated.  Every subsequent evaluation of
+  the \ex{if-outdated} form with the \synvar{outdater} will evaluate
+  the \synvar{consequence}, usually something similar to what
+  \ex{show-outdated} does.
+\end{desc}
+
+\defun{show-outdated}{url}{\noreturn}
+\begin{desc}
+  Emits a regular web page to the client informing the user (in
+  English) that ``the page or action you requested relies on outdated
+  data''.  It offers a ``reload'' link that points to \var{url} to get
+  current data.  Usually, \var{url} is a callback URL the calls the
+  according procedure.  See the admin \surflets for examples, \eg
+  \ex{scheme/web-server/root/surlfets/admin-surflet.scm}. 
+\end{desc}
+
+
+\subsection{Simple SUrflets}
+
+PLT offers an API to create simple servlets (which are their analogues
+  to our \surflets).  The \exi{simple-surflet-api} structure offers
+  the procedures with the same name as in the PLT API.  With that,
+  \surflets can look as simple as this
+  (\ex{scheme/web-server/root/surlfets/add-simple.scm, see also
+  \ex{simple-surflet.scm} in the same directory for a larger example}:
+
+\begin{alltt}
+(define-structure surflet surflet-interface
+  (open scheme-with-scsh
+        surflets
+        simple-surflet-api
+        )
+  (begin
+
+    (define (main req)
+      (let* ((number-1 (single-query (make-number "First number:")))
+             (number-2 (single-query (make-number "Second number:"))))
+        (inform (format #f "~a + ~a = ~a"
+                        number-1
+                        number-2
+                        (+ number-1 number-2))))
+      (final-page "Session finished."))
+
+))
+\end{alltt}
+
+The procedures are the following.
+
+\defun{single-query}{query}{any type}
+\begin{desc}
+  Asks the user one single questions based on \var{query} and returns
+  her answer.
+\end{desc}
+
+\defun{queries}{queries}{list}
+\begin{desc}
+  Asks the user multiple questions based on the list of \var{queries}
+  and returns her answers in a list.
+\end{desc}
+
+\defun{form-query}{named-queries}{list}
+\begin{desc}
+  Asks the user multiple queries based on the list of
+  \var{named-queries} and returns her answers in a pseudo association
+  list.  \var{named-queries} is a list of two element lists.  The
+  first element of those lists is a symbol identifying the query, the
+  second is the query.  The resulting pseudo association list contains
+  two element lists, where the first element is the symbol and the
+  second element the user's answer to the query.  The result can be
+  read using the \ex{extract/single} and \ex{extract} procedures.
+\end{desc}
+
+\defun{inform}{title [text \ldots]}{surflet-request}
+\begin{desc}
+  Sends a web page title \var{title} with the \var{text} to the user
+  as an information.  The returned \ex{surflet-request} is usually
+  discarded.  Takes at least one argument.
+\end{desc}
+
+\defun{final-page}{title [text \ldots]}{\noreturn}
+\begin{desc}
+  This sends the last page of the session to the user, titled
+  \var{title} and containing \var{text}.  This is the analog to
+  \ex{send/finish}.  Takes at least one argument.
+\end{desc}
+
+\defun{make-text}{invitation}{query}
+\defun{make-number}{invitation}{query}
+\defun{make-password}{text}{query}
+\defun{make-boolean}{invitation}{query}
+\defun{make-radio}{invitation choices}{query}
+\defun{make-yes-no}{invitation yes-text no-text}{query}
+\begin{desc}
+  These create the various queries.  \var{invitation} is a text
+  displayed in front of the input field, \eg ``Please enter your
+  password:''.  \ex{make-text} creates a text input field,
+  \ex{make-number} creates a number input field (\ie a text input field
+  that only accepts numbers as inputs), \ex{make-password} creates a
+  password input field, \ex{make-boolean} creates a checkbox,
+  \ex{make-radio} creates a group of radio buttons of which only one
+  can be selected and \ex{make-yes-no} creates a radio group that
+  allows the choices \var{yes-text} and \var{no-text}. 
+
+  The value of \ex{make-text}, \ex{make-number} and \ex{make-password}
+  is the text or number entered into the input field.  The value of
+  \ex{make-boolean} is \sharpt or \sharpf.  The value of
+  \ex{make-radio} and \ex{make-yes-no} is the selected choice, a
+  string.
+\end{desc}
+
+\defun{extract/single}{symbol table}{any value}
+\defunx{extract}{symbol table}{list}
+\begin{desc}
+  Return the answer of a user to a query.  \var{table} is the result
+  of \ex{form-query}, \var{symbol} the symbol used to identify the
+  query of interest.  For \ex{extract/single}, it is an error if there
+  is more than one query in \var{table} that is identified by
+  \var{symbol}.
+\end{desc}
+
+% shift-reset
+% profiling
+% handle-fatal
+% thread safe counter

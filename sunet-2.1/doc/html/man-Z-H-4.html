@@ -1,0 +1,988 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-3.html">previous</a></span><span>, <a href="man-Z-H-5.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_2"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_2">Chapter 2</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_2">HTTP server</a></h1>
+<p>
+The SUnet HTTP Server is a complete industrial-strength implementation
+of the HTTP 1.0 protocol.  It is highly configurable and allows the writing
+of dynamic web pages that run inside the server without going through
+complicated and slow protocols like CGI or Fast/CGI.</p>
+<p>
+</p>
+<a name="node_sec_2.1"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.1">2.1&nbsp;&nbsp;Starting and configuring the server</a></h2>
+<p>All procedures described in this section are exported by the
+<tt>httpd</tt> structure.</p>
+<p>
+The Web server is started by calling the <tt>httpd</tt> procedure, which takes
+one argument, an options value:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(httpd <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_2"></a>
+<blockquote>
+This procedure starts the server. The <i>options</i> argument
+specifies various configuration parameters, explained below.<p>
+The server's basic loop is to wait on the port for a connection from
+an HTTP client. When it receives a connection, it reads in and
+parses the request into a special request data structure.  Then the
+server forks a thread which binds the current I/O ports to the
+connection socket, and then hands off to the top-level
+request handler (which must be specified in the options). The
+request handler is responsible for actually serving
+the request -- it can be any arbitrary computation.  Its output goes
+directly back to the HTTP client that sent the request.</p>
+<p>
+Before calling the request handler to service the request, the HTTP
+server installs an error handler that fields any uncaught error,
+sends an error reply to the client, and aborts the request
+transaction.  Hence any error caused by a request handler will be
+handled in a reasonable and robust fashion.
+</p>
+</blockquote>
+The <i>options</i> argument can be constructed through a number of procedures
+with names of the form <tt>with-<tt>...</tt></tt>.  Each of these procedures
+either creates a fresh options value or adds a configuration parameter
+to an old options argument.  The configuration parameter value is
+always the first argument, the (old) options value the optional second
+one.  Here they are:<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-port <i>port [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_4"></a>
+<blockquote>
+This specifies the port on which the server listens.  Defaults to 80.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-root-directory <i>root-directory [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_6"></a> 
+<blockquote>
+This specifies the current directory of the server.  Note that this
+is <em>not</em> the document root directory.  Defaults to <tt>/</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-fqdn <i>fqdn [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_8"></a>
+<blockquote>
+This specifies the fully-qualified domain name the server uses in
+automatically generated replies, or <tt>#f</tt> if the server should
+query DNS for the fully-qualified domain name..  Defaults to <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-reported-port <i>reported-port [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_10"></a>
+<blockquote>
+This specifies the port number the server uses in automatically
+generated replies or <tt>#f</tt> if the reported port is the same as
+the port the server is listening on.  (This is useful if you're
+running the server through an accelerating proxy.)  Defaults to
+<tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-server-admin <i>mail-address [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_12"></a>
+<blockquote>
+This specifies the email address of the server administrator the
+server uses in automatically generated replies.  Defaults to <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-request-handler <i>request-handler [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_14"></a>
+<blockquote>
+This specifies the request handler of the server to which the server
+delegates the actual work.  More on that subject below in
+Section&nbsp;<a href="#node_sec_2.5">2.5</a>.  This parameter must be specified.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-simultaneous-requests <i>requests [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_16"></a>
+<blockquote>
+This specifies a limit on the number of simultaneous requests the
+server servers.  If that limit is exceeded during operation, the
+server will hold off on new requests until the number of
+simultaneous requests has sunk below the limit again.  If this
+parameter is <tt>#f</tt>, no limit is imposed.  Defaults to <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-log-file <i>log-file [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_18"></a>
+<blockquote>
+This specifies the name of a log file for the server where it writes
+Common Log Format logging information.  It can also be a port in
+which case the information is logged to that port, or <tt>#f</tt> for
+no logging.  Defaults to <tt>#f</tt>.<p>
+To allow rotation of log files, the server re-opens the log file
+whenever it receives a <tt>USR1</tt> signal.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-syslog? <i>syslog? [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_20"></a>
+<blockquote>
+This specifies whether the server will log information about
+incoming to the Unix syslog facility.  Defaults to <tt>#t</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-resolve-ip? <i>resolve-ip? [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_22"></a>
+<blockquote>
+This specifies whether the server writes the domain names rather
+than numerical IPs to the output log it produces.  Defaults to
+<tt>#t</tt>.
+</blockquote><p>
+To avoid paranthitis, the <tt>make-httpd-options</tt> procedure eases the
+construction of the options argument:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-httpd-options <i>transformer value <tt>...</tt></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_24"></a>
+<blockquote>
+This constructs an options value from an argument list of parameter
+transformers and parameter values.  The arguments come in pairs,
+each an option transformer from the list above, and a value for that
+parameter.  <tt>Make-httpd-options</tt> returns the resulting options value.
+</blockquote><p>
+For example,
+</p>
+<pre class=verbatim>(httpd (make-httpd-options
+         with-request-handler (rooted-file-handler &quot;/usr/local/etc/httpd&quot;)
+         with-root-directory &quot;/usr/local/etc/httpd&quot;))
+</pre><p>
+starts the server on port 80 with
+<tt>/usr/local/etc/httpd</tt> as its root directory and
+lets it serve any file out from this directory.
+</p>
+<p>
+</p>
+<a name="node_sec_2.2"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.2">2.2&nbsp;&nbsp;Requests</a></h2>
+<p></p>
+<p>
+Request handlers operate on <i>requests</i> which contain the
+information needed to generate a page.  The relevant procedures to
+dissect requests are defined in the <tt>httpd-requests</tt> structure:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(request? <i>value</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_26"></a>
+<div align=left><tt>(request-method <i>request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_28"></a>
+<div align=left><tt>(request-uri <i>request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_30"></a>
+<div align=left><tt>(request-url <i>request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>url</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_32"></a>
+<div align=left><tt>(request-version <i>request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>pair</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_34"></a>
+<div align=left><tt>(request-headers <i>request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_36"></a>
+<div align=left><tt>(request-socket <i>request</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>socket</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_38"></a>
+<blockquote>
+The procedure inspect request values.  <tt>Request?</tt> is a predicate
+for requests.  <tt>Request-method</tt> extracts the method of the HTTP
+request; it's a string such as <code class=verbatim>&quot;GET&quot;</code>, <code class=verbatim>&quot;PUT&quot;</code>.
+<tt>Request-uri</tt> returns the escaped URI string as read from request
+line.  <tt>Request-url</tt> returns an HTTP URL value (see the
+description of the <tt>url</tt> structure in <a href="man-Z-H-6.html#node_chap_4">4</a>).
+<tt>Request-version</tt> returns <code class=verbatim>(major . minor)</code> integer pair
+representing the version specified in the HTTP request.
+<tt>Request-headers</tt> returns an association lists of header field
+names and their values, each represented by a list of strings, one
+for each line.  <tt>Request-socket</tt> returns the socket connected
+to the client.<a name="call_footnote_Temp_3"></a><a href="#footnote_Temp_3"><sup><small>1</small></sup></a>
+</blockquote><p>
+</p>
+<a name="node_sec_2.3"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.3">2.3&nbsp;&nbsp;Responses</a></h2>
+<p></p>
+<p>
+A path handler must return a <i>response</i> value representing the
+content to be sent to the client.  The machinery presented here for
+constructing responses lives in the <tt>httpd-responses</tt> structure.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-response <i>status-code maybe-message seconds mime extras
+body</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>response</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_40"></a>
+<blockquote>
+This procedure constructs a response value.  <i>Status-code</i> is an
+HTTP status code (more on that below).  <i>Maybe-message</i> is a a
+message elaborating on the circumstances of the status code; it can
+also be <tt>#f</tt> meaning that the server should send a default
+message associated with the status code.  <i>Seconds</i> natural
+number indicating the time the content was created, typically the
+value of <code class=verbatim>(time)</code>.  <i>Mime</i> is a string indicating the MIME
+type of the response (such as <code class=verbatim>&quot;text/html&quot;</code> or
+<code class=verbatim>&quot;application/octet-stream&quot;</code>).  <i>Extras</i> is an association
+list with extra headers to be added to the response; its elements
+are pairs, each of which consists of a symbol representing the field
+name and a string representing the field value.  <i>Body</i>
+represents the body of the response; more on that below.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-redirect-response <i>location</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>response</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_42"></a>
+<blockquote>
+This is a helper procedure for constructing HTTP redirections.  The
+server will serve the new file indicated by <i>location</i>.
+<i>Location</i> must be URI-encoded and begin with a slash.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-error-response <i>status-code request [message] extras <tt>...</tt></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>response</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_44"></a>
+<blockquote>
+This is a helper procedure for constructing error responses.
+<i>code</i> is status code of the response (see below). <i>Request</i>
+is the request that led to the error.  <i>Message</i> is an optional
+string containing an error message written in HTML, and <i>extras</i>
+are further optional arguments containing further message lines to
+be added to the web page that's generated.<p>
+<tt>Make-error-response</tt> constructs a response value which generates
+a web page containg a short explanatory message for the error at hand.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<hr>
+<p></p>
+<a name="node_tbl_Temp_4"></a>
+<div class=table align=center><table width=100%><tr><td align=center>
+<table border=1><tr><td valign=top >ok </td><td valign=top >200 </td><td valign=top >OK</td></tr>
+<tr><td valign=top >created </td><td valign=top >201 </td><td valign=top >Created</td></tr>
+<tr><td valign=top >accepted </td><td valign=top >202 </td><td valign=top >Accepted</td></tr>
+<tr><td valign=top >prov-info </td><td valign=top >203 </td><td valign=top >Provisional Information</td></tr>
+<tr><td valign=top >no-content </td><td valign=top >204 </td><td valign=top >No Content</td></tr>
+<tr><td valign=top ><p>
+mult-choice </p>
+</td><td valign=top >300 </td><td valign=top >Multiple Choices</td></tr>
+<tr><td valign=top >moved-perm </td><td valign=top >301 </td><td valign=top >Moved Permanently</td></tr>
+<tr><td valign=top >moved-temp </td><td valign=top >302 </td><td valign=top >Moved Temporarily</td></tr>
+<tr><td valign=top >method </td><td valign=top >303 </td><td valign=top >Method (obsolete)</td></tr>
+<tr><td valign=top >not-mod </td><td valign=top >304 </td><td valign=top >Not Modified</td></tr>
+<tr><td valign=top ><p>
+bad-request </p>
+</td><td valign=top >400 </td><td valign=top >Bad Request</td></tr>
+<tr><td valign=top >unauthorized </td><td valign=top >401 </td><td valign=top >Unauthorized</td></tr>
+<tr><td valign=top >payment-req </td><td valign=top >402 </td><td valign=top >Payment Required</td></tr>
+<tr><td valign=top >forbidden </td><td valign=top >403 </td><td valign=top >Forbidden</td></tr>
+<tr><td valign=top >not-found </td><td valign=top >404 </td><td valign=top >Not Found</td></tr>
+<tr><td valign=top >method-not-allowed </td><td valign=top >405 </td><td valign=top >Method Not Allowed</td></tr>
+<tr><td valign=top >none-acceptable </td><td valign=top >406 </td><td valign=top >None Acceptable</td></tr>
+<tr><td valign=top >proxy-auth-required </td><td valign=top >407 </td><td valign=top >Proxy Authentication Required</td></tr>
+<tr><td valign=top >timeout </td><td valign=top >408 </td><td valign=top >Request Timeout</td></tr>
+<tr><td valign=top >conflict </td><td valign=top >409 </td><td valign=top >Conflict</td></tr>
+<tr><td valign=top >gone </td><td valign=top >410 </td><td valign=top >Gone</td></tr>
+<tr><td valign=top >internal-error </td><td valign=top >500 </td><td valign=top >Internal Server Error</td></tr>
+<tr><td valign=top >not-implemented </td><td valign=top >501 </td><td valign=top >Not Implemented</td></tr>
+<tr><td valign=top >bad-gateway </td><td valign=top >502 </td><td valign=top >Bad Gateway</td></tr>
+<tr><td valign=top >service-unavailable </td><td valign=top >503 </td><td valign=top >Service Unavailable</td></tr>
+<tr><td valign=top >gateway-timeout </td><td valign=top >504 </td><td valign=top >Gateway Timeout</td></tr>
+<tr><td valign=top ></td></tr></table>
+</td></tr>
+<tr><td align=center><b>Table 1:</b>&nbsp;&nbsp;HTTP status codes</td></tr>
+<tr><td>
+
+</td></tr></table></div><p></p>
+<hr>
+<p></p>
+<p></p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(status-code <i><i>&lt;.name.&gt;</i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>status-code</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(syntax)&nbsp;</div>
+ <a name="node_idx_46"></a>
+<div align=left><tt>(name-&gt;status-code <i>symbol</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>status-code</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_48"></a>
+<div align=left><tt>(status-code-number <i>status-code</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>integer</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_50"></a>
+<div align=left><tt>(status-code-message <i>status-code</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_52"></a>
+<blockquote>
+The <tt>status-code</tt> syntax returns a status code where
+<i>&lt;.name.&gt;</i> is the name from Table&nbsp;<a href="#node_tbl_Temp_4">1</a>.
+<tt>Name-&gt;status-code</tt> also returns a status code for a name
+represented as a symbol.  For a given status code,
+<tt>status-code-number</tt> extracts its number, and
+<tt>status-code-message</tt> extracts its associated default message.
+</blockquote><p>
+</p>
+<a name="node_sec_2.4"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.4">2.4&nbsp;&nbsp;Response Bodies</a></h2>
+<p></p>
+<p>
+A <i>response body</i> represents the body of an HTTP response.
+There are several types of response bodies, depending on the
+requirements on content generation.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-writer-body <i>proc</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>body</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_54"></a>
+<blockquote>
+This constructs a response body from a <i>writer</i> -- a procedure
+that prints the page contents to a port.  The <i>proc</i> argument
+must be a procedure accepting an output port (to which <i>proc</i>
+prints the body) and the options value passed to the <tt>httpd</tt>
+invocation.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-reader-writer-body <i>proc</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>body</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_56"></a>
+<blockquote>
+This constructs a response body from a <i>reader/writer</i> -- a
+procedure that prints the page contents to a port, possibly after
+reading input from the socket of the HTTP connection.  The
+<i>proc</i> argument must be a procedure accepting three arguments:
+an input port (associated with the HTTP connection socket), an
+output port (to which <i>proc</i> prints the body), and the options
+value passed to the <tt>httpd</tt> invocation.
+</blockquote><p>
+</p>
+<a name="node_sec_2.5"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.5">2.5&nbsp;&nbsp;Request Handlers</a></h2>
+<p></p>
+<p>
+A request handler generates the actual content for a request; request
+handlers form a simple algebra and may be combined and composed in
+various ways.</p>
+<p>
+A request handler is a procedure of two arguments like this:
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(request-handler <i>path req</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>response</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_58"></a>
+<blockquote>
+<i>Req</i> is a request. The <i>path</i> argument is the URL's
+path, parsed and split at slashes into a string list. For example,
+if the Web client dereferences URL
+<pre class=verbatim>http://clark.lcs.mit.edu:8001/h/shivers/code/web.tar.gz
+</pre><p>
+then the server would pass the following path to the top-level
+handler:
+</p>
+<pre class=verbatim>(&quot;h&quot; &quot;shivers&quot; &quot;code&quot; &quot;web.tar.gz&quot;)
+</pre><p>
+The <i>path</i> argument's pre-parsed representation as a string
+list makes it easy for the request handler to implement recursive
+operations dispatch on URL paths.</p>
+<p>
+The request handler must return an HTTP response.
+</p>
+</blockquote><p>
+</p>
+<a name="node_sec_2.5.1"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_2.5.1">2.5.1&nbsp;&nbsp;Basic Request Handlers</a></h3>
+<p>The web server comes with a useful toolbox of basic request handlers
+that can be used and built upon.  The following procedures are
+exported by the <tt>httpd-basic-handlers</tt> structure:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_60"></a></p>
+<div align=left><tt>null-request-handler</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;request-handler&nbsp;</div>
+
+<blockquote>
+This request handler always generated a <tt>not-found</tt> error
+response, no patter what the request is.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-predicate-handler <i>predicate handler
+default-handler</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_62"></a>
+<blockquote>
+The request handler returned by this procedure first calls
+<i>predicate</i> on its path and request; it then acts like
+<i>handler</i> if the predicate returned a true vale, and like
+<i>default-handler</i> if the predicate returned <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-host-name-handler <i>hostname handler default-handler</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_64"></a>
+<blockquote>
+The request handler returned by this procedure compares the host
+name specified in the request with <i>hostname</i>: if they match, it
+acts like <i>handler</i>, otherwise, it acts like
+<i>default-handler</i>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-path-predicate-handler <i>predicate handler
+default-handler</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_66"></a>
+<blockquote>
+The request handler returned by this procedure first calls
+<i>predicate</i> on its path; it then acts like <i>handler</i> if the
+predicate returned a true vale, and like <i>default-handler</i> if
+the predicate returned <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-path-prefix-handler <i>path-prefix handler default-handler</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_68"></a>
+<blockquote>
+This constructs a request handler that calls <i>handler</i> on its
+argument if <i>path-prefix</i> (a string) is the first element of the
+requested path; it calls <i>handler</i> on the rest of the path and
+the original request.  Otherwise, the handler acts like
+<i>default-handler</i>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(alist-path-dispatcher <i>handler-alist default-handler</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_70"></a>
+<blockquote>
+This procedure takes as arguments an alist mapping strings to path
+handlers, and a default request handler, and returns a handler that
+dispatches on its path argument.  When the new request handler is
+applied to a path 
+<pre class=verbatim>(&quot;foo&quot; &quot;bar&quot; &quot;baz&quot;)
+</pre><p>
+it uses the
+first element of the path -- <tt>foo</tt> -- to index into the
+alist.  If it finds an associated request handler in the alist, it
+hands the request off to that handler, passing it the tail of the
+path, in this case
+</p>
+<pre class=verbatim>(&quot;bar&quot; &quot;baz&quot;)
+</pre><p>
+On the other hand, if the path is
+empty, or the alist search does not yield a hit, we hand off to the
+default path handler, passing it the entire original path,
+</p>
+<pre class=verbatim>(&quot;foo&quot; &quot;bar&quot; &quot;baz&quot;)
+</pre><p>
+This procedure is how you say: ``If the first element of the URL's
+path is `foo', do X; if it's `bar', do Y; otherwise, do Z.''
+The slash-delimited URI path structure implies an associated tree of
+names. The request-handler system and the alist dispatcher allow you to
+procedurally define the server's response to any arbitrary subtree
+of the path space.</p>
+<p>
+Example: A typical top-level request handler is
+</p>
+<pre class=verbatim>(define ph
+  (alist-path-dispatcher
+      `((&quot;h&quot;       . ,(home-dir-handler &quot;public_html&quot;))
+        (&quot;cgi-bin&quot; . ,(cgi-handler &quot;/usr/local/etc/httpd/cgi-bin&quot;))
+        (&quot;seval&quot;   . ,seval-handler))
+      (rooted-file-handler &quot;/usr/local/etc/httpd/htdocs&quot;)))
+</pre><p></p>
+<p>
+This means:
+</p>
+<ul>          
+<li><p>If the path looks like <tt>(&quot;h&quot; &quot;shivers&quot;
+&quot;code&quot; &quot;web.tar.gz&quot;)</tt>, pass the path
+<tt>(&quot;shivers&quot; &quot;code&quot; &quot;web.tar.gz&quot;)</tt> to a
+home-directory request handler.
+</p>
+<li><p>If the path looks like <tt>(&quot;cgi-bin&quot; &quot;calendar&quot;)</tt>,
+pass (&quot;calendar&quot;) off to the CGI request handler.
+</p>
+<li><p>If the path looks like <tt>(&quot;seval&quot; <tt>...</tt>)</tt>, the tail
+of the path is passed off to the code-uploading <tt>seval</tt> path
+handler.
+</p>
+<li><p>Otherwise, the whole path is passed to a rooted file handler,
+who will convert it into a filename, rooted at
+<tt>/usr/local/etc/httpd/htdocs</tt>,
+and serve that file.
+</p>
+</ul><p>
+</p>
+</blockquote><p>
+</p>
+<a name="node_sec_2.5.2"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_2.5.2">2.5.2&nbsp;&nbsp;Static Content Request Handlers</a></h3>
+<p>The request handlers described in this section are for serving static
+content off directory trees in the file system.  They live in the
+<tt>httpd-file-directory-handlers</tt> structure.</p>
+<p>
+The request handlers in this section eventually call an internal
+procedure named <tt>file-serve</tt> for serving files which implements a
+simple directory-generation service using the following rules:
+</p>
+<ul>
+<li><p>If the filename has the form of a directory (i.e., it ends with
+a slash), then <tt>file-serve</tt> actually looks for a file named
+<tt>index.html</tt> in that directory.
+</p>
+<li><p>If the filename names a directory, but is not in directory form
+(i.e., it doesn't end in a slash, as in
+``<tt>/usrinclude</tt>'' or ``<tt>/usrraj</tt>''),
+then <tt>file-serve</tt> sends back a ``301 moved permanently''
+message, redirecting the client to a slash-terminated version of the
+original URL. For example, the URL
+<tt>http://clark.lcs.mit.edu/&nbsp;shivers</tt>
+would be redirected to
+<tt>http://clark.lcs.mit.edu/&nbsp;shivers/</tt>
+</p>
+<li><p>If the filename names a regular file, it is served to the
+client.
+</p>
+</ul><p>
+The <tt>httpd-file-directory-handlers</tt> all take an options value as an
+argument, similar to the options for <tt>httpd</tt> itself.</p>
+<p>
+The <i>options</i> argument can be constructed through a number of procedures
+with names of the form <tt>with-<tt>...</tt></tt>.  Each of these procedures
+either creates a fresh options value or adds a configuration parameter
+to an old options argument.  The configuration parameter value is
+always the first argument, the (old) options value the optional second
+one.  Here they are:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-file-name-&gt;content-type <i>proc [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_72"></a>
+<blockquote>
+This specifies a procedure for determining the MIME content type
+(``<tt>text/html</tt>,'' ``<tt>application/octet-stream</tt>'' etc.)
+from a file name.  <i>Proc</i> takes a file name as an argument and
+must return a string.  (This is relevant in directory listings.)  The default is a procedure able to handle the
+more common file extensions.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-file-name-&gt;content-encoding <i>proc [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_74"></a>
+<blockquote>
+This specifies a procedure for determining the MIME content encoding
+(if the file is compressed, gzipped, etc.) from a file name.
+(This is relevant in directory listings.)  
+<i>Proc</i> takes a file name as an argument and must return two
+values: the equivalent, unencoded file name (i.e., without the
+trailing <tt>.Z</tt> or <tt>.gz</tt>) and a string representing the content
+encoding.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-file-name-&gt;icon-url <i>proc [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_76"></a>
+<blockquote>
+This specifies a procedure for determining the icon to be displayed
+next to a file name in a directory listing.
+<i>Proc</i> takes a file name as an argument and must return a URL
+for the corresponding icon or <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-blank-icon-url <i>file-name-or-<tt>#f</tt> [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_78"></a>
+<blockquote>
+This specifies a file name (or its absence) for the special icon
+that must be as wide as the icons returned by the previous procedure
+but that is blank.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-back-icon-url <i>file-name-or-<tt>#f</tt> [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_80"></a>
+<blockquote>
+This specifies a file name (or its absence) for the special icon
+that is displayed next to the ``parent directory'' link in directory
+listings.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-unknown-icon-url <i>file-name-or-<tt>#f</tt>
+[options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_82"></a>
+<blockquote>
+This specifies a file name (or its absence) for the special icon
+that is displayed next to the unknown entries in directory listings.
+</blockquote><p>
+The <tt>make-file-directory-options</tt> procedure eases the construction
+of the options argument:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-file-directory-options <i>transformer value <tt>...</tt></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_84"></a>
+<blockquote>
+This constructs an options value from an argument list of parameter
+transformers and parameter values.  The arguments come in pairs,
+each an option transformer from the list above, and a value for that
+parameter.  <tt>Make-file-directory-options</tt> returns the resulting
+options value.
+</blockquote>
+Here are procedure for constructing static content request handlers:
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(rooted-file-handler <i>root [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_86"></a> 
+<blockquote>
+This returns a request handler that serves files from a particular
+root in the file system.  Only the <tt>GET</tt> operation is provided.
+The path argument passed to the handler is converted into a
+filename, and appended to <i>root</i>.  The file name is checked for
+<tt>..</tt>  components, and the transaction is aborted if it does.
+Otherwise, the file is served to the client.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(rooted-file-or-directory-handler <i>root [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_88"></a> 
+<blockquote>
+Dito, but also serve directory indices for directories without
+<tt>index.html</tt>. 
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(home-dir-handler <i>subdir [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_90"></a>
+<blockquote>
+This procedure builds a request handler that does basic file serving
+out of home directories. If the resulting <i>request-handler</i> is
+passed a path of the form <tt>(<i>user</i> . <i>file-path</i>)</tt>, then it serves the file
+<tt><i>subdir</i>/<i>file-path</i></tt> inside the user's home directory.<p>
+The request handler only handles GET requests; the filename is not
+allowed to contain <tt>..</tt> elements.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(tilde-home-dir-handler <i>subdir default-request-handler [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_92"></a>
+<blockquote>
+This returns request handler that examines the car of the path. If
+it is a string beginning with a tilde, e.g., <tt>&quot;&nbsp;ziggy&quot;</tt>, then the
+string is taken to mean a home directory, and the request is served
+similarly to a home-dir-handler request handler. Otherwise, the
+request is passed off in its entirety to the
+<i>default-request-handler</i>.
+</blockquote><p>
+</p>
+<a name="node_sec_2.6"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.6">2.6&nbsp;&nbsp;CGI Server</a></h2>
+<p>The procedure(s) described here live in the <tt>httpd-cgi-handlers</tt>
+structure.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(cgi-handler <i>bin-dir [cgi-bin-path]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>request-handler</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_94"></a>
+<blockquote>
+Returns a request handler for CGI scripts located in
+<i>bin-dir</i>.  <i>Cgi-bin-dir</i> specifies the value of the
+<tt>PATH</tt> variable of the environment the CGI scripts run in. It defaults
+to
+<pre class=verbatim>/bin:/usr/bin:/usr/ucb:/usr/bsd:/usr/local/bin
+</pre><p>
+The CGI scripts are called as specified by CGI/1.1<a name="call_footnote_Temp_5"></a><a href="#footnote_Temp_5"><sup><small>2</small></sup></a>.</p>
+<p>
+Note that the CGI handler looks at the name of the CGI script to
+determine how it should be handled:
+</p>
+<ul>
+<li><p>If the name of the script starts with `<tt>nph-</tt>', its reply
+is read, the RFC&nbsp;822-fields like <tt>Content-Type</tt> and <tt>Status</tt>
+are parsed and the client is sent back a real HTTP reply,
+containing the rest of the script's output.</p>
+<p>
+</p>
+<li><p>If the name of the script doesn't start with `<tt>nph-</tt>',
+its output is sent back to the client directly. If its return code
+is not zero, an error message is generated.
+</p>
+</ul><p>
+</p>
+</blockquote>      <p>
+</p>
+<a name="node_sec_2.7"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.7">2.7&nbsp;&nbsp;Scheme-Evaluating Request Handlers</a></h2>
+<p>The <tt>httpd-seval-handlers</tt> structure contains a handler which
+demonstrates how to safely evaluate Scheme code uploaded from the
+client to the server.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p><a name="node_idx_96"></a></p>
+<div align=left><tt>seval-handler</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;request-handler&nbsp;</div>
+
+<blockquote>
+This request handler is suitable for receiving code entered into an
+HTML text form. The Scheme code being uploaded is being <tt>POST</tt>ed
+to the server (from a form).  The code should be URI-encoded in the
+URL as <tt>program=</tt>&lt;<em>s</em><em>t</em><em>u</em><em>f</em><em>f</em>&gt;.
+<em>s</em><em>t</em><em>u</em><em>f</em><em>f</em> must be an (URI-encoded) Scheme expression which
+the handler evaluates in a separate subprocess.  (It waits for 10
+seconds for a result, then kills the subprocess.)  The handler then
+prints the return values of the Scheme code.
+</blockquote><p>
+The following structures define environments that are R5RSwithout
+features that could examine or effect the file system.  You can also
+use them as models of how to execute code in other protected
+environments in Scheme 48.</p>
+<p>
+</p>
+<a name="node_sec_2.7.1"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_2.7.1">2.7.1&nbsp;&nbsp;The <tt>loser</tt> structure</a></h3>
+<p>The <tt>loser</tt> package exports only one procedure:</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(loser <i>name</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>nothing</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_98"></a><blockquote>
+Raises an error like ``Illegal call <i>name</i>''.
+</blockquote><p>
+</p>
+<a name="node_sec_2.7.2"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_2.7.2">2.7.2&nbsp;&nbsp;The <tt>toothless</tt> structure</a></h3>
+<p>The <tt>toothless</tt> structure contains everything of R5RSexcept
+that following procedure cause an error if called:
+</p>
+<ul>
+<li><p><tt>call-with-input-file</tt>
+</p>
+<li><p><tt>call-with-output-file</tt>
+</p>
+<li><p><tt>load</tt>
+</p>
+<li><p><tt>open-input-file</tt>
+</p>
+<li><p><tt>open-output-file</tt>
+</p>
+<li><p><tt>transcript-on</tt>
+</p>
+<li><p><tt>with-input-from-file</tt>
+</p>
+<li><p><tt>with-input-to-file</tt>
+</p>
+<li><p><tt>eval</tt>
+</p>
+<li><p><tt>interaction-environment</tt>
+</p>
+<li><p><tt>scheme-report-environment</tt>
+</p>
+</ul><p></p>
+<p>
+</p>
+<a name="node_sec_2.7.3"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_2.7.3">2.7.3&nbsp;&nbsp;The <tt>toothless-eval</tt> structure</a></h3>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(eval-safely <i>expression</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>any result</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_100"></a><blockquote>
+Creates a brand-new structure, imports the <tt>toothless</tt> structure,
+and evaluates <i>expression</i> in it. When the evaluation is
+done, the environment is thrown away, so <i>expression</i>'s
+side-effects don't persist from one <tt>eval-safely</tt> call to the
+next.  If <i>expression</i> raises an error exception,
+<tt>eval-safely</tt> returns <tt>#f</tt>.
+</blockquote><p>
+</p>
+<a name="node_sec_2.8"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.8">2.8&nbsp;&nbsp;Writing Request Handlers</a></h2>
+<p></p>
+<a name="node_sec_2.8.1"></a>
+<h3><a href="man-Z-H-1.html#node_toc_node_sec_2.8.1">2.8.1&nbsp;&nbsp;Parsing HTML Forms</a></h3>
+<p>In HTML forms, field data are turned into a single string, of the form
+<tt><i>&lt;.name.&gt;</i>=<i>&lt;.val.&gt;</i>&amp;<i>&lt;.name.&gt;</i>=<i>&lt;.val.&gt;</i><tt>...</tt></tt>.
+The <tt>parse-html-forms</tt> structure provides simple functionality to
+parse these strings.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(parse-html-form-query <i>string</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_102"></a>
+<blockquote>
+This parses <code class=verbatim>&quot;foo=x&amp;bar=y&quot;</code> into <code class=verbatim>((&quot;foo&quot; . &quot;x&quot;) (&quot;bar&quot; .
+  &quot;y&quot;))</code>.  Substrings are plus-decoded (i.-e. plus characters are
+turned into spaces) and then URI-decoded.<p>
+This implementation is
+slightly sleazy as it will successfully parse a string like
+<code class=verbatim>&quot;a&amp;b=c&amp;d=f&quot;</code> into <code class=verbatim>((&quot;a&amp;b&quot; . &quot;c&quot;) (&quot;d&quot; .  &quot;f&quot;))</code> without
+a complaint.
+</p>
+</blockquote><p>
+</p>
+<a name="node_sec_2.9"></a>
+<h2><a href="man-Z-H-1.html#node_toc_node_sec_2.9">2.9&nbsp;&nbsp;SSL encryption with Apache</a></h2>
+<p>Network traffic with a HTTP server is usually encrypted and protected
+from manipulation using the cryptographic algorithm provided by an
+implementation of the <i>secure socket layer</i>, SSL for short.
+SUnet does not have support for SSL yet.  However, an Apache
+web-server with SSL support can be configured as a proxy.  In this
+setup the Apache web-server accepts encrypted requests and forwards
+them to a SUnet web-server running locally.  This section describes
+how to set up Apache as an encrypting proxy, assuming the reader has
+basic knowledge about Apache and its configuration directives.</p>
+<p>
+The following excerpt shows a minimalist SSL virtual host that
+forwards requests to a SUnet server.</p>
+<p>
+</p>
+<pre class=verbatim>&lt;VirtualHost 134.2.12.82:443&gt;
+  DocumentRoot &quot;/www/some-domain/htdocs&quot;
+  ServerName www.some-domain.de
+  ServerAdmin admin@some-domain.de
+  ErrorLog /www/some-domain/logs/error_log
+
+  ProxyRequests off
+  ProxyPass / http://localhost:8080/
+  ProxyPassReverse / http://localhost:8080/
+
+  SSLEngine on
+  SSLRequireSSL
+
+  SSLCertificateFile /www/some-domain/cert/some-domain.cert
+  SSLCertificateKeyFile /www/some-domain/cert/some-domain.key
+&lt;/VirtualHost&gt;
+</pre><p></p>
+<p>
+First, a virtual host is added to Apache's configuration file.  This
+virtual host listens for incoming connections on port 443, which is
+the standard port for encrypted HTTP traffic.  <tt>SSLRequireSSL</tt>
+ensures that server accepts encrypted connections only.</p>
+<p>
+In terms of the Apache documentation, the web-server acts as a so
+called <i>reverse proxy</i>.  The option <tt>ProxyRequests</tt> has
+a misleading name.  Setting this option to off does only turns off
+Apache's facility to act as a <i>forward proxy</i> and has no effect
+on the configuration directives for reverse proxies.  Actually,
+turning on <tt>ProxyRequests</tt> is dangerous, because this turns
+Apache into a proxy server that can be used from anywhere to access
+any site that is accessible to the Apache server.</p>
+<p>
+In this setting, all requests get forwarded to a SUnet web-server
+which listens for incoming connections on localhost port 8080 only,
+thus, it is not reachable from a remote machine.  Apache forwards all
+requests to the host and port specified by the <tt>ProxyPass</tt>
+directive.  <tt>ProxyPassReverse</tt> specifies how
+<tt>Location</tt>-Header fields of HTTP redirect messages send by the
+SUNet server are translated.</p>
+<p>
+
+</p>
+<div class=footnoterule><hr></div><p></p>
+<div class=footnote><p><a name="footnote_Temp_3"></a><a href="#call_footnote_Temp_3"><sup><small>1</small></sup></a> Request handlers should not perform I/O on the
+request record's socket.  Request handlers are frequently called
+recursively, and doing I/O directly to the socket might bypass a
+filtering or other processing step interposed on the current I/O ports
+by some superior request handler.</p>
+<p><a name="footnote_Temp_5"></a><a href="#call_footnote_Temp_5"><sup><small>2</small></sup></a> see
+<a href="http://hoohoo.ncsa.uiuc.edu/cgi/interface.html">http://hoohoo.ncsa.uiuc.edu/cgi/interface.html</a> for a sort of
+specification.</p>
+</div>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-3.html">previous</a></span><span>, <a href="man-Z-H-5.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

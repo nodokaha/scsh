@@ -1,0 +1,79 @@
+% -*- latex -*-
+
+% This is the reference manual for the Scheme Untergrund Networking Package.
+
+\documentclass[twoside]{report}
+\usepackage{code,boxedminipage,makeidx,palatino,ct,
+            headings,mantitle,array,matter,mysize10,tex2page}
+
+\usepackage[latin1]{inputenc}
+\usepackage{alltt}
+\usepackage{xspace}
+\usepackage{tabularx,theorem,ulem,float,afterpage} % need url
+\normalem                       % usually, don't use ulem
+
+\texonly
+% tex2page defines \url and hyperref loads the package url
+% but setting \url to \relax satisfies \newcommand
+\let\url\relax
+\input{pdfcond}
+\ifpdf
+\usepackage[pdftex,hyperindex,
+     pdftitle={sunet manual, release 2.1},
+     pdfauthor={Olin Shivers, Mike Sperber, Martin Gasbichler, Eric Marsden 
+       and Andreas Bernauer}
+     colorlinks=true,linkcolor=blue,pagecolor=blue,urlcolor=blue,
+     pdfstartview=FitH,pdfview=FitH]{hyperref}
+\usepackage{thumbpdf}
+\usepackage{tocbibind}
+\else
+\usepackage[dvipdfm,hyperindex,hypertex,
+     pdftitle={sunet manual, release 2.1},
+     pdfauthor={Olin Shivers, Mike Sperber, Martin Gasbichler, Eric Marsden 
+       and Andreas Bernauer}
+     colorlinks=true,linkcolor=blue,pagecolor=blue,urlcolor=blue,
+     pdfstartview=FitH,pdfview=FitH]{hyperref}
+\fi
+\endtexonly
+
+% Style issues
+\parskip = 3pt plus 3pt  
+\sloppy  
+
+\input{decls}
+\makeindex
+%%% End preamble
+
+
+\begin{document}
+
+\frontmatter 
+\title{SUnet Reference Manual}
+\subtitle{For SUnet release 2.1}
+\author{Dr. S\raisebox{1ex}{2}, Martin Gasbichler, Eric Marsden, Andreas Bernauer}
+\date{October 2004}
+
+\mainmatter
+\maketitle
+
+\tableofcontents
+
+\include{intro}
+\include{httpd}
+\include{uri}
+\include{url}
+\include{cgi-script}
+\include{surflets}
+\include{ftpd}
+\include{ftp}
+\include{netrc}
+\include{rfc822}
+\include{nettime}
+\include{smtp}
+\include{pop3}
+\include{dns}
+
+\backmatter
+\printindex
+
+\end{document}

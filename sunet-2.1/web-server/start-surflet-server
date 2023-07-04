@@ -1,0 +1,209 @@
+#!/bin/sh
+echo "Loading..."
+
+exec scsh -lel SSAX-4.9/load.scm -lel sunet-2.1/load.scm -dm -o surflet-server -e main -s "$0" "$@"
+!#
+
+(define-structure surflet-server
+  (export main				; sh jump entry point
+	  server)			; scsh entry point
+  (open httpd-core
+	httpd-make-options
+	httpd-basic-handlers
+	httpd-file-directory-handlers
+	httpd-cgi-handlers
+	httpd-seval-handlers
+	surflet-handler
+	surflet-handler/options
+	let-opt
+        scsh      
+        scheme
+	srfi-37
+	signals)
+                         
+  (begin
+    
+    (define (usage)
+      (format #f 
+"Usage: start-surflet-server 
+             [-h DIR | --htdocs-dir=DIR] [-s DIR | --surflet-dir=DIR]
+             [--cgi-bin-dir=DIR]
+             [-i DIR | --images-dir=DIR] [-p NUM | --port=NUM] 
+             [-l FILE | --log-file-name=FILE] [-r NUM | --requests=NUM]
+             [--help]
+
+ with
+ htdocs-dir     directory of html files (default: root/htdocs)
+ surflet-dir    directory of SUrflet files  (default: root/surflets)
+ cgi-bin-dir    directory of cgi files  (default: root/cgi-bin)
+ images-dir     directory of images files (default: root/img)
+ port           port server is listening to (default: 8080)
+ log-file-name  directory where to store the logfile in CLF
+                 (default: /tmp/httpd.log)
+ requests       maximal amount of simultaneous requests (default 5)
+ --help         show this help
+"))
+
+    (define (display-usage)
+      (display (usage) (current-error-port))
+      (exit 1))
+
+    (define (raise-usage-error msg . info)
+      (display msg (current-error-port))
+      (display " --- " (current-error-port))
+      (for-each 
+       (lambda (i)
+	 (display i (current-error-port))
+	 (display " " (current-error-port)))
+       info)
+      (display "\n" (current-error-port))
+      (exit 1))
+
+    (define (parse-arguments arg-list)
+      (let ((number-option-proc
+	     (lambda (alist-key)
+	       (lambda (option name arg ops)
+		 (cond 
+		  ((not arg) 
+		   (raise-usage-error "Option requires a number" name arg))
+		  ((string->number arg)
+		   => (lambda (n) (cons (cons alist-key n) ops)))
+		  (else 
+		   (raise-usage-error "Not a number" arg))))))
+	    (absolute-file-option-proc
+	     (lambda (alist-key)
+	       (lambda (option name arg ops)
+		 (cons (cons alist-key
+			     (absolute-file-name arg)) ops)))))
+
+	(let ((htdocs-dir-option
+	       (option '(#\h "htdocs-dir") #t #f 
+		       (absolute-file-option-proc 'htdocs-dir)))
+	      (surflet-dir-option
+	       (option '(#\s "surflet-dir") #t #f
+		       (absolute-file-option-proc 'surflet-dir)))
+	      (cgi-bin-dir-option
+	       (option '(#\c "cgi-bin-dir") #t #f
+		       (absolute-file-option-proc 'cgi-bin-dir)))
+	      (images-dir-option
+	       (option '(#\i "images-dir") #t #f
+		       (absolute-file-option-proc 'images-dir)))
+	      (port-option
+	       (option '(#\p "port") #t #f
+		       (number-option-proc 'port)))
+	      (log-file-name-option
+	       (option '(#\l "log-file-name") #t #f
+		       (absolute-file-option-proc 'log-file-name)))
+	      (requests-option
+	       (option '(#\r "requests") #t #f
+		       (number-option-proc 'requests)))
+	      (help-option
+	       (option '(#f "help") #f #f
+		       (lambda (option name arg ops)
+			 (display-usage)))))
+	  (args-fold arg-list
+		     (list htdocs-dir-option surflet-dir-option
+                           cgi-bin-dir-option
+			   images-dir-option port-option
+			   log-file-name-option requests-option
+			   help-option)
+		     (lambda (op name arg ops)
+		       (raise-usage-error 
+			"Unknown command line argument: " op))
+		     cons
+		     '()))))
+
+    (define (make-options-from-args cmd-line-args default-options)
+      (let ((given (parse-arguments cmd-line-args)))
+	(map (lambda (p)
+	       (or (assoc (car p) given) p))
+	     default-options)))
+
+    (define (lookup-option alist option)
+      (cond 
+       ((assoc option alist)
+	=> cdr)
+       (else
+	(error "Internal error, option not found" option alist))))
+
+    (define (server . args)
+      (if (pair? args)
+	  (main `(main ,@(car args)))
+	  (main (list (cwd)))))
+    
+    (define (become-nobody-if-root)
+      (cond ((zero? (user-uid))
+	     (set-gid (->gid "nobody"))
+	     (set-uid (->uid "nobody")))))
+
+    (define (main args)
+      (with-cwd 
+	  (file-name-directory (car args))
+	(let* ((default-options
+                 `((htdocs-dir	. ,(absolute-file-name "root/htdocs"))
+                   (surflet-dir	. ,(absolute-file-name "root/surflets"))
+                   (cgi-bin-dir	. ,(absolute-file-name "root/cgi-bin"))
+                   (images-dir	. ,(absolute-file-name "root/img"))
+                   (port		. 8080)
+                   (log-file-name	. "/tmp/httpd.log")
+                   (requests	. 5)))
+               (options (make-options-from-args (cdr args) default-options)))
+
+	 (format #t "Going to run SUrflet server with:
+ htdocs-dir:    ~a
+ surflet-dir:   ~a
+ cgi-bin-dir:   ~a
+ images-dir:    ~a
+ port:          ~a
+ log-file-name: ~a
+ a maximum of ~a simultaneous requests, syslogging activated, 
+ and home-dir-handler (public_html) activated.
+
+"
+		 (lookup-option options 'htdocs-dir)
+		 (lookup-option options 'surflet-dir)
+		  (lookup-option options 'cgi-bin-dir)
+		 (lookup-option options 'images-dir)
+		 (lookup-option options 'port)
+		 (lookup-option options 'log-file-name)
+		 (lookup-option options 'requests))
+
+	 (httpd 
+	  (make-httpd-options
+	   with-port			(lookup-option options 'port)
+	   with-root-directory		(cwd)
+	   with-simultaneous-requests	(lookup-option options 'requests)
+	   with-syslog?			#t
+	   with-log-file		(lookup-option options 'log-file-name)
+           with-post-bind-thunk          become-nobody-if-root
+	   ;; The following settings are made to avoid dns lookups.
+	   with-reported-port		(lookup-option options 'port)
+	   with-fqdn			"localhost"
+	   with-resolve-ips?		#f
+	   with-request-handler 
+	   (alist-path-dispatcher
+	    (list
+             (cons "cgi-bin" (cgi-handler (lookup-option options 'cgi-bin-dir)))
+             (cons "seval" seval-handler)
+	     (cons "source"	(rooted-file-or-directory-handler 
+				 (lookup-option options 'surflet-dir)
+				 (with-file-name->content-type
+				  (lambda (file-name)
+				    (if (string-ci=? 
+					 (file-name-extension file-name) ".scm")
+					"text/plain"))
+				  (make-file-directory-options))))
+	     (cons "img"	(rooted-file-handler 
+				 (lookup-option options 'images-dir)))
+	     (cons "surflet"	(surflet-handler 
+				 (with-surflet-path 
+				  (lookup-option options 'surflet-dir)))))
+            (tilde-home-dir-handler "public_html"
+                                    (rooted-file-or-directory-handler
+                                     (lookup-option options 'htdocs-dir)))))))))
+    ))
+;; EOF
+
+;;; Local Variables:
+;;; mode:scheme
+;;; End:

@@ -1,0 +1,60 @@
+  define([SCX_PREPEND], [[$2]="$[$2] [$1]"])
+ 
+  AC_INIT(scx, 0.2)
+  AC_CONFIG_SRCDIR(configure.in)
+  AM_INIT_AUTOMAKE
+          
+  AC_CONFIG_HEADERS(c/config.h)
+
+  AC_PROG_LIBTOOL
+
+
+
+  AC_PROG_CC
+ 
+  AC_PATH_XTRA
+
+  AC_ARG_WITH(scsh-includes, 
+                    AC_HELP_STRING([--with-scsh-includes=DIR],  
+                                    [scsh include files are in DIR @<:@/usr/local/include@:>@]),
+                     scsh_includes=$withval, 
+                     scsh_includes=/usr/local/include)
+          AC_SUBST(scsh_includes)
+ 
+ 	  AC_ARG_WITH(xft, 
+		      AC_HELP_STRING([--with-xft],
+			             [Compile with Xft support]))
+
+	  dnl Compile with Xft support?
+    	  if test "x$with_xft" = "xyes"; then
+	    AC_CHECKING([xft-config program])
+	    AC_CHECK_PROG([XFT_CONFIG], [xft-config], "yes", "no", $PATH, [])
+
+	    if test "$XFT_CONFIG" = "yes"; then
+              SCX_PREPEND(`xft-config --libs`, x_libraries)
+              SCX_PREPEND(`xft-config --cflags`, x_includes)
+	    else
+	      LIBS="$LIBS -L${x_libraries}"
+	      AC_CHECK_LIB(Xrender, XRenderQueryExtension, SCX_PREPEND(-lXrender, x_libraries))
+	      AC_CHECK_LIB(Xft, XftFontOpen, SCX_PREPEND(-lXft, x_libraries))
+            fi
+
+	    AC_DEFINE([WITH_XFT], 1, [Define 1 if compiling with Xft support])
+	    SCX_PREPEND(\$(XFT_OBJECTS), extra_objects)
+	    AC_SUBST(load_xft_packages, yes)
+	  fi 
+        AM_CONDITIONAL(WITH_XFT, test "x$with_xft" = "xyes")
+        schemedir='${prefix}'"/scheme"
+        libdir='${prefix}'"/lib"
+        libsysdir='${prefix}'
+#${libdir}"/`scsh -lm ${srcdir}/scheme/configure.scm -o configure -c '(display (host))'`"
+        AC_SUBST(libdir)
+        AC_SUBST(libsysdir)
+        AC_SUBST(schemedir)
+	AC_SUBST(LIBS)
+	AC_SUBST(CC)
+	AC_SUBST(x_includes)
+	AC_SUBST(x_libraries)
+	AC_SUBST(extra_objects)
+
+AC_OUTPUT([Makefile c/Makefile c/xlib/Makefile c/libs/Makefile])

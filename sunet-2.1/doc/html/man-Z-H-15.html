@@ -1,0 +1,158 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-14.html">previous</a></span><span>, <a href="man-Z-H-16.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_13"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_13">Chapter 13</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_13">POP3 Client</a></h1>
+<p>
+The <tt>pop3</tt> structure provides a client for the POP3 protocol that
+allows access to email on a maildrop server.  It is often used in
+configurations where users connect from a client machine which doesn't
+have a permanent network connection or isn't always turned on,
+situations which make local SMTP delivery impossible.  It is the most
+common form of email access provided by ISPs.</p>
+<p>
+Two types of authentication are commonly used.  The first, most basic
+type involves sending a user's password in clear over the network, and
+should be avoided.  (Unfortunately, many POP3 clients only implement this
+basic authentication.)  The digest authentication system involves the
+server sending the client a ``challenge'' token; the client encodes
+this token with the pass phrase and sends the coded information to the
+server.  This method avoids sending sensitive information over the
+network.  Both methods are implemented by <tt>pop3</tt>.</p>
+<p>
+Once connected, a client may request information about the number and
+size of the messages waiting on the server, download selected messages
+(either their headers or the entire content), and delete selected
+messages.</p>
+<p>
+The procedures defined here raise an error detectable via
+<tt>pop3-error?</tt> upon protocol errors with the POP3 server.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-connect <i>[host-or-<tt>#f</tt>] [login-or-<tt>#f</tt>]
+[password-or-<tt>#f</tt>] [log-port]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>connection</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_684"></a>
+<blockquote>
+This procedure connects to the maildrop server named <i>host</i>,
+and logs in using the provided login name and password.  Any of
+these can be omitted or <tt>#f</tt>, in which case the procedure uses
+defaults: <tt>MAILHOST</tt> for the host, and <tt>&nbsp;/.netrc</tt>-provided
+values for login and password.  If <i>log-port</i> is provided, the
+conversation to the server is logged to the specified output port.<p>
+<tt>Pop3-connect</tt> returns a value representing the connection to the
+POP3 server, to be used in the procedures below.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-stat <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>number bytes</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_686"></a>
+<blockquote>
+This returns the number of messages and the number of bytes waiting in the
+maildrop.
+</blockquote><p>
+Most of the following procedures accept a <i>msgid</i> argument which
+specifies a message number, which ranges from 1 for the first message
+to the number returned by <tt>pop3-stat</tt>.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-retrieve-message <i>connection msgid</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>headers message</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_688"></a>
+<blockquote>
+This downloads message number <i>msgid</i> from the mailhost.
+It returns the headers as an alist of field names and bodies; the
+names are symbols, the bodies are strings.  (These are obtained
+using the <tt>rfc822</tt> structure, see Section&nbsp;<a href="man-Z-H-12.html#node_chap_10">10</a>.)
+The message is returned as a list of strings, each string
+representing a line of the message.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-retrieve-headers <i>connection msgid</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>headers</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_690"></a>
+<blockquote>
+This downloads the headers of message number <i>msgid</i>.  It
+returns the headers in the same format as <tt>pop3-retrieve-message</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-last <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>msgid</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_692"></a>
+<blockquote>
+This returns the highest accessed message-id number for the current
+session.  (This isn't in the RFC, but seems to be supported by several
+servers.)
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-delete <i>connection msgid</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_694"></a>
+<blockquote>
+This mark message number <i>msgid</i> for deletion.  The message will
+not be deleted until the client logs out.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-reset <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_696"></a>
+<blockquote>
+This marks any messages which have been marked for deletion.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-quit <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_698"></a>
+<blockquote>
+This closes the connection with the mailhost.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(pop3-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_700"></a>
+<blockquote>
+This returns <tt>#t</tt> if <i>thing</i> is a <tt>pop3-error</tt> object,
+otherwise <tt>#f</tt>.
+</blockquote><p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-14.html">previous</a></span><span>, <a href="man-Z-H-16.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

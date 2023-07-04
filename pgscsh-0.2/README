@@ -1,0 +1,57 @@
+PostgreSQL access from the Scheme Shell              -*-indented-text-*-
+=======================================
+
+   This module lets you access the PostgreSQL object-relational DBMS
+   from within the Scheme Shell. It implements the client part of the
+   socket-level frontend/backend protocol, rather than providing a
+   wrapper around the libpq library. The module is capable of type
+   coercions from a range of SQL types to the equivalent Scheme type,
+   and now supports large objects (BLOBs).
+
+
+Installing ==========================================================
+
+   This library runs under Olin Shivers' Scheme Shell, which adds many
+   useful things like sockets, a POSIX interface, records, a module
+   system and error handling to Scheme. The scsh can be obtained by
+   anonymous ftp from
+
+       <URL:ftp://ftp-swiss.ai.mit.edu/pub/su/scsh/scsh.tar.gz>
+
+   The distribution includes a test file which is executable from the
+   command line, and which shows how to use the library via the
+   Scheme48 module system.
+
+   NB: The postgres backend must be started with the "-i" argument in
+   order to allow TCP/IP connections; they are disallowed with the
+   default setup.
+
+
+Availability ==========================================================
+
+   Copyright (C) 1999 Eric Marsden
+
+   This library is free software; you may redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
+
+   You should have received a copy of the GNU Library General Public
+   License along with this library; if not, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   
+   Tested with scsh 0.5.1 on Debian Linux 2.1 and PostgreSQL 6.3.2.
+   Please send bug reports, suggestions and questions to
+   <emarsden@mail.dotcom.fr>. This is version 0.2. The latest version
+   should be available from
+
+       <URL:http://www.chez.com/emarsden/downloads/>
+
+
+Eric Marsden, 1999-09-14

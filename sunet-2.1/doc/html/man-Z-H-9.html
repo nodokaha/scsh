@@ -1,0 +1,183 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-8.html">previous</a></span><span>, <a href="man-Z-H-10.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_7"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_7">Chapter 7</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_7">FTP Server</a></h1>
+<p></p>
+<p>
+The <tt>ftpd</tt> structure contains a complete anonymous ftp server.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftpd <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_544"></a>
+<div align=left><tt>(ftp-inetd <i>options</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i><i>no return value</i></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_546"></a> 
+<blockquote>
+<tt>Ftpd</tt> starts the server, using <i>anonymous-home</i> as the
+root directory of the server.<p>
+<tt>ftpd-inetd</tt> is the version to be used from <tt>inetd</tt>.
+<tt>Ftpd-inetd</tt> handles the connection through the current standard
+output and input ports.
+</p>
+</blockquote>
+The <i>options</i> argument can be constructed through a number of
+procedures with names of the form <tt>with-<tt>...</tt></tt>.  Each of these
+procedures either creates a fresh options value or adds a
+configuration parameter to an old options argument.  The configuration
+parameter value is always the first argument, the (old) options value
+the optional second one.  Here they are:<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-port <i>port [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_548"></a>
+<blockquote>
+This specifies the port on which the server listens.  Defaults to 21.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-anonymous-home <i>string [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_550"></a>
+<blockquote>
+This specifies the home directory for anonymous logins.  Defaults to
+<code class=verbatim>&quot;~ftp&quot;</code>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-banner <i>list [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_552"></a>
+<blockquote>
+This specifies an alternative greeting banner for those members of
+the Untergrund who prefer to remain covert.  The banner is
+represented as a list of strings, one for each line of output.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-log-port <i>output-port [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_554"></a>
+<blockquote>
+If this is non-<tt>#f</tt>, exftpd outputs a log entry for each file
+sent or retrieved on <i>output-port</i>.  Defaults to <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(with-dns-lookup? <i>boolean [options]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_556"></a>
+<blockquote>
+If <i>dns-lookup?</i> is <tt>#t</tt>, the log file will contain the host
+names instead of their IP addresses.  If <i>dns-lookup?</i> is <tt>#f</tt>,
+the log will only contain IP addresses.  Defaults to <tt>#f</tt>.
+</blockquote>
+The <tt>make-ftpd-options</tt> eases the construction of the options
+argument:
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(make-ftpd-options <i>transformer value <tt>...</tt></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>options</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_558"></a>
+<blockquote>
+This constructs an options value from an argument list of parameter
+transformers and parameter values.  The arguments come in pairs,
+each an option transformer from the list above, and a value for that
+parameter.  <tt>Make-ftpd-options</tt> returns the resulting options value.
+</blockquote><p>
+The log format of <tt>ftpd</tt> is the same as the one of
+<tt>wuftpd</tt>.   The entries look like this:
+</p>
+<pre class=verbatim>Fri Apr 19 17:08:14 2002 4 134.2.2.171 56881 /files.lst b _ i a nop@ssword ftp 0 *
+</pre><p>
+These are the fields:
+</p>
+<ol> 
+<li><p>Current date and time. This field contains
+spaces and is 24 characters long.
+</p>
+<li><p>Transfer time in seconds.
+</p>
+<li><p>Remote host IP (wu-ftpd puts the name here).
+</p>
+<li><p>File size in bytes
+</p>
+<li><p>Name of file (spaces are converted to underscores)
+</p>
+<li><p>Transfer type: <u>a</u>scii or <u>b</u>inary (image type).
+</p>
+<li><p>Special action flags. As <tt>ftpd</tt> does not support any special
+action, it always has <tt>_</tt> here.
+</p>
+<li><p>File was sent to user (<u>o</u>utgoing) or received from user
+(<u>i</u>ncoming) 
+</p>
+<li><p><u>A</u>nonymous access
+</p>
+<li><p>Anonymous ftp password.
+</p>
+<li><p>Service name -- always <tt>ftp</tt>.
+</p>
+<li><p>Authentication mode (always ``none'' = `<tt>0</tt>').
+</p>
+<li><p>Authenticated user ID (always ``not available'' = `<tt>*</tt>')
+</p>
+</ol><p></p>
+<p>
+The server also writes log information to the syslog facility.
+The following syslog levels occur in the output:
+</p>
+<dl><dt></dt><dd>
+</dd><dt><b><tt>notice</tt></b></dt><dd>
+<ul>
+<li><p>messages concerning <em>connections</em> (establishing connection,
+connection refused, closing connection due to timeout, etc.)
+</p>
+<li><p>the execution of the <tt>STOR</tt> command<br>
+Its success (<em>i.e.</em>somebody is putting something on your server via ftp, also known as
+<tt>PUT</tt>) is also logged at <tt>notice</tt>.
+</p>
+<li><p>internal errors
+</p>
+<li><p>Unix errors
+</p>
+<li><p>reaching of actually unreachable case branches
+</p>
+</ul><p>
+</p>
+</dd><dt><b><tt>info</tt></b></dt><dd> Messages concerning all other commands,
+including the <tt>RETR</tt> command.
+</dd><dt><b><tt>debug</tt></b></dt><dd> all other messages, including debug messages
+</dd></dl><p></p>
+<p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-8.html">previous</a></span><span>, <a href="man-Z-H-10.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

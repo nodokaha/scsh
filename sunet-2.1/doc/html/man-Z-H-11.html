@@ -1,0 +1,98 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-10.html">previous</a></span><span>, <a href="man-Z-H-12.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_9"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_9">Chapter 9</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_9">Parsing Netrc Files</a></h1>
+<p>
+The <tt>netrc</tt> structures provides procedures to parse authentication
+information contained in <tt>&nbsp;/.netrc</tt>.</p>
+<p>
+On Unix systems the netrc file may contain information allowing
+automatic login to remote hosts.  The format of the file is defined in
+the <tt>ftp(1)</tt> manual page.  Example lines are
+</p>
+<pre class=verbatim>machine ondine.cict.fr login marsden password secret
+default login anonymous password user@site
+</pre><p>
+The netrc file should be protected by appropriate permissions, and
+(like <tt>/usr/bin/ftp</tt>) this library will refuse to read the file if it is
+badly protected.  (unlike <tt>ftp</tt> this library will always refuse
+to read the file -- -<tt>ftp</tt> refuses it only if the password is
+given for a non-default account).  Appropriate permissions are set if
+only the user has permissions on the file.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(netrc-machine-entry <i>host accept-default? [file-name]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>netrc-entry-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_606"></a>
+<blockquote>
+This procedure looks for the entry related to given host in the
+user's netrc file.  The host is specified in <i>host</i>.
+<i>Accept-default?</i> specifies whether <tt>netrc-machine-entry</tt>
+should fall back to the default entry if there is no macht for
+<i>host</i> in the netrc file.  If specified, <i>file-name</i>
+specifies an alternate file name for the netrc data.  It defaults to
+<tt>.netrc</tt> in the current user's home directory.<p>
+<tt>Netrc-machine-entry</tt> returns a netrc entry (see below) if it was
+able to find the requested information; if not, it returns <tt>#f</tt>.</p>
+<p>
+If the netrc file had inappropriate permissions, <tt>netrc-machine-entry</tt>
+raises an error.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(netrc-entry? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_608"></a>
+<div align=left><tt>(netrc-entry-machine <i>netrc-entry</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_610"></a>
+<div align=left><tt>(netrc-entry-login <i>netrc-entry</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_612"></a>
+<div align=left><tt>(netrc-entry-password <i>netrc-entry</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_614"></a>
+<div align=left><tt>(netrc-entry-account <i>netrc-entry</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string-or-<tt>#f</tt></i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_616"></a>
+<blockquote>
+<tt>Netrc-entry?</tt> is the predicate for netrc entries.  The other
+procedures are selectors for netrc entries as returned by
+<tt>netrc-machine-entry</tt>.  They return <tt>#f</tt> if the netrc file
+didn't contain a binding for the corresponding field.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(netrc-macro-definitions <i>[file-name]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>alist</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_618"></a>
+<blockquote>
+This returns the macro definitions from the netrc files, represented
+as an alist mapping macro names -- represented as strings -- to
+definitions -- represented as lists of strings.
+</blockquote><p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-10.html">previous</a></span><span>, <a href="man-Z-H-12.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

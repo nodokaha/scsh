@@ -1,0 +1,5 @@
+version 0.1
+* restart.scm and port to sunterlib (Eric Knauel)
+
+version 0.0 2002-12-01
+* Upstream from Richard Kelsey, Michael Sperber

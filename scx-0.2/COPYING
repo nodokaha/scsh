@@ -1,0 +1,63 @@
+Copyright 1990, 1991, 1992, 1993, 1994, 1995, Oliver Laumann, Berlin
+(except for the contents of the directory `doc/usenix').
+
+This software was derived from Elk 1.2, which was Copyright 1987, 1988,
+1989, Nixdorf Computer AG and TELES GmbH, Berlin (Elk 1.2 has been written
+by Oliver Laumann (me) for TELES Telematic Services, Berlin, in a joint
+project between TELES and Nixdorf Microprocessor Engineering, Berlin).
+
+Oliver Laumann, TELES GmbH, and Nixdorf Computer AG, as co-owners or
+individual owners of copyright in this software, grant to any person or
+company a worldwide, royalty free, license to
+
+   i) copy this software,
+  ii) prepare derivative works based on this software,
+ iii) distribute copies of this software or derivative works,
+  iv) perform this software, or
+   v) display this software,
+
+provided that this notice is not removed and that neither Oliver Laumann
+nor Teles nor Nixdorf are deemed to have made any representations as to
+the suitability of this software for any purpose nor are held responsible
+for any defects of this software.
+
+THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+
+Berlin, June 20, 1995
+
+Oliver Laumann  <net@informatik.uni-bremen.de>
+
+================================================================================
+
+The changes to port scx from the original Elk files to scsh are
+subject to the following copyright notice:
+
+Copyright (c) 2002-2003 David Frese
+Copyright (c) 2002 Norbert Freudemann
+Copyright (c) 2003 Martin Gasbichler
+Copyright (c) 2003 Eric Knauel
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

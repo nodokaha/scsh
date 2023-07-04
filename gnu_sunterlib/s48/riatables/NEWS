@@ -1,0 +1,12 @@
+version 0.2
+* A number of bug fixes:
+    - Fixed variable name typo in POP-TABLE-ENTRY!.
+    - Overhauled previously completely broken WALK-TABLE.
+    - Corrected obscure bug that made the GC thrash when dumping
+      buckets while rehashing weak, GC-sensitive tables in a nearly
+      full heap.
+* New procedure: (TABLE->ALIST table)
+
+version 0.1
+* Initial version. UPSTREAM:
+  http://www.bloodandcoffee.net/campbell/code/s48-riatables.tar.gz

@@ -1,0 +1,5 @@
+(define (string->byte-vector str)
+  (let ((vec (make-byte-vector 0 0)))
+  (do ((i 0 (+ i 1)))
+    ((= i (string-length str)) vec)
+    	(byte-vector-set! vec (char->integer (string-ref str i))))))	

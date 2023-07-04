@@ -1,0 +1,184 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-13.html">previous</a></span><span>, <a href="man-Z-H-15.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_12"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_12">Chapter 12</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_12">SMTP Client</a></h1>
+<p>
+The <tt>smtp</tt> structure provides an client library for the Simple Mail
+Transfer Protocol, commonly used for sending email on the Internet.
+This library provides a simple wrapper for sending complete emails as
+well as procedures for composing custom SMTP transactions.</p>
+<p>
+Some of the procedures described here return an SMTP reply code.  For
+details, see RFC&nbsp;821.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(smtp-send-mail <i>from to-list headers body [host]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_638"></a>
+<div align=left><tt>(smtp-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_640"></a>
+<div align=left><tt>(smtp-recipients-rejected-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_642"></a>
+<blockquote>
+This emails message <i>body</i> with headers <i>headers</i> to
+recipients in list <i>to-list</i>, using a sender address <i>from</i>.
+The email is handed off to the SMTP server running on <i>host</i>;
+default is the local host.  <i>Body</i> is either a list of strings
+representing the lines of the message body or an input port which is
+exhausted to determine the message body.  <i>Headers</i> is an
+association lists, mapping symbols representing RFC&nbsp;822 field names
+to strings representing field bodies.<p>
+If some transaction-related error happens, <tt>smtp-send-mail</tt>
+signals an <tt>smtp-error</tt> condition with predicate
+<tt>smtp-error?</tt>.  More specifically, it raises an
+<tt>smtp-recipients-rejected-error</tt> (a subtype of <tt>smtp-error</tt>)
+if some recipients were rejected.  For <tt>smtp-error</tt>, the
+arguments to the <tt>signal</tt> call are the error code and the error
+message, represented as a list of lines.  For
+<tt>smtp-recipients-rejected-error</tt>, the arguments are reply code
+700 and an association list whose elements are of the form
+<tt>(<i>loser-recipient</i> <i>code</i> .  <i>text</i>)</tt> -- that is, for
+each recipient refused by the server, you get the error data sent
+back for that guy.  The success check is <tt>(&lt; code 400)</tt>.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(smtp-expand <i>name host</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>code text</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_644"></a>
+<div align=left><tt>(smtp-verify <i>name host</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>code text</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_646"></a>
+<div align=left><tt>(smtp-get-help <i>host [details]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>code text-list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_648"></a>
+<blockquote>
+These three are simple queries of the server as stated in the
+RFC&nbsp;821: <tt>smtp-expann</tt> asks the server to confirm that the
+argument identifies a mailing list, and if so, to return the
+membership of that list.  The full name of the users (if known) and
+the fully specified mailboxes are returned in a multiline reply.
+<tt>Smtp-verify</tt> asks the receiver to confirm that the argument
+identifies a user.  If it is a user name, the full name of the user
+(if known) and the fully specified mailbox are returned.
+<tt>Smtp-get-help</tt> causes the server to send helpful information.
+The command may take an argument (<i>details</i>) (e.g., any command
+name) and return more specific information as a response.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(smtp-connect <i>host [port]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-connection</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_650"></a>
+<blockquote>
+<tt>Smtp-connect</tt> returns an SMTP connection value that represents
+a connection to the SMTP server.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(smtp-transactions <i>smtp-connection transaction1 ...</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>code text-list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_652"></a>
+<div align=left><tt>(smtp-transactions/no-close <i>smtp-connection transaction1 ...</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>code text-list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_654"></a>
+<blockquote>
+These procedures make it easy to do simple sequences of SMTP
+commands.  <i>Smtp-connection</i> must be an SMTP connection as
+returned by <tt>smtp-connect</tt>.  The <i>transaction</i> arguments must
+be transactions as returned by the procedures below.
+<tt>Smtp-transactions</tt> and <tt>smtp-transactions/no-close</tt> execute
+the transactions specified by the arguments.<p>
+For each transaction,
+</p>
+<ul>
+<li><p>If the transaction's reply code is 221 or 421 (meaning the socket has
+been closed), then the transaction sequence is aborted, and 
+<tt>smtp-transactions</tt>/<tt>smtp-transactions/no-close</tt> return the
+reply code and text from that  transaction.
+</p>
+<li><p>If the reply code is an error code (in the four- or five-hundred range), 
+the transaction sequence is aborted, and the fatal transaction's code
+and text values are returned.  <tt>Smtp-transactions</tt> will additionally
+close the socket for you; <tt>smtp-transactions/no-close</tt> will not.
+</p>
+<li><p>If the transaction is the last in the transaction sequence, 
+its reply code and text are returned.
+</p>
+<li><p>Otherwise, we throw away the current reply code and text, and
+proceed to the next transaction.
+</p>
+</ul><p>
+<tt>Smtp-transactions</tt> closes the socket after the transaction.  (The
+<tt>smtp-quit</tt> transaction, when executed, also closes the transaction.)</p>
+<p>
+If the socket should be kept open in the case of an abort, use
+<tt>Smtp-transactions/no-close</tt>.
+</p>
+</blockquote><p>
+</p>
+<div align=left><tt>(smtp-helo <i>local-host-name</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_656"></a>
+<div align=left><tt>(smtp-mail <i>sender-address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_658"></a>
+<div align=left><tt>(smtp-rcpt <i>destination-address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_660"></a>
+<div align=left><tt>(smtp-data <i>socket message</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_662"></a>
+<div align=left><tt>(smtp-send <i>sender-address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_664"></a>
+<div align=left><tt>(smtp-soml <i>sender-address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_666"></a>
+<div align=left><tt>(smtp-saml <i>sender-address</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_668"></a>
+<a name="node_idx_670"></a><div align=left><tt>smtp-rset</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;smtp-transaction&nbsp;</div>
+
+<div align=left><tt>(smtp-vrfy <i>user</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_672"></a>
+<div align=left><tt>(smtp-expn <i>user</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_674"></a>
+<div align=left><tt>(smtp-help <i>details</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>smtp-transaction</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_676"></a>
+<a name="node_idx_678"></a><div align=left><tt>smtp-noop</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;smtp-transaction&nbsp;</div>
+
+<a name="node_idx_680"></a><div align=left><tt>smtp-quit</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;smtp-transaction&nbsp;</div>
+
+<a name="node_idx_682"></a><div align=left><tt>smtp-turn</tt> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;smtp-transaction&nbsp;</div>
+
+<blockquote>
+These transactions represent the commands of the SMTP protocol for
+use in <tt>smtp-transactions</tt> and <tt>smtp-transactions/no-close</tt>,
+i.e. they send the corresponding command along with the argument(s),
+if any.  For details, consult RFC&nbsp;821.<p>
+The <tt>smtp-quit</tt> transaction, in addition to sending a <tt>QUIT</tt>
+command to the SMTP server, also closes the socket of its SMTP
+connection.
+</p>
+</blockquote><p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-13.html">previous</a></span><span>, <a href="man-Z-H-15.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

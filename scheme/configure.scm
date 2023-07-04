@@ -1,4 +1,4 @@
-(define (host) "x86_64-unknown-linux-gnu")
+(define (host) "x86_64-pc-linux-gnu")
 
 (define (machine-vendor-os)
   (let ((match (regexp-search (rx (submatch (+ (~ #\-))) "-"
@@ -38,7 +38,7 @@
 
 (define (cflags) "-g -O2")
 
-(define (cppflags) " -I/nix/store/jjmwd58bk0z8w5jxk6nq6r2k82ibphq9-scheme48-1.9.2/include")
+(define (cppflags) " -I/usr/local/include")
 
 (define (ldflags) " -rdynamic")
 

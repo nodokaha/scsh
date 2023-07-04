@@ -1,0 +1,48 @@
+Scx 0.2 README					        -*- outline -*-
+
+                             Scx library
+                             ===========
+
+Scx is an interface to Xlib for the Scheme implementation scsh. Scx is
+based on the Xlib interface of Elk 3.0 and shares most of the original
+API. In addition, scx provides bindings to the xft library for font
+rendering.
+
+* Installation
+==============
+
+Starting with version 0.2, scx conforms to the packaging proposal for
+scsh by Michel Schinz. Please see: 
+
+<http://lamp.epfl.ch/~schinz/scsh_packages/>
+
+In short, this means that you can install scx by unpacking the scx
+tarball and issuing the following command in the created directory:
+
+scsh-install-pkg --prefix /path/to/your/package/root
+
+See the file INSTALL for the generic installation instructions for
+scsh packages.
+
+The scx package accepts a special option "--with-xft <yes/no>" that
+controls the installation of the Xft bindings.  Enable this option if
+your local X installation provides Xft.
+
+You need to install Sunterlib 0.6 or later from
+<http://savannah.nongnu.org/projects/sunterlib> to use scx.
+
+* Documentation
+===============
+
+There is currently no documentation specific to scx but the
+description of the original Elk API at
+http://www-rn.informatik.uni-bremen.de/software/elk/doc.html might be
+helpful.
+
+* Support
+=========
+
+Please direct questions, comments, answers about scx to the regular
+scsh mailing list at
+
+scsh-users@scsh.net

@@ -1,0 +1,6 @@
+version 0.4
+* New package system.
+* New upstream release.
+* UPSTREAM: As suggested by Sven Hartrumpf, a long option with a
+  missing required option-argument (no "=") will not use the next
+  command line argument as the option-argument.

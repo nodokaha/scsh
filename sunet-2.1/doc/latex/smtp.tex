@@ -1,0 +1,123 @@
+\chapter{SMTP Client}\label{cha:smtp}
+%
+The \ex{smtp} structure provides an client library for the Simple Mail
+Transfer Protocol, commonly used for sending email on the Internet.
+This library provides a simple wrapper for sending complete emails as
+well as procedures for composing custom SMTP transactions.
+
+Some of the procedures described here return an SMTP reply code.  For
+details, see RFC~821.
+
+\defun{smtp-send-mail}{from to-list headers body [host]}{undefined}
+\defunx{smtp-error?}{thing}{boolean}
+\defunx{smtp-recipients-rejected-error?}{thing}{boolean}
+\begin{desc}
+  This emails message \var{body} with headers \var{headers} to
+  recipients in list \var{to-list}, using a sender address \var{from}.
+  The email is handed off to the SMTP server running on \var{host};
+  default is the local host.  \var{Body} is either a list of strings
+  representing the lines of the message body or an input port which is
+  exhausted to determine the message body.  \var{Headers} is an
+  association lists, mapping symbols representing RFC~822 field names
+  to strings representing field bodies.
+  
+  If some transaction-related error happens, \ex{smtp-send-mail}
+  signals an \ex{smtp-error} condition with predicate
+  \ex{smtp-error?}.  More specifically, it raises an
+  \ex{smtp-recipients-rejected-error} (a subtype of \ex{smtp-error})
+  if some recipients were rejected.  For \ex{smtp-error}, the
+  arguments to the \ex{signal} call are the error code and the error
+  message, represented as a list of lines.  For
+  \ex{smtp-recipients-rejected-error}, the arguments are reply code
+  700 and an association list whose elements are of the form
+  \ex{(\var{loser-recipient} \var{code} .  \var{text})}---that is, for
+  each recipient refused by the server, you get the error data sent
+  back for that guy.  The success check is \ex{(< code 400)}.
+\end{desc}
+
+\defun{smtp-expand}{name host}{code text}
+\defunx{smtp-verify}{name host}{code text}
+\defunx{smtp-get-help}{host [details]}{code text-list}
+\begin{desc}
+  These three are simple queries of the server as stated in the
+  RFC~821: \ex{smtp-expann} asks the server to confirm that the
+  argument identifies a mailing list, and if so, to return the
+  membership of that list.  The full name of the users (if known) and
+  the fully specified mailboxes are returned in a multiline reply.
+  \ex{Smtp-verify} asks the receiver to confirm that the argument
+  identifies a user.  If it is a user name, the full name of the user
+  (if known) and the fully specified mailbox are returned.
+  \ex{Smtp-get-help} causes the server to send helpful information.
+  The command may take an argument (\var{details}) (e.g., any command
+  name) and return more specific information as a response.
+\end{desc}
+
+\defun{smtp-connect}{host [port]}{smtp-connection}
+\begin{desc}
+  \ex{Smtp-connect} returns an SMTP connection value that represents
+  a connection to the SMTP server.
+\end{desc}
+
+\defun{smtp-transactions}{smtp-connection transaction1 ...}{code text-list}
+\defunx{smtp-transactions/no-close}{smtp-connection transaction1 ...}{code text-list}
+\begin{desc}
+  These procedures make it easy to do simple sequences of SMTP
+  commands.  \var{Smtp-connection} must be an SMTP connection as
+  returned by \ex{smtp-connect}.  The \var{transaction} arguments must
+  be transactions as returned by the procedures below.
+  \ex{Smtp-transactions} and \ex{smtp-transactions/no-close} execute
+  the transactions specified by the arguments.
+
+  For each transaction,
+  \begin{itemize}
+  \item If the transaction's reply code is 221 or 421 (meaning the socket has
+    been closed), then the transaction sequence is aborted, and 
+    \ex{smtp-transactions}/\ex{smtp-transactions/no-close} return the
+    reply code and text from that  transaction.
+  \item If the reply code is an error code (in the four- or five-hundred range), 
+    the transaction sequence is aborted, and the fatal transaction's code
+    and text values are returned.  \ex{Smtp-transactions} will additionally
+    close the socket for you; \ex{smtp-transactions/no-close} will not.
+  \item  If the transaction is the last in the transaction sequence, 
+    its reply code and text are returned.
+  \item Otherwise, we throw away the current reply code and text, and
+    proceed to the next transaction.
+  \end{itemize}
+                                %
+  \ex{Smtp-transactions} closes the socket after the transaction.  (The
+  \ex{smtp-quit} transaction, when executed, also closes the transaction.)
+  
+  If the socket should be kept open in the case of an abort, use
+  \ex{Smtp-transactions/no-close}.
+\end{desc}
+
+\defunx{smtp-helo}{local-host-name}{smtp-transaction}
+\defunx{smtp-mail}{sender-address}{smtp-transaction}
+\defunx{smtp-rcpt}{destination-address}{smtp-transaction}
+\defunx{smtp-data}{socket message}{smtp-transaction}
+\defunx{smtp-send}{sender-address}{smtp-transaction}
+\defunx{smtp-soml}{sender-address}{smtp-transaction}
+\defunx{smtp-saml}{sender-address}{smtp-transaction}
+\defvarx{smtp-rset}{smtp-transaction}
+\defunx{smtp-vrfy}{user}{smtp-transaction}
+\defunx{smtp-expn}{user}{smtp-transaction}
+\defunx{smtp-help}{details}{smtp-transaction}
+\defvarx{smtp-noop}{smtp-transaction}
+\defvarx{smtp-quit}{smtp-transaction}
+\defvarx{smtp-turn}{smtp-transaction}
+\begin{desc}
+  These transactions represent the commands of the SMTP protocol for
+  use in \ex{smtp-transactions} and \ex{smtp-transactions/no-close},
+  i.e.\ they send the corresponding command along with the argument(s),
+  if any.  For details, consult RFC~821.
+  
+  The \ex{smtp-quit} transaction, in addition to sending a \ex{QUIT}
+  command to the SMTP server, also closes the socket of its SMTP
+  connection.
+\end{desc}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

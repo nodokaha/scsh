@@ -1,0 +1,133 @@
+'Banana' is a simple object serialization protocol.
+
+- Main Procedures -
+
+(encode value [profile]) ==> byte-vector               [procedure]
+  Turns a value into a byte-vector representing that value.
+  Generally, the 'none' profile is used (and PROFILE defaults to
+  PROFILE/NONE), and with that one can encode only integers
+  (positive, zero, and negative, and of any size), lists, strings,
+  and reals (*FIXME* Real number encoding and decoding doesn't
+  work right now -- I haven't a clue how to encode them in the
+  IEEE floating point format, which is what Banana requires).
+    Example:
+      (encode '(1 -1 ("hello")))
+        (not printed as byte-vectors would normally print; this is
+        just how Banana output is ordinarily shown)
+        ==> 03 80 01 81 01 83 01 80 05 82 68 65 6c 6c 6c 6f
+
+(decode input-port/string/byte-vector [profile])       [procedure]
+    ==> value
+  Decodes the output of ENCODE, or reads similar output from an
+  input port, or processes a string similarly.
+    Example:
+      (decode (encode '(1 -1 ("hello"))))
+        ==> (1 -1 ("hello"))
+
+(etb? byte)                                            [procedure]
+    ==> boolean
+  Returns #T if BYTE > 127 (#x7f), #F if otherwise.  BYTE must be
+  an exact integer.
+
+- Exceptions -
+
+banana-error <-- error                            [condition type]
+  Subtypes of BANANA-ERROR are raised whenever anything involving
+  Banana-ing goes wrong.  The procedure that raised the error is
+  stored in each BANANA-ERROR condition, too, accessed by
+  BANANA-ERROR-CALLER.
+
+(banana-error? value)                   [condition type predicate]
+
+(banana-error-caller banana-error) ==> symbol          [procedure]
+  Returns the name of the procedure that raised BANANA-ERROR.
+
+banana:unknown-byte <-- banana-error              [condition type]
+  Raised when DECODE encounters an element type byte (see the
+  Banana specification on http://twistedmatrix.com/ for what the
+  element type bytes are) that it can't find in the profile it was
+  passed.
+
+(unknown-byte-error? value)             [condition type predicate]
+
+(unknown-byte-error-byte banana:unknown-byte) ==> byte [procedure]
+  Returns the byte that DECODE didn't recognize.
+
+(unknown-byte-error-profile banana:unknown-byte)       [procedure]
+    ==> profile
+  Returns the profile that DECODE was searching through.
+
+banana:unsupported-type <-- banana-error          [condition type]
+  Raised when a profile's encoder doesn't know how to Banana a
+  value of a certain type.
+
+(unsupported-type-error? value)         [condition type predicate]
+
+(unsupported-type-error-type banana:unsupported-type)  [procedure]
+    ==> string
+  Returns the name of the type that a profile's encoder didn't
+  support.
+
+(unsupported-type-error-value banana:unsupported-type) [procedure]
+    ==> value
+  Returns the value of that type that a profile's encoder didn't
+  support.
+
+read-eof-error <-- read-error                     [condition type]
+  Raised when an EOF is reached and was not expected.
+
+- Profiles -
+
+Profiles are ways to extend the Banana protocol.  See the Banana
+specification for how they work in Banana.
+
+:profile                                             [record type]
+  Profiles are stored in instances of this.  They have four
+  fields, accessed by similar names --
+    name          -- profile-name
+    encoder       -- profile-encoder
+    decoder-table -- profile-decoder-table
+    parent        -- profile-parent
+
+  NAME is mainly for debugging purposes.
+
+  ENCODER should be a procedure of one argument and should return
+  a byte vector.
+
+  DECODER-TABLE is a table of element type bytes to procedures of
+  two arguments.
+
+  PARENT is either #F (indicating no parent) or a profile from
+  which another profile can inherit element type byte decoders and
+  such.
+
+(make-profile string proc alist)                       [procedure]
+  Makes a profile, whose name is STRING, whose encoder is PROC,
+  and whose decoder table is a table made from ALIST, which should
+  be a list of pairs, the CAR of each being an element type byte,
+  and the CDR of each being a decoder procedure.
+
+(extend-profile profile string proc alist)             [procedure]
+  The preferred profile constructor, this one allows you to make a
+  profile that inherits behaviour from another profile, but is
+  otherwise just like MAKE-PROFILE.
+
+The BANANA-EXTRAS package includes a couple prettifying procedures
+and a couple useful procedures should one desire to extend Banana.
+
+(posint->byte-vector nonnegative-integer)              [procedure]
+  The name is slightly misleading, since it also works on zero,
+  but in any case, it returns a byte vector of NONNEGATIVE-INTEGER
+  encoded as the Banana specification states.  Note that it does
+  -not- produce a byte vector with the PROFILE/NONE element type
+  byte for nonnegative integers.
+
+(byte-vector->posint byte-vector)                      [procedure]
+  The converse of POSINT->BYTE-VECTOR.
+
+(prettify-byte byte)                                   [procedure]
+  Makes BYTE look like it normally does when being described in
+  the context of Banana.
+
+(prettify-byte-vector byte-vector)                     [procedure]
+  Returns a list of prettified bytes in BYTE-VECTOR.

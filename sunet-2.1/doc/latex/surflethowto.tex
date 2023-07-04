@@ -1,0 +1,1412 @@
+%%documentclass{article}
+%%
+%%usepackage[latin1]{inputenc}
+%%usepackage{fontenc}
+%%usepackage{alltt}
+%%usepackage{url,xspace}
+%%usepackage{tabularx}
+%%usepackage{theorem,ulem,float,afterpage}
+%%normalem			%usually, don't use ulem
+%%
+%%
+%%input{decls}
+%%
+%%title{Howto write \surflets}
+%%author{Andreas Bernauer}
+%%
+%%begin{document}
+%%maketitle
+%%
+%%tableofcontents
+%%sloppy
+
+\section{Howto}
+\label{sec:surflethowto}
+
+This howto gives a short introduction in how to write a \surflet.  It
+is concentrated on the practical side rather on describing the
+\surflet API in detail to give you instant succes in running your own
+surflets.  See section \ref{sec:surflet-api} for the (technical) API
+description. 
+
+\subsection{Introduction}
+%\marginpar{\surflets are pieces of code for web site scripting.}
+For those who don't know it already, \surflets are pieces of code that
+can be executed interactively through a website.  There is a \surflet
+handler who administrates their execution and suspension.  The
+\surflet handler is part of the SUnet webserver.  \surflets ease the
+implementation of web applications in two ways, compared to other
+server-side scripting tools like Java\texttrademark Servlets or
+Microsoft\textregistered Active Server Pages or PHP:
+
+\begin{enumerate}
+\item  \surflets have an automatic program flow control like any
+other usual program (but unlike usual web programs), \ie the web
+designer doesn't have to care about session management at all. The
+sequence of the web pages result from their appearance in the program
+like the print statements in any other usual program.
+
+\item  \surflets come along with a library for robust user
+interaction.  \surflets represent interaction elements of the web page
+like text input fields or dropdown lists in the \surflet program by
+specific objects.  A web designer can plug in these objects into a
+website and use them to read out the user input.
+\end{enumerate}
+
+The following sections probably assume that you have basic knowledge
+of the SUnet webserver and scsh.  The environment variable
+\typew{\$sunet} refers to the top level directory of your sunet
+installation.  On my system this is \name{/home/andreas/sw/sunet}.
+
+\subsection{How to run the SUnet webserver that handles \surflets}
+
+The following sections will show pieces of \surflet code you might
+want to try out.  Therefore you need the SUnet webserver running with
+the ability to serve \surflets.  This section tells you how to do it.
+
+\paragraph{Obtaining necessary packages} You need Oleg's SSAX package
+(for scsh), to be able to use surflets:
+
+\begin{itemize}
+  \item Download Oleg's SSAX package from
+  \url{http://prdownloads.sf.net/ssax/ssax-sr5rs-plt200-4.9.tar.gz?download}.
+
+  \item Download the SSAX package kit from
+     \url{http://lamp.epfl.ch/~schinz/scsh_packages}.  
+
+  \item Uncompress and untar both tarballs in the same directory.
+  This will create a directory called \name{SSAX}, to which I will
+  refer to as \typew{\$SSAX}.  The package kit will add a file
+  \name{pkg-def.scm} to the \name{SSAX} directory.
+
+  \item Install SSAX as a scsh package by issuing the command
+  \typew{scsh-install-pkg --prefix /path/to/your/package/root} in the
+  \typew{\$SSAX} directory.  If you don't yet have the packaging
+  utility of Michel Schinz, you can obtain it from
+  \url{http://lamp.epfl.ch/~schinz/scsh_packages}.
+
+  If you don't want to install SSAX with the packaging utility, you
+  can adjust the scripts to directly load the SSAX package definitions
+  from \type{\$SSAX/lib/packages.scm}.  Note that the original file
+  has a typo which you can correct with
+
+  \begin{alltt}
+    cd \$SSAX
+    patch -p1 < \$sunet/httpd/surflets/SSAX-goodhtml-patch
+  \end{alltt}
+
+
+%  \item Unfortunately, this SSAX distribution (plt200-4.9) has a typo in
+%  the package definition for scsh.  Apply the patch that comes with
+%  the \surflets distribution to get rid of this typo:
+%    \begin{itemize}
+%      \item \typew{cd \$SSAX}
+%      \item \typew{patch -p1 < \$sunet/httpd/surflets/SSAX-goodhtml-patch}
+%    \end{itemize}
+\end{itemize}
+
+\paragraph{Starting the SUrflet server} 
+ You can start the SUnet webserver along with the
+\surflet-handler now.  The SUnet distribution comes with a script that
+does this for you:
+
+\begin{alltt}
+\$ /path/to/your/package/root/sunet/web-server/start-surflet-server
+\end{alltt}
+
+Please be patient, scsh has to load a lot of libraries.  If the
+loading succeeds you will see something like this:
+
+\begin{alltt}
+[andreas@hgt web-server]\$ ./start-surflet-server
+Loading...
+reading options: ()
+Going to run SUrflet server with:
+ htdocs-dir:    /home/andreas/bin/lib/scsh/0.6/sunet-2.1/web-server/root/htdocs   
+ surflet-dir:   /home/andreas/bin/lib/scsh/0.6/sunet-2.1/web-server/root/surflets 
+ images-dir:    /home/andreas/bin/lib/scsh/0.6/sunet-2.1/web-server/root/img
+ port:          8080
+ log-file-name: /tmp/httpd.log
+ a maximum of 5 simultaneous requests, syslogging activated, 
+ and home-dir-handler (public_html) activated.
+
+ NOTE: This is the SUrflet server. It does not support cgi.
+\end{alltt}
+
+This means the server is up and running.  Try to connect to
+\url{http://localhost:8080} with your browser and you will see the
+welcome page of the SUnet server.  There's a link to the
+\surflets homepage.  You can also already try out some of the
+\surflets that come with the distribution.
+
+You will probably notice a long response time the first time you load
+the first \surflet.  This is because the server has to load the
+\surflet libraries.  The server handles further requests to \surflets
+faster.
+
+If the port the \surflet server tries to use is occupied, you will see
+an error message similar to this one:
+
+\begin{alltt}
+Error: 98
+       "Address already in use"
+       #{Procedure 11701 (\%bind in scsh-level-0)}
+       4
+       2
+       (0 . 8080)
+\end{alltt}
+
+In this case, pass another port number to the script, \eg 8000:
+\codex{start-surflet-server -p 8000}
+
+The \typew{--help} option will show you more parameters that you can
+adjust, but you won't need them for this howto.
+
+
+\subsection{How to send web pages}
+
+This section will discuss some of the various ways in which you can
+send a web page to a browser that contacted your \surflet.
+
+\subsubsection{My first \surflet}
+\label{sec:first-surflet}
+
+Traditionally,  your first program in any programming language prints
+something like ``Hello, World!''.  We follow this tradition:
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (send-html/finish
+       '(html (body (h1 "Hello, world!")))))
+    ))
+\end{listing}
+
+You can either save a file with that content in the \surflets
+directory the server mentioned at startup or you can use the file
+\name{howto/hello.scm} that comes along with the \surflets
+distribution and which is located in the server's standard \surflets
+directory.  Let's go through the small script step by step:
+
+\begin{alltt}
+(define-structure surflet surflet-interface
+\end{alltt}
+
+This defines a module named \name{surflet} which implements the
+interface \name{surflet-interface}.  \name{surflet-interface} just
+states that the module exports a function named \name{main} to which
+we will come shortly.  For those of you who know about the scsh module
+system: Yes, \surflets are basically scsh modules that are loaded
+dynamically during run time.
+
+\begin{alltt}
+  (open surflets
+        scheme-with-scsh)
+\end{alltt}
+
+The \name{open} form lists all the modules the \surflet needs.  You
+will probably always need the two modules that are stated here
+(namely \name{surflets} and \name{scheme-with-scsh}).  If you need
+other modules, like \name{srfi-13} for string manipulation, this is
+the place where you want to state it.
+
+\begin{alltt}
+  (begin
+\end{alltt}
+
+This just opens the body of the \surflet.  All your \surflet code goes
+here.\footnote{If you know about scsh modules, you probably also know
+that there is a \name{file} clause that you could use to place the
+code in a file instead or along with the \name{begin} clause.}
+
+\begin{alltt}
+    (define (main req)
+\end{alltt}
+
+Here is the \name{main} function that the interface declared this
+\surflet will implement.  The \name{main} function is the entry point
+to your \surflet:  The server calls this function every time a user
+browses to your \surflet the first time.  The server calls \name{main}
+with one argument: a representation of the inital request of the
+browser.  We don't have to worry about that at this point.
+
+\begin{alltt}
+      (send-html/finish
+       '(html (body (h1 "Hello, world!")))))
+    ))
+\end{alltt}
+
+\name{send-html/finish} is one of three function you will regularly
+use to send web pages to the browser.  The other two functions are
+\name{send-html} and \name{send-html/suspend}.
+\name{send-html/finish} -- as the name already suggests -- sends a
+HTML page to the browser and finishes the \surflet.  \name{send-html}
+just sends the HTML page and does not return. 
+\name{send-html/suspend} sends the HTML page and suspends the
+\surflet, \ie it waits until the user continues with the \surflet, 
+\eg by submitting a webform.  We will discuss \name{send-html} and
+\name{send-html/suspend} in detail later.  I will refer to these three
+functions as the \emph{sending functions}.
+
+In a \surflet, HTML pages are represented as lists, or, to be more
+precise, as SXML (S-expression based XML).\label{sec:SXML} The first
+element of a SXML list is a symbol stating the HTML tag.  The other
+elements of a SXML list are the contents that are enclosed by this
+HTML tag.  The contents can be other SXML lists, too.  Here are some
+examples of SXML lists and how they translate to HTML:
+
+%\newcommand{\htmltag}[1]{$\mathtt{<}$#1$\mathtt{>}$}
+\begin{tabular}{ll}
+SXML: & \verb|'(p "A paragraph.")}|  \\
+HTML: & \verb|<p>A paragraph.\htmltag{/p}}|\\
+\\
+SXML: & \verb|'(p "A paragraph." (br) "With break line.")}| \\
+HTML: & \verb|<p>A paragraph.<br>With break line.</p>}|\\
+\\
+SXML: & \verb|'(p "Nested" (p "paragraphs"))}|\\
+HTML: & \verb|<p>Nested<p>paragraphs</p></p>}|\\
+\end{tabular}
+
+Attributes are stated by a special list whose first element is the
+at-symbol.  The attribute list must be the second element in the list:
+
+\begin{tabular}{ll}
+SXML: & \verb|'(a (@ (href "attr.html")) "Attributed HTML tags.")|\\
+HTML: & \verb|<a href="attr.html">Attributed HTML tags.</a>|\\
+\\
+SXML: & \verb|'(a (@ (href "attr2.html") (target "\_blank")) "2
+attributes.")}| \\ 
+HTML: & \verb|<a href="attr2.html" target="\_blank">2 attributes.</a>}|
+\end{tabular}
+
+As you see from the \surflet example, \name{send-html/finish} expects
+SXML as an argument.  In the example, the SXML translates to the
+following HTML code:
+\begin{alltt}
+<html><body><h1>Hello, world!</h1>
+</body>
+</html>
+\end{alltt}
+
+Please note, that there is no check for valid HTML or even XHTML
+here.  The only thing the translation process takes care of are
+special characters in strings like the ampersand (\typew{\&}).  The
+translation process replaces them by their HTML representation (\eg,
+\typew{\&amp;}) so you don't have to worry about that when you use
+strings.  Everything else like using valid HTML tags or valid
+attributes is your responsibility.
+
+
+\subsubsection{Dynamic content}
+
+Let's extend our first \surflet example by some dynamic content, \eg
+by displaying the current time using scsh's \name{format-date}
+function.  As the HTML page is basically represented as a list, this
+can be done like this:
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (send-html/finish
+       `(html (body (h1 "Hello, world!")
+                    (p "The current date and time is "
+                       ,(format-date "~H:~M:~S ~p ~m/~d/~Y" 
+                                     (date)))))))
+    ))
+\end{listing}
+
+This \surflet can be found in \name{howto/hello-date.scm}.  The
+beginning of this \surflet is the same as in the previous example.
+The difference lies in the argument to \name{send-html/finish}.  Note
+that the argument starts with a backquote (\typew{`}) rather than with
+a regular quote (\typew{'}) as in the previous example.
+
+Instead of passing a ``static'' list, \ie a list whose contents are
+given before execution, this \surflet uses the quasiquote and unquote
+feature of Scheme to create a ``dynamic'' list, \ie a list whose
+contents are given only during execution.  A ``dynamic'' list is
+introduced by a backquote (\typew{`}) and its dynamic contents are
+noted by commata (\typew{,}).  Thus, if the \surflet is executed while
+I am writing this howto, the argument to \name{send-html/finish} above
+is translated to
+
+\begin{alltt}
+       '(html (body (h1 "Hello, world!")
+                    (p "The current date and time is "
+                       "13:09:03 PM 11/18/2003")))))
+\end{alltt}
+
+\noindent\emph{before} it is passed to \name{send-html/finish}.  Thus, using
+dynamic content can be easily done with Scheme's quasiquote and
+unquote feature.  Of course, you can build your list in any way you
+want; the quasiquote notation is just a convenient way to do it.
+
+
+\subsubsection{Several web pages in a row}
+
+The previous example \surflets only showed one page and finished
+afterwards.  Here, we want to present two web pages in a row.  We use
+the previously mentioned function \name{send-html/suspend}, which
+suspends after it has sent the page and continues when the user
+clicked for the next page.  In contrast to \name{send-html/finish},
+that expected SXML, \name{send-html/suspend} expects a function that
+takes an argument and returns SXML.  The parameter the function gets
+(here: \name{k-url}) is the URL that points to the next
+page:\footnote{In the API this URL is called the \emph{continuation
+URL}.}
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (send-html/suspend
+       (lambda (k-url)
+         `(html (body (h1 "Hello, world!")
+                      (p (a (@ (href ,k-url)) "Next page -->"))))))
+      (send-html/finish
+       '(html (body (h1 "Hello, again!")))))
+    ))
+\end{listing}
+
+This \surflet can be found in \name{howto/hello-twice.scm}.  This
+example first displays a web page with the message ``Hello, world!''
+and a link to the next page labeled with ``Next page --$>$''.  When the
+user clicks on the provided link, \name{send-html/suspend} returns and
+the next statement after the call to \name{send-html/suspend} is
+executed.  Here it is \name{send-html/finish} which shows a web page
+with the message ``Hello, again!''.
+
+When \name{send-html/suspend} returns, (almost) the complete context
+of the running \surflet is restored.  Thus, every variable in the
+\surflet will retain its value during suspension.  The consequence is
+that you don't have to worry about sessions, sesssion variables and
+alike.  The user can freely use the back button of her browser or
+clone a window while the \surflet will keep on responding in the
+expected way.  This is all automatically managed by the
+\surflet-handler.  
+
+The only exception are variables whose values are changed by side
+effects, \eg if you change a variable via \name{set!}.  These
+variables keep their modified values, allowing communication between
+sessions of the same \surflet.\footnote{If you want to change a
+variable via side effects but you don't want to interfere with other
+sessions, you can use \name{set-session-data!} and
+\name{get-session-data}.  See the API documentation in section
+\ref{sec:surflet-api} for further information.}
+
+
+\subsubsection{Begin and end of sessions}
+
+So far I don't have mentioned too much details about sessions.  The
+reason is, as mentioned before, that the \surflet handler takes care
+of the session automatically as described in the previous paragraph.
+%, \ie it starts the session automatically when an
+%instance of your \surflet starts and takes care of the saving and
+%restoring of all variable values during suspensions of your \surflet
+%instance, except for \typew{set!}ed values.
+
+The only thing you have to worry about is when your session
+\emph{ends}.  As long as your session hasn't been finished by
+\name{send-html/finish}, the user can move freely between the web
+pages your \surflet provides.  Once you've finished the session via
+\name{send-html/finish}, this freedom ends.  As the session is over,
+the user will get an error message when he tries to recall some web
+page from the server.  The server will tell the user about the
+possible reasons for the error (namely that most likely the session
+was finished) and provides a link to the beginning of a new session.
+
+Thus, \name{send-html/suspend} suspends the current execution of a
+\surflet, returning with the request for the next web page of your
+\surflet and \name{send/finish} finishes the session.  The third
+sending function is \name{send-html} which just sends a web page.
+\name{send-html} does not return and does not touch the session of
+your \surflet instance.
+
+\subsubsection{Abbreviations in SXML}
+\label{sxml-abbrvs}
+
+The example in subsection ``Several web pages in a row'' wrote down
+the link to the next web page explicitly via the ``a''-tag.  As
+websites contain a lot of links, the sending functions (like
+\name{send-html/finish}) allow an abbreviation.  The following SXML
+snippets are equivalent:
+
+\begin{alltt}
+(a (@ (href ,k-url)) "Next page -->")
+(url ,k-url "Next page -->")
+\end{alltt}
+
+\name{url} expects the target address as the next element and includes
+every text afterwards as part of the link. 
+
+There are also some other abbreviations.  \typew{(nbsp)} inserts
+`\typew{\&nbsp;}' into the HTML, \typew{(*COMMENT* \dots)} inserts a
+comment, and with \typew{(plain-html \dots)} you can insert arbitrary
+HTML code (\ie strings) directly , without any string conversions.
+The last abbreviation, \name{surflet-form}, is discussed in the next
+section.
+
+
+\subsection{How to write web forms}
+
+The \surflets come along with a libary for easy user interaction.  The
+following subsections will show how to write web forms and how to get
+the data the user has entered.
+
+
+\subsubsection{Simple web forms}
+
+Let's write a \surflet that reads user input and prints it out on the
+next page:
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (let* ((text-input (make-text-field))
+             (submit-button (make-submit-button))
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (body 
+                        (h1 "Echo")
+                        (surflet-form ,k-url
+                                      (p "Please enter something:"
+                                         ,text-input
+                                         ,submit-button)))))))
+             (bindings (get-bindings req))
+             (user-input (input-field-value text-input bindings)))
+        (send-html/finish
+         `(html (body
+                 (h1 "Echo result")
+                 (p "You've entered: '" ,user-input "'."))))))
+))
+\end{listing}
+
+Here are the details to the code in \name{main}:
+
+\begin{alltt}
+    (define (main req)
+      (let* ((text-input (make-text-field))
+             (submit-button (make-submit-button))
+\end{alltt}
+
+\name{make-text-field} and \name{make-submit-button} define two user
+interaction elements: a text input field and a submit button.
+\surflets represent user interaction elements by \name{Input-field}
+objects.  Thus, user interaction elements are first class values in
+\surflet, unlike in many other web scripting languages, \eg Java
+surflets, PHP or Microsoft Active Server Pages, \ie you have a
+representation of a user interaction element in your program that you
+can pass to functions, receive them as return values, etc.  You'll
+soon see the advantages of this approach.
+
+\begin{alltt}
+           (req (send-html/suspend
+                 (lambda (k-url)
+                   `(html 
+                     (body 
+                      (h1 "Echo")
+                      (surflet-form ,k-url
+                                    (p "Please enter something:"
+                                       ,text-input
+                                       ,submit-button)))))))
+\end{alltt}
+
+Instead of discarding the return value of \name{send-html/suspend} as
+in the examples of the previous section, this time we'll save the
+return value, as it will contain the data the user has entered in our
+text input field.
+
+The definition of the website is as described in the previous section
+except for the new abbreviation \name{surflet-form}.
+\name{surflet-form} creates the HTML code for a web form and expects
+as its next value the URL to the next webpage as provided by
+\name{send-html/suspend}, here named
+\name{k-url}.  The remaining arguments constitute the content of the
+web form.  Thus, the code above is equal to the following SXML:
+
+\begin{alltt}
+(form (@ (action ,k-url) (method "GET"))
+  (p "Please enter something:"
+     ,text-input
+     ,submit-button))
+\end{alltt}
+
+If you want to use the POST method instead of the default GET method,
+add the symbol \name{'POST} after the URL:
+
+\begin{alltt}
+(surflet-form ,k-url
+              POST
+              (p "Please enter something:"
+                 ,text-input
+                 ,submit-button))
+\end{alltt}
+
+The web page \name{send-html/suspend} sends to the browser looks like
+in figure [missing]. 
+%\ref{fig:user1-1}.  
+After the user has entered his data into
+the web form, \name{send-html/suspend} returns with the request object
+of the browser for the next page.  This request object contains the
+data the user has entered.
+
+\begin{alltt}
+             (bindings (get-bindings req))
+\end{alltt}
+
+With the function \name{get-bindings} we pull out the user data of the
+request object.  Here we save the user data into the variable
+\name{bindings}.  \name{get-bindings} works for both request methods
+\typew{GET} and \typew{POST}.
+
+\begin{alltt}
+           (user-input (input-field-value text-input bindings)))
+\end{alltt}
+
+With the function \name{input-field-value} and the extracted user data
+we can read the value for an \name{input-field}.   Here, we want to
+know what the user has entered into the \name{text-input-field}.
+
+\begin{alltt}
+        (send-html/finish
+         `(html (body
+                 (h1 "Echo result")
+                 (p "You've entered: '" ,user-input "'."))))))
+\end{alltt}
+
+After we have extracted what the user has entered into the text field,
+we can show the final page of our \surflet and echo her input.
+
+Thus, the scheme for user interaction is about the following:
+
+\begin{itemize}
+\item Create the user interaction elements, \name{input-field}s, you
+want to use in your web page.
+\item Send the web page with \name{send-html/suspend} to the browser.
+Plug in the \name{input-field}s in the web page as if they were usual
+values.  Save the return value of \name{send-html/suspend}.
+\item Extract the user data from the return value of
+\name{send-html/suspend}.
+\item Read the values of each \name{input-field} out of the extracted
+user data with \name{input-field-value}.
+\end{itemize}
+
+The complete list of functions that create \name{input-fields} can be
+found in the API in section \ref{sec:surflet-api}.
+
+\subsubsection{Return types other than strings}
+\label{subsec:input-return}
+
+As the user interaction elements are first class values in a \surflet,
+they can return other types than strings.  For example the \surflets
+come with a number input field, \ie an input field that accepts only
+text that can be interpreted as a number.  If the user enters
+something that is not a number, \name{input-field-value} will return
+\sharpf as the value of the number input field.  If you'd rather want
+an error to be raised, you can use \name{raw-input-field-value}
+instead.
+
+\subsubsection{Annotated input fields}
+
+The return value of an input field need not even be a primitive
+value.  The \surflets library allows you to ``annotate'' your input
+fields with values which should be returned indicated by the user's
+input.  \Eg, consider this \surflet:
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+	handle-fatal-error
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (let* ((select-input-field 
+              (make-select
+               (map make-annotated-select-option
+                    '("Icecream" "Chocolate" "Candy")
+                    '(1.5 2.0 0.5))))
+              (req (send-html/suspend
+                    (lambda (k-url)
+                      `(html 
+                        (head (title "Sweet Store"))
+                        (body
+                         (h1 "Your choice")
+                         (surflet-form 
+                          ,k-url
+                          (p "Select the sweet you want:"
+                             ,select-input-field)
+                          ,(make-submit-button)))))))
+              (bindings (get-bindings req))
+              (price (input-field-value select-input-field 
+                                        bindings)))
+        (send-html/finish
+         `(html (head (title "Receipt"))
+                (body
+                 (h2 "Your receipt:")
+                 (p "This costs you \$" ,price "."))))))
+))
+\end{listing}
+
+Let's go through the important part of this \surflet:
+
+\begin{alltt}
+      (let* ((select-input-field 
+              (make-select
+               (map make-annotated-select-option
+                    '("Icecream" "Chocolate" "Candy")
+                    '(1.5 2.0 0.5))))
+\end{alltt}
+
+Here we define a select input field (a dropdown list).  Instead of
+only providing a list of values that shall show up in the dropdown
+list and later examining which one was selected and looking up the
+price for the sweet, we bind the values in the list with the price
+while we create the select input field.  When the select input field
+is shown in the browser, it will show the names of the sweets.  When
+we lookup the user's input, we will get the associated price for the
+sweet.  Again, this works not only with numbers, but with any
+arbitrary Scheme value (\eg functions or records).
+
+\subsubsection{Sending error messages}
+
+If a user tries to forge a \surflet-URL (\eg by extracting the
+continuation URL from the HTML source and editing it), your \surflet
+has to deal with unexpected values.  Usually, a forged \surflet-URL
+will result in an error that is raised in one of the \surflet library
+functions.  If you don't catch this error, the \surflet handler will
+catch it for you, send an error message to the user
+\emph{and terminate the current session} as your \surflet obviously
+encountered an unexpected error and might be in an invalid state.  If
+you don't want this behavior, you can catch this error (like any other
+error that is raised by \scsh) and send your own error message with
+\name{send-error} which is located in the \name{surflets/error}
+package.  The \name{handle-fatal-error} package can be useful in this
+context.  Here's an example, that modifies the example from the
+previous subsection (modifications emphasized):
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+\codemph{        handle-fatal-error}
+\codemph{        surflets/error}
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (let* ((select-input-field 
+              (make-select
+               (map make-annotated-select-option
+                    '("Icecream" "Chocolate" "Candy")
+                    '(1.5 2.0 0.5))))
+              (req (send-html/suspend
+                    (lambda (k-url)
+                      `(html 
+                        (head (title "Sweet Store"))
+                        (body
+                         (h1 "Your choice")
+                         (surflet-form 
+                          ,k-url
+                          (p "Select the sweet you want:"
+                             ,select-input-field)
+                          ,(make-submit-button)))))))
+              (bindings (get-bindings req))
+\codemph{              (cost (with-fatal-error-handler               }
+\codemph{                     (lambda (condition decline)            }
+\codemph{                       (send-error (status-code bad-request)}
+\codemph{                                   req                      }
+\codemph{                                   "No such option or internal }
+\codemph{                                    error. Please try again."))}
+\codemph{                     (raw-input-field-value select-input-field }
+\codemph{                                            bindings))))    }
+        (send-html/finish
+         `(html (head (title "Receipt"))
+                (body
+                 (h2 "Your receipt:")
+                 (p "This costs you \$" ,cost "."))))))
+))
+\end{listing}
+
+Let's examine the important part of this example:
+
+\begin{alltt}
+              (cost (with-fatal-error-handler
+                     (lambda (condition decline)
+                       (send-error (status-code bad-request)
+                                   req
+                                   "No such option or internal
+                                    error. Please try again."))
+                     (raw-input-field-value select-input-field 
+                                            bindings))))
+\end{alltt}
+
+As mentioned in \ref{subsec:input-return}, this \surflet uses
+\name{raw-input-field-value} instead of \name{input-field-value}
+because the former raises an error while the latter returns \sharpf\ in
+case of an error.
+
+If a user forges a continuation URL, \name{raw-input-field-value}
+might not be able to find a valid value for the
+\name{select-input-field} and raises an error.  This error is catched
+by the error handler which was installed by
+\name{with-fatal-error-handler}.  The error handler uses
+\name{send-error} to send an error message to the browser.  Its first
+argument is the status code of the error message.  See the
+documentation of the \sunet webserver for different status codes.  The
+second argument is the request which was processed while the error
+occured.  The last argument is a free text message to explain the
+cause of the error to the user.
+
+While in the original \surflet the user will still see the resulting
+receipt web page with an empty dollar amount and has her session
+finished, this modified version will show an error message and won't
+finish the session.
+
+It is your choice, which version you choose, \ie if you let the
+\surflet handler handle the occuring error automatically or if you
+install your own error handlers and use \name{raw-input-field-value}.
+However, be careful if you use \name{raw-input-field-value} along with
+check boxes.  The HTML standard dictates that an unchecked check box
+does not appear in the data the browser sends to the server.  Thus,
+\name{raw-input-field-value} won't find the check box in the data and
+raise an error which is not a ``real'' error as you migh expect it.
+
+
+\subsubsection{Your own input fields}
+
+The \surflet library contains constructors for all input fields that
+are described in the HTML~2.0 standard.  See the \surflet API in
+section \ref{sec:surflet-api} for a complete list.  The \surflet
+library also allows you to create your own input fields, \eg an input
+field that only accepts valid dates as its input.  This subsection
+gives you a short overview how to do this.  You will find the details
+in the \surflet API.
+
+Let's have a look at an \surflet that uses its own input field.  The
+``input field'', called nibble input field, consists of four check
+boxes which represent bits of a nibble (half a byte).  The value of
+the input field is the number that the check boxes represent.  \Eg, if
+the user checks the last two checkboxes, the value of the nibble input
+field is 3.
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        surflets/my-input-fields
+        scheme-with-scsh)
+  (begin
+
+    (define (make-nibble-input-fields)
+      (let ((checkboxes (list (make-annotated-checkbox 8)
+                              (make-annotated-checkbox 4)
+                              (make-annotated-checkbox 2)
+                              (make-annotated-checkbox 1))))
+        (make-multi-input-field
+         #f "nibble-input"
+         (lambda (input-field bindings)
+           (let loop ((sum 0)
+                      (checkboxes checkboxes))
+             (if (null? checkboxes)
+                 sum
+                 (loop (+ sum (or (input-field-value (car checkboxes) 
+                                                     bindings)
+                                  0))
+                       (cdr checkboxes)))))
+         '()
+         (lambda (ignore)
+           checkboxes))))
+
+    (define nibble-input-field (make-nibble-input-fields))
+
+    (define (main req)
+      (let* ((req (send-html/suspend
+                   (lambda (new-url)
+                     `(html (title "Nibble Input Widget")
+                            (body 
+                             (h1 "Nibble Input Widget")
+                             (p "Enter your nibble (msb left):")
+                             (surflet-form ,new-url
+                                           ,nibble-input-field
+                                           ,(make-submit-button)))))))
+             (bindings (get-bindings req))
+             (number (input-field-value nibble-input-field bindings)))
+        (send-html
+         `(html (title "Result")
+                (body 
+                 (h2 "Result")
+                 (p "You've entered " ,number "."))))))
+    ))
+\end{listing}
+
+Let's go through this \surflet step by step.
+
+\begin{alltt}
+(define-structure surflet surflet-interface
+  (open surflets
+        surflets/my-input-fields
+        scheme-with-scsh)
+\end{alltt}
+
+If you want to create your own input fields, you have to open the
+\name{surflets/my-input-fields} package.
+
+\begin{alltt}
+  (begin
+    (define (make-nibble-input-fields)
+      (let ((checkboxes (list (make-annotated-checkbox 8)
+                              (make-annotated-checkbox 4)
+                              (make-annotated-checkbox 2)
+                              (make-annotated-checkbox 1))))
+\end{alltt}
+
+\name{make-nibble-input-fields} is the constructor for our new type of
+input field.  As mentioned before, we use check boxes to let the user
+enter the nibble.  We use annotated checkboxes for this purpose whose
+value is the value in the nibble.
+
+\begin{alltt}
+        (make-multi-input-field
+         #f "nibble-input"
+\end{alltt}
+
+The value of our new input field will depend on the value of several
+real input fields.  Thus we create a multi input field.  If the value
+depended only on the browser data that is associated to the name of
+our input field, we would use \name{make-input-field} instead, which
+creates a usual input field.  \Eg, if we wanted to create a date input
+field that accepts only valid dates as input and used a text input
+field for this purpose, we would use \name{make-input-field}.
+
+The first two parameters is the name of the input field and its type.
+As we use checkboxes to represent our input field, we don't need the
+name field.  The type field is meant for debugging purposes, so you
+can identify the type of the input field during a debugging session.
+
+\begin{alltt}
+         (lambda (input-field bindings)
+           (let loop ((sum 0)
+                      (checkboxes checkboxes))
+             (if (null? checkboxes)
+                 sum
+                 (loop (+ sum (or (input-field-value (car checkboxes) 
+                                                     bindings)
+                                  0))
+                       (cdr checkboxes)))))
+\end{alltt}
+
+The next parameter is the so called transformer function.
+\name{raw-input-field-value} calls the transformer function to
+determine the value of the input field depending on the given
+bindings.  The transformer function of a multi input field (which our
+nibble input field is) gets the input field and the bindings as
+parameters.  A usual input field would only get the data that is
+associated to its name.
+
+The transformer function of our nibble input field goes over each
+check box, looks it up in the bindings and adds its value to a sum, if
+\name{input-field-value} can find it.  If it can't find it, zero is
+added instead.  The value of our nibble input field is the resulting
+sum.
+
+The rest of the \surflet is straight forward and not repeated here
+again.  We create, use and evaluate the nibble input field as we do
+with every other input field.
+
+
+\subsection{Program flow control}
+
+With the techniques shown so far it is rather difficult to create a
+web page that has several different successor webpages rather than
+only one web page.  This section will show you how to do this with the
+\surflets.  Basically, there are two different methods how to perform
+this task.  One method is to mark each link in some way and evaluate
+the mark after \name{send-html/suspend} has returned.  The other
+method is to bind a callback function to each link that is called when
+the user selects the link.  This section shows both methods.
+
+\subsubsection{Dispatching to more than one successor web page}
+
+The basic idea of dispatching is to add a mark to a link and evaluate
+it after the user has clicked on a link and \name{send-html/suspend}
+returned.  Let's have a look at an example.  It shows an entry page at
+which the user states the language in which she wants to be greeted:
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+
+    (define (main req)
+      (let* ((english (make-address))
+             (german (make-address))
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (head (title "Multi-lingual"))
+                       (body 
+                        (h2 "Select your language:")
+                        (ul
+                         (li (url ,(english k-url) "English")
+                         (li (url ,(german k-url) "Deutsch")))))))))
+             (bindings (get-bindings req)))
+        (case-returned-via bindings
+          ((english) (result-page "Hello, how are you?"))
+          ((german) (result-page "Hallo, wie geht es Ihnen?")))))
+
+    (define (result-page text)
+      (send-html/finish
+       `(html 
+         (head (title "Greeting"))
+         (body
+          (h2 ,text)))))
+    ))
+\end{listing}
+
+Let's see how \name{main} presents the different options:
+
+\begin{alltt}
+    (define (main req)
+      (let* ((english (make-address))
+             (german (make-address))
+\end{alltt}
+
+Of course you don't have to worry about adding the mark to the links.
+Instead, we create the links with \name{make-address}.
+
+\begin{alltt}
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (head (title "Multi-lingual"))
+                       (body 
+                        (h2 "Select your language:")
+                        (ul
+                         (li (url ,(english k-url) "English")
+                         (li (url ,(german k-url) "Deutsch")))))))))
+\end{alltt}
+
+\name{make-address} returns a function you can call to create the
+link as we did here with
+
+\begin{alltt}
+ (li (url ,(english k-url) "English")
+\end{alltt}
+
+This creates a list item which contains a hyperlink labeled
+``English''.  The hyperlink is created by the SXML abbreviation
+\name{url} as shown in \ref{sxml-abbrvs}.  Instead of just passing 
+the continuation URL \name{k-url} to \name{url}, we create the marked
+link by calling the function \name{make-adddress} gave us.
+
+\begin{alltt}
+             (bindings (get-bindings req)))
+        (case-returned-via bindings
+          ((english) (result-page "Hello, how are you?"))
+          ((german) (result-page "Hallo, wie geht es Ihnen?")))))
+\end{alltt}
+
+After \name{send-html/suspend} has returned, we can evaluate which
+link the user has clicked by using \name{case-returned-via}.
+\name{case-returned-via} works similar to the regular \name{case} of
+Scheme.  It evaluates the body of the form whose initial list contains
+the address that the user used to leave the website.  \Eg, if the user
+has selected ``German'' as her preferred language and clicked on the
+link we have named \name{german} in our \surflet,
+\name{case-returned-via} will evaluate its second form and the
+\surflet will display the greeting in German.
+
+\name{case-returned-via} is syntactic sugar like the regular
+\name{case}.  However, instead of \name{equal?} it uses
+\name{returned-via}.  \name{returned-via} takes the bindings and 
+and an address and returns \sharpt, if the user left the web page via
+this address (\ie, via the link that is represented by this address)
+and \sharpf otherwise.  \name{returned-via} does not end with a
+question mark as it might return other values as well as we will see
+shortly.  Of course, it is your choice if you want to use
+\name{case-returned-via} or explicitly \name{returned-via}.
+
+
+\subsubsection{Annotated dispatching}
+
+The approach shown in the previous subsection has one major drawback:
+the meaning of an address becomes clear only when you look at the
+dispatching section of \name{case-returned-via}.  This subsection
+shows you how to link the meaning and the representation of an address
+closer together.
+
+We modify the previous code example slightly to this \surflet
+(differences emphasized):
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (let* (\codemph{(language (make-annotated-address))}
+             (req (send-html/suspend
+                   (lambda (k-url)
+                     `(html 
+                       (head (title "Multi-lingual"))
+                       (body 
+                        (h2 "Select your language:")
+                        (ul
+                         (li (url ,\codemph{(language k-url }
+\codemph{                                             "Hello, how are you?")} 
+                                  "English")
+                         (li (url ,\codemph{(language k-url }
+\codemph{                                             "Hallo, wie geht es Ihnen?")}
+                                  "Deutsch")))))))))
+             (bindings (get-bindings req)))
+        (case-returned-via bindings
+\codemph{          ((language) => result-page))))}
+
+    (define (result-page text)
+      (send-html/finish
+       `(html 
+         (head (title "Greeting"))
+         (body
+          (h2 ,text)))))
+    ))
+\end{listing}
+
+Let's look at the differing parts:
+
+\begin{alltt}
+      (let* ((language (make-annotated-address))
+\end{alltt}
+
+To link the meaning with the address itself, we use an annotated
+address.  As we can annotate the address now, we don't need two
+distinct addresses anymore.
+
+\begin{alltt}
+          (li (url ,(language k-url 
+                              "Hello, how are you?")
+                   "English")
+          (li (url ,(language k-url 
+                              "Hallo, wie geht es Ihnen?")
+                   "Deutsch")))))))))
+\end{alltt}
+
+In addition to the continuation URL \name{k-url} we also annotate the
+address with a value.  Here we use the different greetings as the
+annotation.  The address can be annotated with any arbitrary Scheme
+value, \eg functions or records.
+
+\begin{alltt}
+        (case-returned-via bindings
+          ((language) => result-page))))
+\end{alltt}
+
+\name{case-returned-via} has an extended syntax similar to \name{cond}
+that it useful with annotated address.  The arrow `\name{=>}' calls
+the following function with the annotation of the address via which
+the user has left the web page.  You can extract the annotation
+yourself with \name{returned-via} like this:
+
+\begin{alltt}
+(result-page (returned-via language bindings))	
+\end{alltt}
+
+This will call \name{result-page} with the annotation of the address
+via which the user has left the web page.  \name{returned-via} returns
+\sharpf, if the user didn't leave the web page via one of the links
+created with this address (which is not really possible in this
+example).
+
+\subsubsection{Callbacks}
+
+The other method to lead to different successor web pages is using
+callbacks.  A callback is a function that is called if the user leaves
+the web page via an associated link.  This is different from the
+dispatch method where \name{send-html/suspend} returns.  You can
+create a web page that only uses callbacks to lead to successor web
+pages and you don't have to use \name{send-html/suspend}.
+Instead, you can use \name{send-html}.
+
+Although it is possible to use several different callbacks in a single
+web page, this is not recommended.  The reason lies in the
+implementation of a callback, which saves the current continuation.
+Several different callbacks would result in the storage of the several
+slightly different continuations.  This is unnecessary, as you can
+annotate the callbacks with the arguments for the callback function.
+Let's see an example which is a variation of the previous examples
+(important parts / differences emphasized):
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        \codemph{surflets/callbacks}
+        scheme-with-scsh)
+  (begin
+    
+    (define (main req)
+      (let ((language \codemph{(make-annotated-callback result-page)}))
+        (\codemph{send-html}
+         `(html 
+           (head (title "Multi-lingual"))
+           (body 
+            (h2 "Select your language:")
+            (ul
+             (li (url ,\codemph{(language "Hello, how are you?")}
+                      "English")
+                 (li (url ,\codemph{(language "Hallo, wie geht es Ihnen?")}
+                          "Deutsch")))))))))
+
+    (define \codemph{(result-page req text)}
+      (send-html/finish
+       `(html 
+         (head (title "Greeting"))
+         (body
+          (h2 ,text)))))
+    ))
+\end{listing}
+
+The differences to the dispatch method are the following: you have to
+open the \name{surflets/callbacks} package to use callbacks, you don't
+use the continuation URL to create the callback link, and the
+callbacked function must accept the request from the browser as the
+first argument.  Furthermore, you don't have to use
+\name{send-html/suspend}, if a user can only leave your web page via
+callbacks.  However, it can be sensible to combine the dispatch and
+the callback method, in which case you have to use
+\name{send-html/suspend}.
+
+Note that is nonsensical to create a callback on top level, \ie the
+call to \name{make-annotated-callback} must occur every time
+\name{main} is called and not only once when the \surflet is read into
+memory.  For the same reason it is nonsensical in most cases to reuse
+a callback.
+
+The \surflet library provides also a wrapper function with which you
+can instruct the callback to call different functions instead of a
+single one.  If you create your callback like
+
+\begin{alltt}
+(let ((callback (make-annotated-callback callback-function)))
+   \dots)
+\end{alltt}
+
+you can instruct the callback to call different functions like this:
+
+\begin{alltt}
+(callback function1 arg1 arg2)
+\dots \\
+(callback function2 arg3 arg4 arg5)
+\end{alltt}
+
+Again, it is your choice which option you want to use.  Note that
+calling a function with several arguments and of different amount each
+time is also possible if you only use a single function for the
+callback.
+
+\subsection{Data management}
+
+When you write web programs, there are usually two kinds of data that
+you use: data that is local to each instance of a \surflet, \eg the
+user's login, and data that is global to each instance of a \surflet,
+\eg a port to a logfile.  Changes to local data is only visible to
+each session of a \surflet, while changes to global data is visible
+to every session of a \surflet.
+
+The \surflet library does not really distinguish between these two
+types of data, but provides ways to realize both of them in a
+convenient way that is not (really) different from the way you handle
+these data types in a regular Scheme program.
+
+If a data item is globally used in your \surflet, define it global
+(on top level) and change its values with \name{set!}.   If a data
+item is locally used, define it locally (in your function) and do not
+change its value with \name{set!}.  
+
+If the following sounds too technical to you, you can safely skip this
+paragraph.  The reason why the distinction between global and local
+data is done via whether you mutate the data's value with \name{set!}
+is that the \surflets are implemented with continuations.
+Continuations cannot reflect changes that are done via \name{set!} (or
+side effects in general) and thus such changes are globally visible.
+On the other hand continuations represent states of a program and a
+reified continuations reifies also the values of all data.
+
+But what to do if you happen to want to change your \emph{local}
+data's value with \name{set!}?  The \surflet library provides a place
+where you store such mutable local data and two functions to access
+it: \name{set-session-data!} sets the mutable local data and
+\name{get-session-data} reads the mutable local data.  Here is an
+example.  It uses the callback technique that was presented in the
+previous section.  If you haven't read that section, you only need to
+know that \name{show-page} is called again and again as long as the
+user keeps on clicking on ``Click''.
+
+\begin{listing}
+(define-structure surflet surflet-interface
+  (open surflets
+        surflets/callbacks
+        scheme-with-scsh)
+  (begin
+    (define (main req)
+      (set-session-data! -1)
+      (let ((start (make-annotated-callback show-page)))
+        (show-page req 'click start)))
+
+    (define (show-page req what callback)
+      (if (eq? what 'click)
+          (click callback)
+          (cancel)))
+
+    (define (click callback)
+      (set-session-data! (+ 1 (get-session-data)))
+      (send-html
+       `(html 
+         (head (title "Click counter"))
+         (body
+          (h2 "Click or cancel")
+          (p "You've already clicked " 
+             ,(get-session-data) 
+             " times.")
+          (p (url ,(callback 'click callback) "Click")
+             (url ,(callback 'cancel callback) "Cancel"))))))
+
+    (define (cancel)
+      (send-html/finish
+       `(html
+         (head (title "Click counter finished"))
+         (body
+          (h2 "Finished")
+          (p "after " ,(get-session-data) " clicks.")))))
+))
+\end{listing}
+
+At the beginning of \name{main} we initialize the mutable local data
+with \name{set-session-data!}.
+
+\begin{alltt}
+    (define (main req)
+      (set-session-data! -1)
+      (let ((start (make-annotated-callback show-page)))
+        (show-page req 'click start)))
+\end{alltt}
+
+Afterwards, we create and save a callback that will be called again
+and again.  We call \name{show-page} with the callback to show the
+first web page.
+
+\begin{alltt}
+    (define (show-page req what callback)
+      (if (eq? what 'click)
+          (click callback)
+          (cancel)))
+\end{alltt}
+
+\name{show-page} evaluates its second argument \name{what} to
+determine what to do next: continue or cancel.
+
+\begin{alltt}
+    (define (click callback)
+      (set-session-data! (+ 1 (get-session-data)))
+      (send-html
+       `(html 
+         (head (title "Click counter"))
+         (body
+          (h2 "Click or cancel")
+          (p "You've already clicked " 
+             ,(get-session-data) 
+             " times.")
+          (p (url ,(callback 'click callback) "Click")
+             (url ,(callback 'cancel callback) "Cancel"))))))
+\end{alltt}
+
+If the user continues, \name{click} increases the mutable local
+counter and shows the next page.  
+
+Note that we don't use \name{send-html/suspend} here because we use
+the callback to lead to the next web page.  If the user clicks on the
+link labeled with ``Click'' or ``Cancel'', \name{show-page} will be
+called with \typew{'click} or \typew{'cancel}, respectively, and the
+callback as parameters.  This creates an endless loop without saving
+endless states of the \surflet.
+
+\name{cancel} shows the final page with the amount of clicks
+performed.  
+
+\subsection{My own SXML}
+
+Section \ref{sec:SXML} introduced SXML, the way how \surflets
+represent HTML.   This section will show you, how you can create your
+own rules to translate from SXML to HTML.
+
+\subsubsection{Terms and theoretical background}
+
+This subsection will introduce the main concepts of the translation
+process and some necessary terms we will use in the following.
+
+The translation process from SXML to HTML takes two steps.  In the
+first step, SXML is translated to an intermediate form.  This is done
+by the \textit{translator}.  In the second step, the intermediate form
+is printed into an HTML string.  This is done by the
+\textit{printer}.  The intermediate form looks very much like SXML,
+but contains only \textit{atoms} or, recursively, list of atoms.
+Atoms are numbers, characters, strings, \sharpf, and the empty list.
+We call the intermediate form an \textit{atom tree} and the list from
+which we've started an \textit{SXML tree}.
+
+The basic unit in the translation process is a \textit{conversion
+rule}.  A conversion rule consists of a trigger and a conversion
+function.  As its first element, the trigger identifies the list for
+which the translator shall call the conversion function.  The
+translator calls the conversion function with all list elements as
+parameters and replaces the whole list by the result of the conversion
+function.  The result of the conversion function is supposed to be an
+atom tree.
+
+The translator takes the SXML tree and a list of conversion rules as
+arguments.  It then traverses the SXML tree depth first and calls the
+conversion functions according to the triggers it encounters,
+replacing the nodes in the SXML tree with the return values of each
+conversion function called.  The result of this translation step will
+be an atom tree, which the printer will print into a string or port.
+
+The translator calls the conversion function in two different modes,
+depending on the conversion rule.  The regular mode is the
+\textit{preprocess} mode:  the translator translates every argument of
+the conversion function before calling it.  The other mode is the
+\textit{unprocessed} mode:  the translator calls the conversion
+function directly without preprocessing the arguments.  This is, the
+translator stops traversing the SXML tree at nodes that trigger a
+conversion rule in unprocessed mode.  
+
+There are two default triggers which you can't use in your translation
+rules: \typew{*default*} and \typew{*text*}.  \typew{*default*} as the
+trigger marks the default conversion rule which the translator uses if
+no other conversion rule triggers.  \typew{*text*} marks the text
+conversion rule and triggers, if the node in the SXML tree is a
+string.  In the standard conversion rule set the text conversion rule
+performs HTML escaping, \eg for the ampersand (\&).
+
+
+\subsubsection{Outlook}
+
+More to come soon about \surflets consisting of different parts and
+individual SXML.
+
+
+
+%\end{document}
+
+%session data
+%surflets containing of different parts
+%my sxml

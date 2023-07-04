@@ -1,0 +1,43 @@
+These are generic installation instructions for scsh packages.
+
+Prerequisites
+=============
+
+The scsh installation library is required to install this package.
+This library *must* be present on your system before the current
+package can be installed. It can be obtained from the following Web
+page:
+
+  http://lamp.epfl.ch/~schinz/scsh_packages/
+
+The installation library comes with its own documentation which
+explains in detail how to install and use scsh packages. It is
+recommended that you read it before installing your first scsh
+package. What follows is a very brief summary of this documentation,
+intended to get you started quickly.
+
+
+Installation
+============
+
+Installation of a scsh package is performed by launching the
+"scsh-install-pkg" script, which is part of the scsh installation
+library. This script must be launched from within the directory which
+resulted from the expansion of the current package's archive, i.e. the
+one containing the file you are reading now.
+
+A list of all the arguments accepted by the "scsh-install-pkg" script
+can be obtained by launching it with the "--help" option. One of these
+arguments, "--prefix", is mandatory and specifies the location where
+installation should be performed. Ideally, you should use the same
+prefix to install all scsh packages, as this makes them easier to
+manage and use.
+
+For example, to install the current package in
+"/usr/local/share/scsh-modules", you should type the following:
+
+  scsh-install-pkg --prefix=/usr/local/share/scsh-modules
+
+Provided that no errors are encountered during installation, a
+message will be printed at the end explaining how to use the newly
+installed package.

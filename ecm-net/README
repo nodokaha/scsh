@@ -1,0 +1,64 @@
+Networking code for the Scheme Shell              -*-indented-text-*-
+====================================
+
+   This package contains networking code for the Scheme Shell. It
+   includes
+
+   * ftp.scm -- a module for transfering files using the FTP protocol
+
+   * pop3.scm -- a module for accessing a maildrop using the POP3
+     protocol
+
+   * netrc.scm -- a module for parsing users' ~/.netrc files to
+     obtain authentication information
+
+   * nettime.scm -- a module for obtaining the time from remote
+     machines, using either the Time (rfc868) or the NetTime (rfc867)
+     protocols.
+
+   * test.scm -- an executable scsh script which runs a few tests on
+     the library.
+
+  
+Installing ==========================================================
+
+   This library runs under Olin Shivers' Scheme Shell, which adds many
+   useful things like sockets, a POSIX interface, records, a module
+   system and error handling to Scheme. The scsh can be obtained by
+   anonymous ftp from
+
+       ftp://ftp-swiss.ai.mit.edu/pub/su/scsh/scsh.tar.gz
+
+   The distribution includes a test file which is executable from the
+   command line, and which shows how to use the library via the
+   Scheme48 module system.
+
+
+
+Availability ==========================================================
+
+   Copyright (C) 1998 Eric Marsden
+
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
+
+   You should have received a copy of the GNU Library General Public
+   License along with this library; if not, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   
+   Tested with scsh 0.5.1 on Debian Linux 1.3.1 (kernel 2.0.30) and on
+   Solaris 2.5.1 with a range of ftp server types and the free
+   Qualcomm qpopper daemon. I would particularly appreciate
+   information about other servers and their status codes. Please send
+   bug reports, suggestions and questions to <emarsden@mail.dotcom.fr>.
+
+
+Eric Marsden, 1998-04-29

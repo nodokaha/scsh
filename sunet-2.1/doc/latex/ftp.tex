@@ -1,0 +1,163 @@
+\chapter{FTP Client}\label{cha:ftp}
+
+The \ex{ftp} structure lets you transfer files between networked
+machines from the Scheme Shell, using the File Transfer Protocol as
+described in RFC~959.
+
+Some of the procedures in this module extract useful information from
+the server's reply, such as the size of a file, or the name of the
+directory we have moved to.  These procedures return the extracted
+information, or, if the server's response doesn't match the expected
+code from the server, a catchable \ex{ftp-error} is raised.
+
+\defun{ftp-connect}{host login password passive? [log-port]}{connection}
+\begin{desc}
+  Open a command connection with the remote machine \var{host} and
+  login on that server with \var{login} and \var{password}.
+  \var{Login} and \var{password} can be \sharpf, in which case the
+  information is extracted from the user's \ex{.netrc} file if necessary.
+  
+  If \var{log-port} is specified, it must be an output port: this
+  starts logging the conversation with the server to that port.  Note
+  that the log contains passwords in clear text.
+\end{desc}
+
+\dfn{ftp-type}{\synvar{name}}{ftp-type}{syntax}
+\defunx{set-ftp-type!}{connection ftp-type}{undefined}
+\begin{desc}
+  This change the transfer mode for future file transfers.  The
+  transfer mode is specfified by \var{ftp-type} which can be created
+  with the \ex{ftp-type} macro.  \synvar{Name} must be either
+  \ex{binary} for binary data or \ex{ascii} for text.
+\end{desc}
+
+\defun{ftp-rename}{connection old new}{undefined}
+\begin{desc}
+  This changes the name of \var{old} on the remote host to \var{new}
+  (assuming sufficient permissions). \var{Old} and \var{new} are
+  strings.
+\end{desc}
+
+\defun{ftp-delete}{connection file}{undefined}
+\begin{desc}
+  This deletes \var{file} from the remote host (assuming the user has
+  appropriate permissions).
+\end{desc}
+
+\defun{ftp-cd}{connection dir}{undefined}
+\begin{desc}
+  This changes the current directory on the server.
+\end{desc}
+
+\defun{ftp-cdup}{connection}{undefined}
+\begin{desc}
+  This move to the parent directory on the server.
+\end{desc}
+
+\defun{ftp-pwd}{connection}{string}
+\begin{desc}
+  Return the current directory on the remote host, as a string.
+\end{desc}
+
+\defun{ftp-ls}{connection [dir]}{list}
+\begin{desc}
+  This returns a list of filenames on the remote host, either from the
+  current directory (if \var{dir} is not specified), or from the
+  directory specified by \var{dir}.
+\end{desc}
+
+\defun{ftp-dir}{connection [dir]}{status}
+\begin{desc}
+  This returns a list of long-form file name entries on the remote
+  host, either from the current directory (if \var{dir} is not
+  specified), or from the directory specified by \var{dir}.  (Note
+  that the format for the long-form entries is not specified by the
+  FTP standard.)
+\end{desc}
+
+\defun{ftp-get}{connection remote-file proc}{undefined}
+\begin{desc}
+  This downloads \var{remote-file} from the FTP server.
+  \ex{Ftp-get} establishes a data conneciton to the server, attaches
+  an input port to the data connection, and calls \var{proc} on that
+  port.
+\end{desc}
+
+\defun{ftp-put}{connection remote-file proc}{undefined}
+\begin{desc}
+  This uploads \var{remote-file} to the FTP server.  \ex{Ftp-put}
+  establishes a data conneciton to the server, attaches an output port
+  to the data connection, and calls \var{proc} on that port.
+\end{desc}
+
+\defun{ftp-append}{connection remote-file proc}{undefined}
+\begin{desc}
+  This appends data to \var{remote-file} on the FTP server.
+  \ex{Ftp-append} establishes a data conneciton to the server,
+  attaches an output port to the data connection, and calls \var{proc}
+  on that port.
+\end{desc}
+
+\defun{ftp-rmdir}{connection dir}{undefined}
+\begin{desc}
+  This removes the directory \var{dir} from the remote host (assuming
+  sufficient permissions).
+\end{desc}
+
+\defun{ftp-mkdir}{connection dir}{undefined}
+\begin{desc}
+  This create a new directory named \var{dir} on the remote host
+  (assuming sufficient permissions).
+\end{desc}
+
+\defun{ftp-modification-time}{connection file}{date}
+\begin{desc}
+  This requests the time of the last modification of \var{file} on the
+  remote host, and on success return a Scsh date record.  (This command
+  is not part of RFC~959 and is not implemented by all servers, but is
+  useful for mirroring.)
+\end{desc}
+
+\defun{ftp-size}{connection file}{integer}
+\begin{desc}
+  This returns the size of \var{file} in bytes. (This command is not
+  part of RFC~959 and is not implemented by all servers.)
+\end{desc}
+
+\defun{ftp-quit}{connection}{undefined}
+\begin{desc}
+  This closes the connection to the remote host.  The \var{connection}
+  object is useless after a quit command.
+\end{desc}
+
+\defun{ftp-quot}{connection command}{status}
+\begin{desc}
+  This sends a \var{command} verbatim to the remote server and wait
+  for a response.  The response text is returned verbatim.
+\end{desc}
+
+\defun{ftp-error?}{thing}{boolean}
+\begin{desc}
+  This returns \sharpt{} if \var{thing} is a \ex{ftp-error} object,
+  otherwise \sharpf.
+\end{desc}
+
+\defun{copy-port->port-binary}{input-port oputput-port}{undefined}
+\defunx{copy-port->port-ascii}{input-port oputput-port}{undefined}
+\defunx{copy-ascii-port->port}{input-port oputput-port}{undefined}
+\begin{desc}
+  These procedures are useful for downloading and uploading data to an
+  FTP connection via \ex{ftp-get}, \ex{ftp-get}, and \ex{ftp-append}.
+  They all copy data from one port to another.
+  \ex{Copy-port->port-binary} copies verbatim, while the other two
+  perform CR/LF conversion for ASCII data transfers.
+  \ex{Copy-port->port-ascii} adds CR/LFs at line endings on output,
+  whereas \ex{Copy-ascii-port->port} removes CR/LFs at line endings
+  end replaces them by ordinary LFs.
+\end{desc}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 
+

@@ -1,0 +1,30 @@
+Scheme Untergrund Networking Library Release Notes
+==================================================
+
+We are pleased to release SUnet version 2.1.
+
+SUnet runs under scsh 0.6.4.  It is possible, but unlikely that it
+runs under earlier versions of scsh. We recommend using version 0.6.6
+for simple installation using the new packaging proposal. See file
+INSTALL for more details.
+
+The major addition of this release are SUrflets by Andreas
+Bernauer. SUrflets are server-side scripts for the web-server written
+in Scheme. Based on the idea of Christian Queinnec, SUrflets employ
+first-class continuations to overcome the lack of state in the HTTP
+protocol and thereby ease the writing of web applications
+dramatically. SUrflets represent XHTML using Oleg Kiselyov's SSAX
+package, which makes it possible to build on the full power of
+s-expressions for generating XHTML.
+
+This release also fixes a number of bugs in various parts of the
+library.
+
+Relay, hack, and enjoy!
+
+Dr. S.
+Dr. S.
+Martin Gasbichler
+Eric Marsden
+Andreas Bernauer
+

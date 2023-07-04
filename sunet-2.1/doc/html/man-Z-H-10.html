@@ -1,0 +1,271 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+
+Generated from man.tex by tex2page, v 2003-09-27
+(running on MzScheme 208, unix), 
+(c) Dorai Sitaram, 
+http://www.ccs.neu.edu/~dorai/tex2page/tex2page-doc.html
+
+-->
+<head>
+<title>
+SUnet Reference Manual
+</title>
+<link rel="stylesheet" type="text/css" href="man-Z-S.css" title=default>
+<meta name=robots content="noindex,follow">
+</head>
+<body>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-9.html">previous</a></span><span>, <a href="man-Z-H-11.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+<a name="node_chap_8"></a>
+<h1 class=chapter>
+<div class=chapterheading><a href="man-Z-H-1.html#node_toc_node_chap_8">Chapter 8</a></div><br>
+<a href="man-Z-H-1.html#node_toc_node_chap_8">FTP Client</a></h1>
+<p></p>
+<p>
+The <tt>ftp</tt> structure lets you transfer files between networked
+machines from the Scheme Shell, using the File Transfer Protocol as
+described in RFC&nbsp;959.</p>
+<p>
+Some of the procedures in this module extract useful information from
+the server's reply, such as the size of a file, or the name of the
+directory we have moved to.  These procedures return the extracted
+information, or, if the server's response doesn't match the expected
+code from the server, a catchable <tt>ftp-error</tt> is raised.</p>
+<p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-connect <i>host login password passive? [log-port]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>connection</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_560"></a>
+<blockquote>
+Open a command connection with the remote machine <i>host</i> and
+login on that server with <i>login</i> and <i>password</i>.
+<i>Login</i> and <i>password</i> can be <tt>#f</tt>, in which case the
+information is extracted from the user's <tt>.netrc</tt> file if necessary.<p>
+If <i>log-port</i> is specified, it must be an output port: this
+starts logging the conversation with the server to that port.  Note
+that the log contains passwords in clear text.
+</p>
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-type <i><i>&lt;.name.&gt;</i></i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>ftp-type</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(syntax)&nbsp;</div>
+ <a name="node_idx_562"></a>
+<div align=left><tt>(set-ftp-type! <i>connection ftp-type</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_564"></a>
+<blockquote>
+This change the transfer mode for future file transfers.  The
+transfer mode is specfified by <i>ftp-type</i> which can be created
+with the <tt>ftp-type</tt> macro.  <i>&lt;.Name.&gt;</i> must be either
+<tt>binary</tt> for binary data or <tt>ascii</tt> for text.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-rename <i>connection old new</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_566"></a>
+<blockquote>
+This changes the name of <i>old</i> on the remote host to <i>new</i>
+(assuming sufficient permissions). <i>Old</i> and <i>new</i> are
+strings.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-delete <i>connection file</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_568"></a>
+<blockquote>
+This deletes <i>file</i> from the remote host (assuming the user has
+appropriate permissions).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-cd <i>connection dir</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_570"></a>
+<blockquote>
+This changes the current directory on the server.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-cdup <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_572"></a>
+<blockquote>
+This move to the parent directory on the server.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-pwd <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>string</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_574"></a>
+<blockquote>
+Return the current directory on the remote host, as a string.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-ls <i>connection [dir]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>list</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_576"></a>
+<blockquote>
+This returns a list of filenames on the remote host, either from the
+current directory (if <i>dir</i> is not specified), or from the
+directory specified by <i>dir</i>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-dir <i>connection [dir]</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>status</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_578"></a>
+<blockquote>
+This returns a list of long-form file name entries on the remote
+host, either from the current directory (if <i>dir</i> is not
+specified), or from the directory specified by <i>dir</i>.  (Note
+that the format for the long-form entries is not specified by the
+FTP standard.)
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-get <i>connection remote-file proc</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_580"></a>
+<blockquote>
+This downloads <i>remote-file</i> from the FTP server.
+<tt>Ftp-get</tt> establishes a data conneciton to the server, attaches
+an input port to the data connection, and calls <i>proc</i> on that
+port.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-put <i>connection remote-file proc</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_582"></a>
+<blockquote>
+This uploads <i>remote-file</i> to the FTP server.  <tt>Ftp-put</tt>
+establishes a data conneciton to the server, attaches an output port
+to the data connection, and calls <i>proc</i> on that port.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-append <i>connection remote-file proc</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_584"></a>
+<blockquote>
+This appends data to <i>remote-file</i> on the FTP server.
+<tt>Ftp-append</tt> establishes a data conneciton to the server,
+attaches an output port to the data connection, and calls <i>proc</i>
+on that port.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-rmdir <i>connection dir</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_586"></a>
+<blockquote>
+This removes the directory <i>dir</i> from the remote host (assuming
+sufficient permissions).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-mkdir <i>connection dir</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_588"></a>
+<blockquote>
+This create a new directory named <i>dir</i> on the remote host
+(assuming sufficient permissions).
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-modification-time <i>connection file</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>date</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_590"></a>
+<blockquote>
+This requests the time of the last modification of <i>file</i> on the
+remote host, and on success return a Scsh date record.  (This command
+is not part of RFC&nbsp;959 and is not implemented by all servers, but is
+useful for mirroring.)
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-size <i>connection file</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>integer</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_592"></a>
+<blockquote>
+This returns the size of <i>file</i> in bytes. (This command is not
+part of RFC&nbsp;959 and is not implemented by all servers.)
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-quit <i>connection</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_594"></a>
+<blockquote>
+This closes the connection to the remote host.  The <i>connection</i>
+object is useless after a quit command.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-quot <i>connection command</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>status</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_596"></a>
+<blockquote>
+This sends a <i>command</i> verbatim to the remote server and wait
+for a response.  The response text is returned verbatim.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(ftp-error? <i>thing</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>boolean</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_598"></a>
+<blockquote>
+This returns <tt>#t</tt> if <i>thing</i> is a <tt>ftp-error</tt> object,
+otherwise <tt>#f</tt>.
+</blockquote><p>
+</p>
+<p></p>
+<p></p>
+<p></p>
+<div align=left><tt>(copy-port-&gt;port-binary <i>input-port oputput-port</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_600"></a>
+<div align=left><tt>(copy-port-&gt;port-ascii <i>input-port oputput-port</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_602"></a>
+<div align=left><tt>(copy-ascii-port-&gt;port <i>input-port oputput-port</i>)</tt> &nbsp;&nbsp;&nbsp;&nbsp;---&gt; &nbsp;&nbsp;&nbsp;&nbsp;<i>undefined</i> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(procedure)&nbsp;</div>
+ <a name="node_idx_604"></a>
+<blockquote>
+These procedures are useful for downloading and uploading data to an
+FTP connection via <tt>ftp-get</tt>, <tt>ftp-get</tt>, and <tt>ftp-append</tt>.
+They all copy data from one port to another.
+<tt>Copy-port-&gt;port-binary</tt> copies verbatim, while the other two
+perform CR/LF conversion for ASCII data transfers.
+<tt>Copy-port-&gt;port-ascii</tt> adds CR/LFs at line endings on output,
+whereas <tt>Copy-ascii-port-&gt;port</tt> removes CR/LFs at line endings
+end replaces them by ordinary LFs.
+</blockquote><p>
+</p>
+<p>
+
+</p>
+<div align=right class=navigation><i>[Go to <span><a href="man.html">first</a>, <a href="man-Z-H-9.html">previous</a></span><span>, <a href="man-Z-H-11.html">next</a></span> page<span>; &nbsp;&nbsp;</span><span><a href="man-Z-H-1.html#node_toc_start">contents</a></span><span><span>; &nbsp;&nbsp;</span><a href="man-Z-H-17.html#node_index_start">index</a></span>]</i></div><p></p>
+</body>
+</html>

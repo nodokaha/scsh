@@ -1,0 +1,1 @@
+procedure-tables: PROCEDURE-HASH and MAKE-PROCEDURE-TABLE for tables whose keys are procedures

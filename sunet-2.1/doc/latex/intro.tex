@@ -1,0 +1,135 @@
+\chapter*{}
+
+\thispagestyle{empty}
+
+Of course, there is no Underground---or Untergrund, as those German
+new-age kids like to call the movement whose orders they
+have sworn to follow.  The age we all remember---the cliff-green
+turbocharged convertibles, cigarettes hanging loose in the corners of
+our mouths, and those trigger-happy fingers always ready for the quick
+hack---is long gone.
+
+In retrospect, it all seems like a candy-colored dream, and it may
+very well be---after all, there was never any proof that the
+Untergrund ever existed, and even if it did, we can be sure the
+obedient followers of the shadowy movement leaders have long burned
+the papers, subjected the hard drives and diskettes to interminable
+sessions of the junkyard magnet, and eradicated all shreds of
+memory from the brains of those who might have talked through long
+sessions of Tcl hacking to the sounds of Celine Dion records.
+
+Yet there are those who still covet membership in that secret
+cult---to gain access to its powerful lore, to usurp invidious and
+powerful superiors, or simply to impress their girlfriends.  For those
+lost souls of the modern age, I have a few words of advice:
+
+It's not a question of ``membership''---silly merchandise and
+ridiculous certificates.  If you are truly meant to be part of the
+Untergrund, you will know.  \emph{The Untergrund will find you.}
+
+Alas, probably not.
+
+\medskip
+
+\hfill April, 2003
+
+\chapter{Overview}\label{sec:intro}
+
+The Scheme Untergrund Networking Package (\textit{SUnet}, for short)
+is a collection of applications and libraries for Internet hacking in
+Scheme.  It runs under Scsh, the Scheme shell.  SUnet includes the
+following components:
+%   
+\begin{description}
+\item[The SUnet Web server]
+  This is a highly configurable HTTP 1.0 server in Scheme.
+  The server is accompanied by some libraries which may also
+  be used separately:
+  \begin{itemize}
+  \item URI and URL parsers and unparsers
+  \item a library for writing CGI scripts in Scheme
+  \item server extensions for interfacing to CGI scripts
+  \item server extensions for uploading Scheme code
+  \item simple structured HTML output library 
+  \end{itemize}
+
+  The server also ships with a sophisticated interface for writing
+  server-side Web applications called \textit{SUrflets}.
+
+\item[The SUnet ftp server]
+  This is a complete anonymous ftp server in Scheme.
+\item[ftp client library] This library allows you to access ftp
+  servers programmatically.
+\item[netrc library] This library parses authentication information
+  contained in \verb|~/.netrc|.
+\item[SMTP client library] This library allows you to forge mail from
+  the comfort of your own Scheme process.
+\item[POP3 client library]
+  This library allows you to access your POP3 mailbox from inside scsh.
+\item[RFC822 header library] This library parses email-style headers.
+\item[Daytime and Time protocol client libraries]
+  These libraries lets you find out what time it is without paying for a
+  Rolex.
+\item[DNS client library] This is a complete, multithreaded DNS
+  library.
+\item[An \texttt{ls} clone] This library displays Unix-style directory
+  listings without running \texttt{ls}.
+\end{description}
+
+
+\section{Obtaining the system}
+
+The SUnet code is available
+\urlhd{http://www.scsh.net/resources/sunet.html}{here}{from
+  \url{http://www.scsh.net/resources/sunet.html}}.  To run the code, you need
+version 0.6.6 or later of \urlhd{http://www.scsh.net/}{scsh}{scsh from
+  \url{http://www.scsh.net/}}.
+
+\section{How to install SUnet}
+
+Starting with version 2.1 SUnet conforms to the packaging proposal for
+scsh by Michel Schinz and needs Michel's installation library to
+install properly. For more information, please see
+\url{http://lamp.epfl.ch/~schinz/scsh_packages/}.
+
+In short, this means that you can install SUnet by unpacking the SUnet
+tarball and issuing the following command in the created directory:
+
+\begin{verbatim}
+scsh-install-pkg --prefix /path/to/your/package/root
+\end{verbatim}
+
+See the file INSTALL for the generic installation instructions for
+scsh packages.  
+
+You need to install version 4.9 of the SSAX package to use SUnet. SSAX
+is available from \url{http://lamp.epfl.ch/~schinz/scsh_packages/}.
+
+\section{How to use the packages}
+%
+After installation, you can use the \verb+-lel+ command-line option to
+load the package definitions. If you installed SUnet including
+SUrflets (the default), you need to load SSAX as well:
+%
+\begin{alltt}
+atari-2600[72] scsh -lel SSAX-4.9/load.scm -lel sunet-2.1/load.scm
+Welcome to scsh 0.6.6 (King Conan)
+Type ,? for help.
+\end{alltt}
+%
+Now, all structures defined by SUnet and SSAX are available:
+%
+\begin{alltt}
+> ,open ftp
+Load structure ftp (y/n)? y
+[netrc netrc.scm]
+[ftp ftp.scm]
+> \textit{call library code}
+> ,exit
+atari-2600[73]
+\end{alltt}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

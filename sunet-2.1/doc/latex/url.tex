@@ -1,0 +1,113 @@
+\chapter{Parsing and Processing URLs}\label{cha:url}
+%
+This modules contains procedures to parse and unparse URLs.  Until
+now, only the parsing of HTTP URLs is implemented.
+
+\section{Server Records}
+
+A \textit{server} value describes path prefixes of the form
+\var{user}:\var{password}@\var{host}:\var{port}. These are
+frequently used as the initial prefix of URLs describing Internet
+resources.
+
+\defun{make-server}{user password host port}{server}
+\defunx{server?}{thing}{boolean}
+\defunx{server-user}{server}{string-or-\sharpf}
+\defunx{server-password}{server}{string-or-\sharpf}
+\defunx{server-host}{server}{string-or-\sharpf}
+\defunx{server-port}{server}{string-or-\sharpf}
+\begin{desc}
+  \ex{Make-server} creates a new server record.  Each slot is a
+  decoded string or \sharpf. (\var{Port} is also a string.)
+  
+  \ex{server?} is the corresponding predicate, \ex{server-user},
+  \ex{server-password}, \ex{server-host} and \ex{server-port}
+  are the correspondig selectors.
+\end{desc}
+
+\defun{parse-server}{path default}{server}
+\defunx{server->string}{server}{string}
+\begin{desc}
+  \ex{Parse-server} parses a URI path \var{path} (a list representing
+  a path, not a string) into a server value.  Default values are taken
+  from the server \var{default} except for the host.  The values
+  are unescaped and stored into a server record that is returned.
+  \ex{Fatal-syntax-error} is called, if the specified path has no
+  initial to slashes (i.e., it starts with `//\ldots').
+  
+  \ex{server->string} just does the inverse job: it unparses
+  \var{server} into a string. The elements of the record
+  are escaped before they are put together.  
+
+  Example:
+\begin{alltt}
+> (define default (make-server "andreas"  "se ret" "www.sf.net" "80"))
+> (server->string default)
+"andreas:se\%20ret@www.sf.net:80"
+> (parse-server '("" "" "foo\%20bar@www.scsh.net" "docu" "index.html") 
+                default)
+'#{server}
+> (server->string ##)
+"foo\%20bar:se\%20ret@www.scsh.net:80"
+\end{alltt}
+%
+For details about escaping and unescaping see Chapter~\ref{cha:uri}.
+\end{desc}
+
+\section{HTTP URLs}
+
+\defun{make-http-url}{server path search frag-id}{http-url}
+\defunx{http-url?}{thing}{boolean}
+\defunx{http-url-server}{http-url}{server}
+\defunx{http-url-path}{http-url}{list}
+\defunx{http-url-search}{http-url}{string-or-\sharpf}
+\defunx{http-url-frag-ment-identifier}{http-url}{string-or-\sharpf}
+%
+\begin{desc}
+  \ex{Make-http-url} creates a new \ex{httpd-url} record.
+  \var{Server} is a record, containing the initial part of the address
+  (like \ex{anonymous@clark.lcs.mit.edu:80}).  \var{Path} contains the
+  URL's URI path ( a list).  These elements are in raw, unescaped
+  format. To convert them back to a string, use
+  \ex{(uri-path->uri (map escape-uri pathlist))}. \var{Search}
+  and \var{frag-id} are the last two parts of the URL.  (See
+  Chapter~\ref{cha:uri} about parts of an URI.)
+  
+  \ex{Http-url?} is the predicate for HTTP URL values, and
+  \ex{http-url-server}, \ex{http-url-path}, \ex{http-url-search} and
+  \ex{http-url-fragment-identifier} are the corresponding selectors.
+\end{desc}
+
+\defun{parse-http-url}{path search frag-id}{http-url}
+\begin{defundescx}{http-url->string}{http-url}{string}
+  This constructs an HTTP URL record from a URI path (a list of path
+  components), a search, and a frag-id component.
+  
+  \ex{Http-url->string} just does the inverse job. It converts an
+  HTTP URL record into a string.
+\end{defundescx}
+%
+Note: The URI parser \ex{parse-uri} maps a string to four parts:
+\var{scheme}, \var{path}, \var{search} and \var{frag-id} (see
+Section~\ref{proc:parse-uri} for details). If \var{scheme} is
+\ex{http}, then the other three parts can be passed to
+\ex{parse-http-url}, which parses them into a \ex{http-url} record.
+All strings come back from the URI parser encoded.  \var{Search} and
+\var{frag-id} are left that way; this parser decodes the path
+elements.  The first two list elements of the path indicating the
+leading double-slash are omitted.
+
+The following procedure combines the jobs of \ex{parse-uri} and
+\ex{parse-http-url}:
+
+\defun{parse-http-url-string}{string}{http-url}
+\begin{desc}
+  This parses an HTTP URL and returns the corresponding URL value; it
+  calls \ex{fatal-syntax-error} if the URL string doesn't have an
+  \ex{http} scheme.
+\end{desc}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "man"
+%%% End: 

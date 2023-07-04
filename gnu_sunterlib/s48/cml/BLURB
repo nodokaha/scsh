@@ -1,0 +1,3 @@
+CML: This is an implementation of the Concurrent ML event algebra
+(called rendezvous here) and some of higher-level synchronization
+abstractions.
