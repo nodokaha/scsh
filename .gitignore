@@ -10,3 +10,4 @@ Makefile
 *.dSYM
 *.sexpr
 *~
+scheme48*
