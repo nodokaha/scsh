@@ -1694,7 +1694,7 @@ EOF
     else
       shlib_search_path=
     fi
-    eval sys_lib_search_path=\"$sys_lib_search_path_spec\"
+    sys_lib_search_path=''
     eval sys_lib_dlsearch_path=\"$sys_lib_dlsearch_path_spec\"
 
     output_objdir=`$echo "X$output" | $Xsed -e 's%/[^/]*$%%'`
