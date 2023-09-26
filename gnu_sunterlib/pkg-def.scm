@@ -61,27 +61,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   (install-file "README.contrib" 'doc))
 
 
-; S48 LIBRARIES
-
-(load-package-in "s48/srfi-10")
-(load-package-in "s48/continuation-data-type")
-(load-package-in "s48/args-fold")
-(load-package-in "s48/hawk-dns-server")
-(load-package-in "s48/module-system")
-(load-package-in "s48/krims")
-(load-package-in "s48/binary-parse")
-(load-package-in "s48/cml")
-(load-package-in "s48/meta-gc")
-(load-package-in "s48/banana")
-(load-package-in "s48/exceptions")
-(load-package-in "s48/heap-images")
-(load-package-in "s48/procedure-tables")
-(load-package-in "s48/profile")
-(load-package-in "s48/riatables")
-(load-package-in "s48/concurrency")
-(load-package-in "s48/intsets")
-(load-package-in "s48/cavespider")
-
+;;; S48 LIBRARIES
+;
+;(load-package-in "s48/srfi-10")
+;(load-package-in "s48/continuation-data-type")
+;(load-package-in "s48/args-fold")
+;(load-package-in "s48/hawk-dns-server")
+;(load-package-in "s48/module-system")
+;(load-package-in "s48/krims")
+;(load-package-in "s48/binary-parse")
+;(load-package-in "s48/cml")
+;(load-package-in "s48/meta-gc")
+;(load-package-in "s48/banana")
+;(load-package-in "s48/exceptions")
+;(load-package-in "s48/heap-images")
+;(load-package-in "s48/procedure-tables")
+;(load-package-in "s48/profile")
+;(load-package-in "s48/riatables")
+;(load-package-in "s48/concurrency")
+;(load-package-in "s48/intsets")
+;(load-package-in "s48/cavespider")
+;
 ; SCSH LIBRARIES
 
 (load-package-in "scsh/tiff")
